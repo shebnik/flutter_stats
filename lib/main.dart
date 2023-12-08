@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
 import 'package:flutter_stats/providers/app_theme_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
@@ -49,6 +50,7 @@ class MainApp extends StatelessWidget {
               PointerDeviceKind.mouse,
             },
           ),
+          title: appName,
           debugShowCheckedModeBanner: false,
           home: const HomePage(),
         ),
