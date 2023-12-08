@@ -16,6 +16,7 @@ class AppNavigationRail extends StatelessWidget {
       leading: FloatingActionButton(
         elevation: 0,
         onPressed: () => context.read<Utils>().loadCsvFile(context),
+        tooltip: 'Load CSV file',
         child: const Icon(Icons.add),
       ),
       destinations: const <NavigationRailDestination>[

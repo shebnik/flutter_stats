@@ -9,6 +9,8 @@ class LinearRegressionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<RegressionModelProvider>();
+    final b0 = provider.coefficients[0];
+    final b1 = provider.coefficients[1];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -30,8 +32,7 @@ class LinearRegressionView extends StatelessWidget {
               children: [
                 MetricsCard(
                   title: 'Equation',
-                  value:
-                      'Y = ${provider.coefficients[0]} + ${provider.coefficients[1]} * X',
+                  value: 'Y = $b0 + $b1 * X',
                 ),
                 const SizedBox(height: 20),
                 MetricsCard(

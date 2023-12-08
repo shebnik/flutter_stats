@@ -1,6 +1,4 @@
-import 'dart:math' as math;
-import 'dart:ui';
-
+import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:provider/provider.dart';
@@ -12,66 +10,70 @@ class ScatterPlotView extends StatelessWidget {
   Widget build(BuildContext context) {
     final xData = context.watch<RegressionModelProvider>().xData;
     final yData = context.watch<RegressionModelProvider>().yData;
-    final regressionLine =
+    final predictedValues =
         context.watch<RegressionModelProvider>().predictedValues;
 
+    final dataPoints = <DataPoint>[];
+
+    for (var i = 0; i < xData.length; i++) {
+      dataPoints.add(DataPoint(xData[i], yData[i]));
+    }
+
+    final predictedPoints = <DataPoint>[];
+
+    for (var i = 0; i < xData.length; i++) {
+      predictedPoints.add(DataPoint(xData[i], predictedValues[i]));
+    }
+
+    final dataSeries = charts.Series(
+      data: dataPoints,
+      domainFn: (point, _) => point.x,
+      measureFn: (point, _) => point.y,
+      id: 'data',
+    );
+
+    final predictedLineSeries = charts.Series<DataPoint, num>(
+      id: 'predicted',
+      colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
+      domainFn: (DataPoint point, _) => point.x,
+      measureFn: (DataPoint point, _) => point.y,
+      data: predictedPoints,
+    );
+
+    final series = [
+      dataSeries,
+      predictedLineSeries,
+    ];
+
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: CustomPaint(
-        painter: ScatterPlotPainter(
-          xData: xData,
-          yData: yData,
-          regressionLine: regressionLine,
-        ),
-      ),
+      padding: const EdgeInsets.all(16),
+      child: ScatterPlotChart(series),
     );
   }
 }
 
-class ScatterPlotPainter extends CustomPainter {
-  ScatterPlotPainter({
-    required this.xData,
-    required this.yData,
-    required this.regressionLine,
-  });
+class ScatterPlotChart extends StatelessWidget {
+  const ScatterPlotChart(this.seriesList, {super.key});
 
-  final List<double> xData;
-  final List<double> yData;
-  final List<double> regressionLine;
+  final List<charts.Series<DataPoint, num>> seriesList;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    // Calculate scale factors to fit data to canvas size
-    final maxX = xData.reduce(math.max);
-    final minX = xData.reduce(math.min);
-    final maxY = yData.reduce(math.max);
-    final minY = yData.reduce(math.min);
-    final scaleX = size.width / (maxX - minX);
-    final scaleY = size.height / (maxY - minY);
-
-    // Draw data points
-    for (int i = 0; i < xData.length; i++) {
-      final x = (xData[i] - minX) * scaleX;
-      final y = size.height - (yData[i] - minY) * scaleY;
-      canvas.drawCircle(Offset(x, y), 3, Paint()..color = Colors.blue);
-    }
-
-    // Draw regression line
-    canvas.drawPoints(
-        PointMode.lines,
-        _generateRegressionLinePoints(scaleX, scaleY, minX, maxY, minY, size),
-        Paint()..color = Colors.red);
+  Widget build(BuildContext context) {
+    return charts.ScatterPlotChart(
+      seriesList,
+      animate: true,
+      behaviors: [
+        charts.ChartTitle(
+          'Zx, Zy and Predicted Values',
+        ),
+      ],
+    );
   }
+}
 
-  List<Offset> _generateRegressionLinePoints(
-      double scaleX, double scaleY, num minX, num maxX, num minY, Size size) {
-    return List.generate(100, (i) {
-      final x = i / 100 * size.width;
-      final y = regressionLine[0] + regressionLine[1] * (x / scaleX + minX);
-      return Offset(x, size.height - (y - minY) * scaleY);
-    });
-  }
+class DataPoint {
+  DataPoint(this.x, this.y);
 
-  @override
-  bool shouldRepaint(ScatterPlotPainter oldDelegate) => true;
+  final num x;
+  final num y;
 }
