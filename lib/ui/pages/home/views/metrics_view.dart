@@ -8,7 +8,7 @@ class MetricsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metrics = context.watch<RegressionModelProvider>().metrics;
+    final projects = context.watch<RegressionModelProvider>().projects;
     final linesOfCodeInThousands =
         context.watch<RegressionModelProvider>().linesOfCodeInThousands;
     return Column(
@@ -24,8 +24,8 @@ class MetricsView extends StatelessWidget {
         ),
         Expanded(
           child: ProjectsList(
-            metrics: metrics,
-            key: const Key('metrics_list'),
+            projects: projects,
+            key: const Key('projects_list'),
           ),
         ),
       ],

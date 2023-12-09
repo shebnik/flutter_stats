@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/metrics_card.dart';
+import 'package:flutter_stats/ui/pages/home/widgets/prediction_widget.dart';
 import 'package:provider/provider.dart';
 
 class LinearRegressionView extends StatelessWidget {
@@ -34,6 +35,8 @@ class LinearRegressionView extends StatelessWidget {
                   title: 'Equation',
                   value: 'Y = $b0 + $b1 * X',
                 ),
+                const SizedBox(height: 20),
+                const PredictionWidget(),
                 const SizedBox(height: 20),
                 MetricsCard(
                   title: 'R²',

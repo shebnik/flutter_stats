@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/models/metrics/metrics.dart';
+import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
 class ProjectsList extends StatelessWidget {
   const ProjectsList({
-    required this.metrics,
+    required this.projects,
     this.outliersIndexes,
     super.key,
   });
 
-  final List<Metrics> metrics;
+  final List<Project> projects;
   final List<int>? outliersIndexes;
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: metrics.length,
+      itemCount: projects.length,
       itemBuilder: (context, index) {
         if (outliersIndexes != null && !outliersIndexes!.contains(index)) {
           return const SizedBox.shrink();
         }
-        final metric = metrics[index];
+        final project = projects[index];
+        final metric = project.metrics!;
         final y = metric.linesOfCode;
         final x = metric.numberOfClasses?.toStringAsFixed(0);
         return MouseRegion(
@@ -45,7 +46,7 @@ class ProjectsList extends StatelessWidget {
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                context.read<RegressionModelProvider>().removeMetric(index);
+                context.read<RegressionModelProvider>().removeProject(index);
               },
             ),
           ),

@@ -36,7 +36,7 @@ class AppListTile extends StatelessWidget {
           ? IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                context.read<RegressionModelProvider>().removeMetric(index);
+                context.read<RegressionModelProvider>().removeProject(index);
               },
             )
           : null,

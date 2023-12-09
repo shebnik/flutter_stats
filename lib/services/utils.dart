@@ -8,7 +8,7 @@ class Utils {
   void loadCsvFile(BuildContext context) {
     final model = context.read<RegressionModelProvider>();
     try {
-      context.read<DataHandler>().retrieveData().then(model.setMetrics);
+      context.read<DataHandler>().retrieveData().then(model.setProjects);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

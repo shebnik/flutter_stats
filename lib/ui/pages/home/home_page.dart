@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
           const AppNavigationRail(),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: context.watch<RegressionModelProvider>().metrics.isEmpty
+            child: context.watch<RegressionModelProvider>().projects.isEmpty
                 ? Center(
                     child: ElevatedButton(
                       onPressed: () =>

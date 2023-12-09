@@ -15,7 +15,7 @@ class OutliersView extends StatelessWidget {
       (RegressionModelProvider provider) => provider.outliers,
     );
     final metrics = context.select(
-      (RegressionModelProvider provider) => provider.metrics,
+      (RegressionModelProvider provider) => provider.projects,
     );
     return Container(
       padding: const EdgeInsets.all(8),
@@ -40,15 +40,14 @@ class OutliersView extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-          ],
-          ...[
+          ] else ...[
             Text(
               'Outliers',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             Expanded(
               child: ProjectsList(
-                metrics: metrics,
+                projects: metrics,
                 outliersIndexes: outliersIndexes,
                 key: const Key('outliers_list'),
               ),
