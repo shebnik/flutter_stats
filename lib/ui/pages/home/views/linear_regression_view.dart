@@ -36,7 +36,7 @@ class LinearRegressionView extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 MetricsCard(
-                  title: 'R^2',
+                  title: 'R²',
                   value: provider.modelQuality.rSquared.toString(),
                 ),
                 const SizedBox(height: 20),
@@ -60,7 +60,7 @@ class LinearRegressionView extends StatelessWidget {
                   value: provider.outliers.length.toString(),
                 ),
                 const SizedBox(height: 40),
-                const Text('R > 0.7 indicates a good model\n'
+                const Text('R² > 0.7 indicates a good model\n'
                     'MMRE < 0.25 indicates a good model\n'
                     'Pred(25) > 0.75 indicates a good model'),
               ],

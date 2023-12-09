@@ -9,7 +9,35 @@ class RegressionModelProvider with ChangeNotifier {
   List<Metrics> get metrics => _metrics;
   late RegressionModel _regressionModel;
 
-  void setMetrics(List<Metrics> metrics) {
+  bool _linesOfCodeInThousands = true;
+
+  bool get linesOfCodeInThousands => _linesOfCodeInThousands;
+
+  // ignore: avoid_positional_boolean_parameters
+  void setLinesOfCodeInThousands(bool value) {
+    _linesOfCodeInThousands = value;
+    if (value) {
+      _metrics = _metrics
+          .map(
+            (e) => e.copyWith(
+              linesOfCode: e.linesOfCode! / 1000,
+            ),
+          )
+          .toList();
+    } else {
+      _metrics = _metrics
+          .map(
+            (e) => e.copyWith(
+              linesOfCode: e.linesOfCode! * 1000,
+            ),
+          )
+          .toList();
+    }
+    notifyListeners();
+  }
+
+  void setMetrics(List<Metrics>? metrics) {
+    if (metrics == null) return;
     _metrics = metrics;
     _regressionModel = RegressionModel(metrics);
     notifyListeners();
@@ -35,6 +63,9 @@ class RegressionModelProvider with ChangeNotifier {
 
   List<double> get testStatistics =>
       _regressionModel.calculateTestStatistics(mahalanobisDistances);
+
+  double get fisherFDistribution =>
+      _regressionModel.calculateFisherFDistribution();
 
   List<int> get outliers => _regressionModel.determineOutliers(testStatistics);
 

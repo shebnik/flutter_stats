@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
+import 'package:flutter_stats/services/fisher.dart';
 
 class RegressionModel {
   RegressionModel(this.metrics)
@@ -89,14 +90,7 @@ class RegressionModel {
     return testStatistics;
   }
 
-  double calculateFisherFDistribution() {
-    // int d1 = 2;
-    // int d2 = n - 2;
-    // double p = 0.05;
-    // double finv = f.inv(d1, d2, p);
-    double finv = 3.2849176510382883;
-    return finv;
-  }
+  double calculateFisherFDistribution() => Fisher.calculate(n);
 
   List<int> determineOutliers(List<double> testStatistics) {
     double f = calculateFisherFDistribution();

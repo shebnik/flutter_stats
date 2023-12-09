@@ -9,9 +9,26 @@ class MetricsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = context.watch<RegressionModelProvider>().metrics;
-    return ProjectsList(
-      metrics: metrics,
-      key: const Key('metrics_list'),
+    final linesOfCodeInThousands =
+        context.watch<RegressionModelProvider>().linesOfCodeInThousands;
+    return Column(
+      children: [
+        CheckboxListTile(
+          title: const Text('Divide Y by 1000'),
+          value: linesOfCodeInThousands,
+          onChanged: (value) {
+            context
+                .read<RegressionModelProvider>()
+                .setLinesOfCodeInThousands(value!);
+          },
+        ),
+        Expanded(
+          child: ProjectsList(
+            metrics: metrics,
+            key: const Key('metrics_list'),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -6,9 +6,18 @@ import 'package:provider/provider.dart';
 
 class Utils {
   void loadCsvFile(BuildContext context) {
-    context.read<DataHandler>().retrieveData().then((metrics) {
-      context.read<RegressionModelProvider>().setMetrics(metrics);
-    });
+    final model = context.read<RegressionModelProvider>();
+    try {
+      context.read<DataHandler>().retrieveData().then(model.setMetrics);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Invalid file format'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   static void copyToClipboard(String value, BuildContext context) {

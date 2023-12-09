@@ -28,17 +28,26 @@ class DataHandler {
     return null;
   }
 
-  Future<List<Metrics>> retrieveData() async {
+  Future<List<Metrics>?> retrieveData() async {
     final file = await _pickFile();
     if (file == null) {
-      throw Exception('File not found');
+      return null;
     }
     final input = file.openRead();
     final fields = await input
         .transform(utf8.decoder)
         .transform(const CsvToListConverter())
-        .skip(1)
         .toList();
+
+    List<String> header = fields
+        .removeAt(0)
+        .toString()
+        .replaceAll(RegExp(r'[\[\]]'), '')
+        .split(', ');
+
+    for (int i = 0; i < header.length; i++) {
+      print(header[i]);
+    }
 
     try {
       final metrics = fields

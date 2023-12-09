@@ -8,6 +8,9 @@ class OutliersView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fisherFDistribution = context.select(
+      (RegressionModelProvider provider) => provider.fisherFDistribution,
+    );
     final outliersIndexes = context.select(
       (RegressionModelProvider provider) => provider.outliers,
     );
@@ -16,28 +19,43 @@ class OutliersView extends StatelessWidget {
     );
     return Container(
       padding: const EdgeInsets.all(8),
-      child: outliersIndexes.isEmpty
-          ? Center(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Text(
+                  'Fisher F-Distribution: $fisherFDistribution',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+          ),
+          if (outliersIndexes.isEmpty) ...[
+            const SizedBox(height: 16),
+            Center(
               child: Text(
                 'No outliers',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-            )
-          : Column(
-              children: [
-                Text(
-                  'Outliers',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                Expanded(
-                  child: ProjectsList(
-                    metrics: metrics,
-                    outliersIndexes: outliersIndexes,
-                    key: const Key('outliers_list'),
-                  ),
-                ),
-              ],
             ),
+          ],
+          ...[
+            Text(
+              'Outliers',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Expanded(
+              child: ProjectsList(
+                metrics: metrics,
+                outliersIndexes: outliersIndexes,
+                key: const Key('outliers_list'),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
