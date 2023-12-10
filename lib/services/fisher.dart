@@ -1,12 +1,18 @@
 class Fisher {
-  static double calculate(int n) {
+  // TODO: implemet Fisher's F distribution
+  static double inv({
+    required double alpha,
+    required int df1,
+    required int df2,
+  }) {
+    final n = df2;
     if (n < 1) {
       throw Exception('n must be greater than 0');
     }
     if (n > fppf.length + 1) {
       return 3;
     }
-    return fppf[n - 3];
+    return fppf[n - 1];
   }
 
   // auto calculated with alpha = 0.05 and df1 = 2

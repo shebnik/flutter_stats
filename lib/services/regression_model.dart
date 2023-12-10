@@ -90,7 +90,13 @@ class RegressionModel {
     return testStatistics;
   }
 
-  double calculateFisherFDistribution() => Fisher.calculate(n);
+  double calculateFisherFDistribution() {
+    return Fisher.inv(
+      alpha: 0.05,
+      df1: 2,
+      df2: n - 2,
+    );
+  }
 
   List<int> determineOutliers(List<double> testStatistics) {
     double f = calculateFisherFDistribution();
