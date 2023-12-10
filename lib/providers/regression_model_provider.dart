@@ -6,6 +6,14 @@ import 'package:flutter_stats/services/regression_model.dart';
 class RegressionModelProvider with ChangeNotifier {
   List<Project> _projects = [];
 
+  int _outliersRemoved = 0;
+  int get outliersRemoved => _outliersRemoved;
+
+  void setOutliersRemoved(int value) {
+    _outliersRemoved = value;
+    notifyListeners();
+  }
+
   List<Project> get projects => _projects;
   late RegressionModel _regressionModel;
 
@@ -43,6 +51,7 @@ class RegressionModelProvider with ChangeNotifier {
   void setProjects(List<Project>? projects) {
     if (projects == null) return;
     _projects = projects;
+    _outliersRemoved = 0;
     _regressionModel = RegressionModel(
       projects.map((e) => e.metrics!).toList(),
     );
@@ -51,6 +60,7 @@ class RegressionModelProvider with ChangeNotifier {
 
   void removeProject(int index) {
     _projects.removeAt(index);
+    _outliersRemoved++;
     _regressionModel = RegressionModel(
       _projects.map((e) => e.metrics!).toList(),
     );

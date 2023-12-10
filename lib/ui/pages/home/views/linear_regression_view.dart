@@ -62,6 +62,11 @@ class LinearRegressionView extends StatelessWidget {
                   title: 'Outliers',
                   value: provider.outliers.length.toString(),
                 ),
+                const SizedBox(height: 20),
+                MetricsCard(
+                  title: 'Total outliers removed',
+                  value: provider.outliersRemoved.toString(),
+                ),
                 const SizedBox(height: 40),
                 const Text('R² > 0.7 indicates a good model\n'
                     'MMRE < 0.25 indicates a good model\n'

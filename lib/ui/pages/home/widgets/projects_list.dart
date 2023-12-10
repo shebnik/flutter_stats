@@ -24,8 +24,17 @@ class ProjectsList extends StatelessWidget {
         }
         final project = projects[index];
         final metric = project.metrics!;
-        final y = metric.linesOfCode;
-        final x = metric.numberOfClasses?.toStringAsFixed(0);
+        var subtitle = '(Y) Lines of code in thousands: ${metric.linesOfCode}';
+        if (metric.numberOfClasses != null) {
+          subtitle += '\n(X1) Number of classes: ${metric.numberOfClasses}';
+        }
+        if (metric.numberOfMethods != null) {
+          subtitle += '\n(X2) Number of methods: ${metric.numberOfMethods}';
+        }
+        if (metric.cyclomaticComplexity != null) {
+          subtitle +=
+              '\n(X3) Cyclomatic complexity: ${metric.cyclomaticComplexity}';
+        }
         return MouseRegion(
           cursor: SystemMouseCursors.click,
           child: ListTile(
@@ -36,13 +45,16 @@ class ProjectsList extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            onTap: () => Utils.copyToClipboard('y=$y, x=$x', context),
-            title: Text(
-              '(Y) Lines of code in thousands: $y',
-            ),
+            onTap: () => Utils.copyToClipboard(subtitle, context),
+            title: project.url != null
+                ? Text(
+                    project.url!,
+                  )
+                : null,
             subtitle: Text(
-              '(X) Number of classes: $x',
+              subtitle,
             ),
+            isThreeLine: true,
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
