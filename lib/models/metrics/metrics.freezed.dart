@@ -21,9 +21,9 @@ Metrics _$MetricsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Metrics {
   double? get linesOfCode => throw _privateConstructorUsedError;
-  double? get cyclomaticComplexity => throw _privateConstructorUsedError;
-  double? get numberOfMethods => throw _privateConstructorUsedError;
   double? get numberOfClasses => throw _privateConstructorUsedError;
+  double? get numberOfMethods => throw _privateConstructorUsedError;
+  double? get cyclomaticComplexity => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -37,9 +37,9 @@ abstract class $MetricsCopyWith<$Res> {
   @useResult
   $Res call(
       {double? linesOfCode,
-      double? cyclomaticComplexity,
+      double? numberOfClasses,
       double? numberOfMethods,
-      double? numberOfClasses});
+      double? cyclomaticComplexity});
 }
 
 /// @nodoc
@@ -56,26 +56,26 @@ class _$MetricsCopyWithImpl<$Res, $Val extends Metrics>
   @override
   $Res call({
     Object? linesOfCode = freezed,
-    Object? cyclomaticComplexity = freezed,
-    Object? numberOfMethods = freezed,
     Object? numberOfClasses = freezed,
+    Object? numberOfMethods = freezed,
+    Object? cyclomaticComplexity = freezed,
   }) {
     return _then(_value.copyWith(
       linesOfCode: freezed == linesOfCode
           ? _value.linesOfCode
           : linesOfCode // ignore: cast_nullable_to_non_nullable
               as double?,
-      cyclomaticComplexity: freezed == cyclomaticComplexity
-          ? _value.cyclomaticComplexity
-          : cyclomaticComplexity // ignore: cast_nullable_to_non_nullable
+      numberOfClasses: freezed == numberOfClasses
+          ? _value.numberOfClasses
+          : numberOfClasses // ignore: cast_nullable_to_non_nullable
               as double?,
       numberOfMethods: freezed == numberOfMethods
           ? _value.numberOfMethods
           : numberOfMethods // ignore: cast_nullable_to_non_nullable
               as double?,
-      numberOfClasses: freezed == numberOfClasses
-          ? _value.numberOfClasses
-          : numberOfClasses // ignore: cast_nullable_to_non_nullable
+      cyclomaticComplexity: freezed == cyclomaticComplexity
+          ? _value.cyclomaticComplexity
+          : cyclomaticComplexity // ignore: cast_nullable_to_non_nullable
               as double?,
     ) as $Val);
   }
@@ -90,9 +90,9 @@ abstract class _$$MetricsImplCopyWith<$Res> implements $MetricsCopyWith<$Res> {
   @useResult
   $Res call(
       {double? linesOfCode,
-      double? cyclomaticComplexity,
+      double? numberOfClasses,
       double? numberOfMethods,
-      double? numberOfClasses});
+      double? cyclomaticComplexity});
 }
 
 /// @nodoc
@@ -107,26 +107,26 @@ class __$$MetricsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? linesOfCode = freezed,
-    Object? cyclomaticComplexity = freezed,
-    Object? numberOfMethods = freezed,
     Object? numberOfClasses = freezed,
+    Object? numberOfMethods = freezed,
+    Object? cyclomaticComplexity = freezed,
   }) {
     return _then(_$MetricsImpl(
       linesOfCode: freezed == linesOfCode
           ? _value.linesOfCode
           : linesOfCode // ignore: cast_nullable_to_non_nullable
               as double?,
-      cyclomaticComplexity: freezed == cyclomaticComplexity
-          ? _value.cyclomaticComplexity
-          : cyclomaticComplexity // ignore: cast_nullable_to_non_nullable
+      numberOfClasses: freezed == numberOfClasses
+          ? _value.numberOfClasses
+          : numberOfClasses // ignore: cast_nullable_to_non_nullable
               as double?,
       numberOfMethods: freezed == numberOfMethods
           ? _value.numberOfMethods
           : numberOfMethods // ignore: cast_nullable_to_non_nullable
               as double?,
-      numberOfClasses: freezed == numberOfClasses
-          ? _value.numberOfClasses
-          : numberOfClasses // ignore: cast_nullable_to_non_nullable
+      cyclomaticComplexity: freezed == cyclomaticComplexity
+          ? _value.cyclomaticComplexity
+          : cyclomaticComplexity // ignore: cast_nullable_to_non_nullable
               as double?,
     ));
   }
@@ -137,9 +137,9 @@ class __$$MetricsImplCopyWithImpl<$Res>
 class _$MetricsImpl implements _Metrics {
   const _$MetricsImpl(
       {this.linesOfCode,
-      this.cyclomaticComplexity,
+      this.numberOfClasses,
       this.numberOfMethods,
-      this.numberOfClasses});
+      this.cyclomaticComplexity});
 
   factory _$MetricsImpl.fromJson(Map<String, dynamic> json) =>
       _$$MetricsImplFromJson(json);
@@ -147,15 +147,15 @@ class _$MetricsImpl implements _Metrics {
   @override
   final double? linesOfCode;
   @override
-  final double? cyclomaticComplexity;
+  final double? numberOfClasses;
   @override
   final double? numberOfMethods;
   @override
-  final double? numberOfClasses;
+  final double? cyclomaticComplexity;
 
   @override
   String toString() {
-    return 'Metrics(linesOfCode: $linesOfCode, cyclomaticComplexity: $cyclomaticComplexity, numberOfMethods: $numberOfMethods, numberOfClasses: $numberOfClasses)';
+    return 'Metrics(linesOfCode: $linesOfCode, numberOfClasses: $numberOfClasses, numberOfMethods: $numberOfMethods, cyclomaticComplexity: $cyclomaticComplexity)';
   }
 
   @override
@@ -165,18 +165,18 @@ class _$MetricsImpl implements _Metrics {
             other is _$MetricsImpl &&
             (identical(other.linesOfCode, linesOfCode) ||
                 other.linesOfCode == linesOfCode) &&
-            (identical(other.cyclomaticComplexity, cyclomaticComplexity) ||
-                other.cyclomaticComplexity == cyclomaticComplexity) &&
+            (identical(other.numberOfClasses, numberOfClasses) ||
+                other.numberOfClasses == numberOfClasses) &&
             (identical(other.numberOfMethods, numberOfMethods) ||
                 other.numberOfMethods == numberOfMethods) &&
-            (identical(other.numberOfClasses, numberOfClasses) ||
-                other.numberOfClasses == numberOfClasses));
+            (identical(other.cyclomaticComplexity, cyclomaticComplexity) ||
+                other.cyclomaticComplexity == cyclomaticComplexity));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, linesOfCode,
-      cyclomaticComplexity, numberOfMethods, numberOfClasses);
+  int get hashCode => Object.hash(runtimeType, linesOfCode, numberOfClasses,
+      numberOfMethods, cyclomaticComplexity);
 
   @JsonKey(ignore: true)
   @override
@@ -195,20 +195,20 @@ class _$MetricsImpl implements _Metrics {
 abstract class _Metrics implements Metrics {
   const factory _Metrics(
       {final double? linesOfCode,
-      final double? cyclomaticComplexity,
+      final double? numberOfClasses,
       final double? numberOfMethods,
-      final double? numberOfClasses}) = _$MetricsImpl;
+      final double? cyclomaticComplexity}) = _$MetricsImpl;
 
   factory _Metrics.fromJson(Map<String, dynamic> json) = _$MetricsImpl.fromJson;
 
   @override
   double? get linesOfCode;
   @override
-  double? get cyclomaticComplexity;
+  double? get numberOfClasses;
   @override
   double? get numberOfMethods;
   @override
-  double? get numberOfClasses;
+  double? get cyclomaticComplexity;
   @override
   @JsonKey(ignore: true)
   _$$MetricsImplCopyWith<_$MetricsImpl> get copyWith =>

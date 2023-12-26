@@ -8,11 +8,57 @@ class ScatterPlotView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final zxData = context.watch<RegressionModelProvider>().zxData;
+    final zyData = context.watch<RegressionModelProvider>().zyData;
+    final zyHat = context.watch<RegressionModelProvider>().predictedValues;
+
     final xData = context.watch<RegressionModelProvider>().xData;
     final yData = context.watch<RegressionModelProvider>().yData;
-    final predictedValues =
-        context.watch<RegressionModelProvider>().predictedValues;
+    final yHat = context.watch<RegressionModelProvider>().yHat;
 
+    return SizedBox(
+      height: MediaQuery.of(context).size.height,
+      child: Row(
+        children: [
+          Expanded(
+            child: ScatterPlot(
+              xData: zxData,
+              yData: zyData,
+              predictedValues: zyHat,
+              title: 'Zx and Zy',
+            ),
+          ),
+          const VerticalDivider(),
+          Expanded(
+            child: ScatterPlot(
+              xData: xData,
+              yData: yData,
+              predictedValues: yHat,
+              title: 'X and Y',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ScatterPlot extends StatelessWidget {
+  const ScatterPlot({
+    required this.xData,
+    required this.yData,
+    required this.predictedValues,
+    required this.title,
+    super.key,
+  });
+
+  final List<num> xData;
+  final List<num> yData;
+  final List<num> predictedValues;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
     final dataPoints = <DataPoint>[];
 
     for (var i = 0; i < xData.length; i++) {
@@ -47,15 +93,20 @@ class ScatterPlotView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: ScatterPlotChart(series),
+      child: ScatterPlotChart(series, title: title),
     );
   }
 }
 
 class ScatterPlotChart extends StatelessWidget {
-  const ScatterPlotChart(this.seriesList, {super.key});
+  const ScatterPlotChart(
+    this.seriesList, {
+    required this.title,
+    super.key,
+  });
 
   final List<charts.Series<DataPoint, num>> seriesList;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +115,8 @@ class ScatterPlotChart extends StatelessWidget {
       animate: true,
       behaviors: [
         charts.ChartTitle(
-          'Zx, Zy and Predicted Values',
+          title,
+          subTitle: 'Red - Predicted Values',
         ),
       ],
     );

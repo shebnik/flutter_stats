@@ -48,7 +48,12 @@ class AppNavigationRail extends StatelessWidget {
         NavigationRailDestination(
           icon: Icon(Icons.show_chart),
           selectedIcon: Icon(Icons.trending_up),
-          label: Text('Linear Regression'),
+          label: Text('Regression'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.settings_ethernet_outlined),
+          selectedIcon: Icon(Icons.settings_ethernet),
+          label: Text('Intervals'),
         ),
         NavigationRailDestination(
           icon: Icon(Icons.scatter_plot_outlined),

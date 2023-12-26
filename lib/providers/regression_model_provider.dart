@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_stats/models/interval/model_interval.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/services/regression_model.dart';
@@ -67,8 +69,13 @@ class RegressionModelProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  List<double> get xData => _regressionModel.Zx;
-  List<double> get yData => _regressionModel.Zy;
+  List<double> get xData =>
+      _regressionModel.metrics.map((e) => e.numberOfClasses!).toList();
+  List<double> get yData =>
+      _regressionModel.metrics.map((e) => e.linesOfCode!).toList();
+
+  List<double> get zxData => _regressionModel.Zx;
+  List<double> get zyData => _regressionModel.Zy;
 
   List<List<double>> get covarianceMatrix =>
       _regressionModel.calculateCovarianceMatrix();
@@ -93,6 +100,13 @@ class RegressionModelProvider with ChangeNotifier {
   List<double> get predictedValues =>
       _regressionModel.calculatePredictedValues(coefficients);
 
+  List<num> get yHat => _regressionModel.calculateYHat(predictedValues);
+
   ModelQuality get modelQuality =>
       _regressionModel.calculateModelQuality(predictedValues);
+
+  List<ModelInterval> get linearIntervals =>
+      _regressionModel.calculateLinearIntervals();
+  List<ModelInterval> get nonLinearIntervals =>
+      _regressionModel.calculatenonLinearIntervals();
 }

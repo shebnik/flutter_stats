@@ -7,9 +7,9 @@ part 'metrics.g.dart';
 class Metrics with _$Metrics {
   const factory Metrics({
     double? linesOfCode,
-    double? cyclomaticComplexity,
-    double? numberOfMethods,
     double? numberOfClasses,
+    double? numberOfMethods,
+    double? cyclomaticComplexity,
   }) = _Metrics;
 
   factory Metrics.fromJson(Map<String, Object?> json)

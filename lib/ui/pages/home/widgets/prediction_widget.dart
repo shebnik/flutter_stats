@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/metrics_card.dart';
 import 'package:intl/intl.dart';
@@ -13,7 +16,7 @@ class PredictionWidget extends StatefulWidget {
 
 class _PredictionWidgetState extends State<PredictionWidget> {
   final textController = TextEditingController();
-  double? _prediction;
+  num? _prediction;
 
   Widget _buildPredictionOutput() {
     if (_prediction == null ||
@@ -42,12 +45,15 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         TextField(
           controller: textController,
           keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
           decoration: const InputDecoration(
             labelText: 'Enter X value (Number of Classes)',
           ),
           onChanged: (_) {
             final x = double.tryParse(textController.text) ?? 0;
-            _prediction = b0 + b1 * x * 100;
+            _prediction = pow(10, b0) * pow(x, b1) * 1000;
             setState(() {});
           },
         ),

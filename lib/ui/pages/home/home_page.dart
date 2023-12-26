@@ -5,10 +5,11 @@ import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/views/covariance_matrix_view.dart';
-import 'package:flutter_stats/ui/pages/home/views/linear_regression_view.dart';
+import 'package:flutter_stats/ui/pages/home/views/intervals_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/mahalanobis_distances_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/metrics_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/outliers_view.dart';
+import 'package:flutter_stats/ui/pages/home/views/regression_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/scatter_plot_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/test_statistic_view.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/app_navigation_rail.dart';
@@ -72,8 +73,10 @@ class _HomePageState extends State<HomePage> {
       case 4:
         return const OutliersView();
       case 5:
-        return const LinearRegressionView();
+        return const RegressionView();
       case 6:
+        return const IntervalsView();
+      case 7:
         return const ScatterPlotView();
       default:
         return const MetricsView();

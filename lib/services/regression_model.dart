@@ -1,21 +1,30 @@
 // ignore_for_file: prefer_final_locals, omit_local_variable_types, non_constant_identifier_names, lines_longer_than_80_chars
 
-import 'dart:math';
-
+import 'package:flutter/material.dart';
+import 'package:flutter_stats/models/interval/model_interval.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/services/fisher.dart';
+import 'package:flutter_stats/services/student.dart';
+import 'package:scidart/numdart.dart';
+import 'dart:math';
 
 class RegressionModel {
   RegressionModel(this.metrics)
-      : Zx = metrics.map((e) => log(e.numberOfClasses!) / log(10)).toList(),
+      : x = metrics.map((e) => e.numberOfClasses!).toList(),
+        y = metrics.map((e) => e.linesOfCode!).toList(),
+        Zx = metrics.map((e) => log(e.numberOfClasses!) / log(10)).toList(),
         Zy = metrics.map((e) => log(e.linesOfCode!) / log(10)).toList();
 
   List<Metrics> metrics;
+  List<double> x;
+  List<double> y;
   List<double> Zx;
   List<double> Zy;
 
   int get n => metrics.length;
+  double get xAvg => x.reduce((a, b) => a + b) / n;
+  double get yAvg => y.reduce((a, b) => a + b) / n;
   double get ZxAvg => Zx.reduce((a, b) => a + b) / n;
   double get ZyAvg => Zy.reduce((a, b) => a + b) / n;
 
@@ -135,21 +144,19 @@ class RegressionModel {
     return Zy_hat;
   }
 
+  List<double> calculateYHat(List<double> predictedValues) {
+    return predictedValues.map((value) => pow(10, value)).toList().cast();
+  }
+
   ModelQuality calculateModelQuality(List<double> predictedValues) {
-    final actualValues = metrics.map((e) => e.linesOfCode!).toList();
-    final yHat = predictedValues.map((value) => pow(10, value)).toList();
+    final yHat = calculateYHat(predictedValues);
 
-    final yAvg = actualValues.reduce((value, element) => value + element) /
-        actualValues.length;
+    final yDiffSquared =
+        y.map((value) => pow(value - yHat[y.indexOf(value)], 2)).toList();
+    final yAvgDiffSquared = y.map((value) => pow(value - yAvg, 2)).toList();
 
-    final yDiffSquared = actualValues
-        .map((value) => pow(value - yHat[actualValues.indexOf(value)], 2))
-        .toList();
-    final yAvgDiffSquared =
-        actualValues.map((value) => pow(value - yAvg, 2)).toList();
-
-    final yDividedDiff = List.generate(actualValues.length, (index) {
-      return (actualValues[index] - yHat[index]) / actualValues[index];
+    final yDividedDiff = List.generate(y.length, (index) {
+      return (y[index] - yHat[index]) / y[index];
     });
 
     final sy = yDiffSquared.reduce((value, element) => value + element);
@@ -159,10 +166,10 @@ class RegressionModel {
     final mmre = yDividedDiff
             .map((diff) => diff.abs())
             .reduce((value, element) => value + element) /
-        actualValues.length;
+        y.length;
 
-    final pred = yDividedDiff.where((diff) => diff.abs() < 0.25).length /
-        actualValues.length;
+    final pred =
+        yDividedDiff.where((diff) => diff.abs() < 0.25).length / y.length;
 
     return ModelQuality(
       rSquared: rSquared,
@@ -170,5 +177,73 @@ class RegressionModel {
       mmre: mmre,
       pred: pred,
     );
+  }
+
+  List<ModelInterval> calculateLinearIntervals() {
+    List<ModelInterval> intervals = [];
+
+    final q = Student.inv2T(alpha: 0.05 / 2, df: n - 2);
+
+    final ZyHat = calculatePredictedValues(calculateRegressionCoefficients());
+    final sy = sqrt(
+      (1 / (n - 2)) *
+          Zy.map((value) => pow(value - ZyHat[Zy.indexOf(value)], 2))
+              .reduce((value, element) => value + element),
+    );
+
+    for (int i = 0; i < n; i++) {
+      final value = 1 / n +
+          (pow(Zx[i] - ZxAvg, 2) /
+              Zx.map((value) => pow(value - ZxAvg, 2))
+                  .reduce((value, element) => value + element));
+
+      intervals.add(
+        ModelInterval(
+          index: i + 1,
+          calculatedValues: ZyHat[i],
+          lowerConfidenceLimit: ZyHat[i] - q * sy * sqrt(value),
+          upperConfidenceLimit: ZyHat[i] + q * sy * sqrt(value),
+          lowerPredictionLimit: ZyHat[i] - q * sy * sqrt(1 + value),
+          upperPredictionLimit: ZyHat[i] + q * sy * sqrt(1 + value),
+        ),
+      );
+    }
+    return intervals;
+  }
+
+  List<ModelInterval> calculatenonLinearIntervals() {
+    List<ModelInterval> intervals = [];
+
+    final q = Student.inv2T(alpha: 0.05 / 2, df: n - 2);
+
+    final yHat = calculateYHat(
+      calculatePredictedValues(calculateRegressionCoefficients()),
+    );
+    final sy = sqrt(
+      (1 / (n - 2)) *
+          y
+              .map((value) => pow(value - yHat[y.indexOf(value)], 2))
+              .reduce((value, element) => value + element),
+    );
+
+    for (int i = 0; i < n; i++) {
+      final value = 1 / n +
+          (pow(x[i] - xAvg, 2) /
+              x
+                  .map((value) => pow(value - xAvg, 2))
+                  .reduce((value, element) => value + element));
+
+      intervals.add(
+        ModelInterval(
+          index: i + 1,
+          calculatedValues: yHat[i],
+          lowerConfidenceLimit: yHat[i] - q * sy * sqrt(value),
+          upperConfidenceLimit: yHat[i] + q * sy * sqrt(value),
+          lowerPredictionLimit: yHat[i] - q * sy * sqrt(1 + value),
+          upperPredictionLimit: yHat[i] + q * sy * sqrt(1 + value),
+        ),
+      );
+    }
+    return intervals;
   }
 }
