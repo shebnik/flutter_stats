@@ -1,11 +1,12 @@
 // ignore_for_file: prefer_final_locals, omit_local_variable_types, non_constant_identifier_names, lines_longer_than_80_chars
 
+import 'dart:math';
+
 import 'package:flutter_stats/models/interval/model_interval.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/services/fisher.dart';
 import 'package:flutter_stats/services/student.dart';
-import 'package:scidart/numdart.dart';
 
 class RegressionModel {
   RegressionModel(this.metrics)
