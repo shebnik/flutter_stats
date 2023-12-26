@@ -1,5 +1,4 @@
 class Student {
-  // TODO: implemet Fisher's F distribution
   static double inv2T({
     required double alpha,
     required int df,
@@ -14,7 +13,7 @@ class Student {
     return fppf[n - 1];
   }
 
-  // auto calculated with alpha = 0.05 and df1 = 2
+  // auto calculated 1000 values with alpha = 0.05/2 and df = 2
   static const List<double> fppf = [
     25.45169958,
     6.205346817,

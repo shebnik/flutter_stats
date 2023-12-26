@@ -1,5 +1,4 @@
 class Fisher {
-  // TODO: implemet Fisher's F distribution
   static double inv({
     required double alpha,
     required int df1,
@@ -15,7 +14,7 @@ class Fisher {
     return fppf[n - 1];
   }
 
-  // auto calculated with alpha = 0.05 and df1 = 2
+  // auto calculated 1000 values with alpha = 0.05 and df1 = 2
   static const List<double> fppf = [
     199.5,
     19,
