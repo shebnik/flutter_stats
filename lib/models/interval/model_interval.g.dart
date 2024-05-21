@@ -8,7 +8,7 @@ part of 'model_interval.dart';
 
 _$ModelIntervalImpl _$$ModelIntervalImplFromJson(Map<String, dynamic> json) =>
     _$ModelIntervalImpl(
-      index: json['index'] as int,
+      index: (json['index'] as num).toInt(),
       calculatedValues: (json['calculatedValues'] as num).toDouble(),
       lowerConfidenceLimit: (json['lowerConfidenceLimit'] as num).toDouble(),
       upperConfidenceLimit: (json['upperConfidenceLimit'] as num).toDouble(),

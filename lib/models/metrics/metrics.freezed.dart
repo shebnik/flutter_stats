@@ -12,7 +12,7 @@ part of 'metrics.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Metrics _$MetricsFromJson(Map<String, dynamic> json) {
   return _Metrics.fromJson(json);
@@ -23,7 +23,7 @@ mixin _$Metrics {
   double? get linesOfCode => throw _privateConstructorUsedError;
   double? get numberOfClasses => throw _privateConstructorUsedError;
   double? get numberOfMethods => throw _privateConstructorUsedError;
-  double? get cyclomaticComplexity => throw _privateConstructorUsedError;
+  double? get numberOfDependencies => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -39,7 +39,7 @@ abstract class $MetricsCopyWith<$Res> {
       {double? linesOfCode,
       double? numberOfClasses,
       double? numberOfMethods,
-      double? cyclomaticComplexity});
+      double? numberOfDependencies});
 }
 
 /// @nodoc
@@ -58,7 +58,7 @@ class _$MetricsCopyWithImpl<$Res, $Val extends Metrics>
     Object? linesOfCode = freezed,
     Object? numberOfClasses = freezed,
     Object? numberOfMethods = freezed,
-    Object? cyclomaticComplexity = freezed,
+    Object? numberOfDependencies = freezed,
   }) {
     return _then(_value.copyWith(
       linesOfCode: freezed == linesOfCode
@@ -73,9 +73,9 @@ class _$MetricsCopyWithImpl<$Res, $Val extends Metrics>
           ? _value.numberOfMethods
           : numberOfMethods // ignore: cast_nullable_to_non_nullable
               as double?,
-      cyclomaticComplexity: freezed == cyclomaticComplexity
-          ? _value.cyclomaticComplexity
-          : cyclomaticComplexity // ignore: cast_nullable_to_non_nullable
+      numberOfDependencies: freezed == numberOfDependencies
+          ? _value.numberOfDependencies
+          : numberOfDependencies // ignore: cast_nullable_to_non_nullable
               as double?,
     ) as $Val);
   }
@@ -92,7 +92,7 @@ abstract class _$$MetricsImplCopyWith<$Res> implements $MetricsCopyWith<$Res> {
       {double? linesOfCode,
       double? numberOfClasses,
       double? numberOfMethods,
-      double? cyclomaticComplexity});
+      double? numberOfDependencies});
 }
 
 /// @nodoc
@@ -109,7 +109,7 @@ class __$$MetricsImplCopyWithImpl<$Res>
     Object? linesOfCode = freezed,
     Object? numberOfClasses = freezed,
     Object? numberOfMethods = freezed,
-    Object? cyclomaticComplexity = freezed,
+    Object? numberOfDependencies = freezed,
   }) {
     return _then(_$MetricsImpl(
       linesOfCode: freezed == linesOfCode
@@ -124,9 +124,9 @@ class __$$MetricsImplCopyWithImpl<$Res>
           ? _value.numberOfMethods
           : numberOfMethods // ignore: cast_nullable_to_non_nullable
               as double?,
-      cyclomaticComplexity: freezed == cyclomaticComplexity
-          ? _value.cyclomaticComplexity
-          : cyclomaticComplexity // ignore: cast_nullable_to_non_nullable
+      numberOfDependencies: freezed == numberOfDependencies
+          ? _value.numberOfDependencies
+          : numberOfDependencies // ignore: cast_nullable_to_non_nullable
               as double?,
     ));
   }
@@ -139,7 +139,7 @@ class _$MetricsImpl implements _Metrics {
       {this.linesOfCode,
       this.numberOfClasses,
       this.numberOfMethods,
-      this.cyclomaticComplexity});
+      this.numberOfDependencies});
 
   factory _$MetricsImpl.fromJson(Map<String, dynamic> json) =>
       _$$MetricsImplFromJson(json);
@@ -151,15 +151,15 @@ class _$MetricsImpl implements _Metrics {
   @override
   final double? numberOfMethods;
   @override
-  final double? cyclomaticComplexity;
+  final double? numberOfDependencies;
 
   @override
   String toString() {
-    return 'Metrics(linesOfCode: $linesOfCode, numberOfClasses: $numberOfClasses, numberOfMethods: $numberOfMethods, cyclomaticComplexity: $cyclomaticComplexity)';
+    return 'Metrics(linesOfCode: $linesOfCode, numberOfClasses: $numberOfClasses, numberOfMethods: $numberOfMethods, numberOfDependencies: $numberOfDependencies)';
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MetricsImpl &&
@@ -169,14 +169,14 @@ class _$MetricsImpl implements _Metrics {
                 other.numberOfClasses == numberOfClasses) &&
             (identical(other.numberOfMethods, numberOfMethods) ||
                 other.numberOfMethods == numberOfMethods) &&
-            (identical(other.cyclomaticComplexity, cyclomaticComplexity) ||
-                other.cyclomaticComplexity == cyclomaticComplexity));
+            (identical(other.numberOfDependencies, numberOfDependencies) ||
+                other.numberOfDependencies == numberOfDependencies));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, linesOfCode, numberOfClasses,
-      numberOfMethods, cyclomaticComplexity);
+      numberOfMethods, numberOfDependencies);
 
   @JsonKey(ignore: true)
   @override
@@ -197,7 +197,7 @@ abstract class _Metrics implements Metrics {
       {final double? linesOfCode,
       final double? numberOfClasses,
       final double? numberOfMethods,
-      final double? cyclomaticComplexity}) = _$MetricsImpl;
+      final double? numberOfDependencies}) = _$MetricsImpl;
 
   factory _Metrics.fromJson(Map<String, dynamic> json) = _$MetricsImpl.fromJson;
 
@@ -208,7 +208,7 @@ abstract class _Metrics implements Metrics {
   @override
   double? get numberOfMethods;
   @override
-  double? get cyclomaticComplexity;
+  double? get numberOfDependencies;
   @override
   @JsonKey(ignore: true)
   _$$MetricsImplCopyWith<_$MetricsImpl> get copyWith =>

@@ -4,6 +4,7 @@ import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
 import 'package:flutter_stats/providers/app_theme_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/home_page.dart';
@@ -20,12 +21,8 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(
-          create: (_) => DataHandler(),
-        ),
-        Provider(
-          create: (_) => Utils(),
-        ),
+        Provider(create: (_) => DataHandler()),
+        Provider(create: (_) => Utils()),
         ChangeNotifierProvider(
           create: (_) => RegressionModelProvider(),
         ),
@@ -35,7 +32,9 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => AppThemeProvider(context),
         ),
-
+        ChangeNotifierProvider(
+          create: (_) => ScrollProvider(ScrollController()),
+        ),
       ],
       child: Builder(
         builder: (context) => MaterialApp(

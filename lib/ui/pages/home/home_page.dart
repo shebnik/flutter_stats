@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
 import 'package:flutter_stats/providers/app_theme_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/views/covariance_matrix_view.dart';
@@ -24,6 +25,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final dataHandler = DataHandler();
+  late final scrollProvider = Provider.of<ScrollProvider>(
+    context,
+    listen: false,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -45,17 +50,33 @@ class _HomePageState extends State<HomePage> {
           const AppNavigationRail(),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: context.watch<RegressionModelProvider>().projects.isEmpty
-                ? Center(
+            child: Consumer<RegressionModelProvider>(
+              builder: (context, value, child) {
+                if (value.projects.isEmpty) {
+                  return Center(
                     child: ElevatedButton(
                       onPressed: () =>
                           context.read<Utils>().loadCsvFile(context),
                       child: const Text('Load csv File'),
                     ),
-                  )
-                : _buildView(),
+                  );
+                }
+                return _buildView();
+              },
+            ),
           ),
         ],
+      ),
+      floatingActionButton: Consumer<ScrollProvider>(
+        builder: (context, value, child) {
+          if (value.showScrollToTopButton) {
+            return FloatingActionButton(
+              onPressed: value.scrollToTop,
+              child: const Icon(Icons.arrow_upward),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }

@@ -11,7 +11,7 @@ _$MetricsImpl _$$MetricsImplFromJson(Map<String, dynamic> json) =>
       linesOfCode: (json['linesOfCode'] as num?)?.toDouble(),
       numberOfClasses: (json['numberOfClasses'] as num?)?.toDouble(),
       numberOfMethods: (json['numberOfMethods'] as num?)?.toDouble(),
-      cyclomaticComplexity: (json['cyclomaticComplexity'] as num?)?.toDouble(),
+      numberOfDependencies: (json['numberOfDependencies'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$MetricsImplToJson(_$MetricsImpl instance) =>
@@ -19,5 +19,5 @@ Map<String, dynamic> _$$MetricsImplToJson(_$MetricsImpl instance) =>
       'linesOfCode': instance.linesOfCode,
       'numberOfClasses': instance.numberOfClasses,
       'numberOfMethods': instance.numberOfMethods,
-      'cyclomaticComplexity': instance.cyclomaticComplexity,
+      'numberOfDependencies': instance.numberOfDependencies,
     };

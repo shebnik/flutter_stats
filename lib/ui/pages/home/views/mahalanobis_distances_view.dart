@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/app_list_tile.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,8 @@ class MahalanobisDistancesView extends StatelessWidget {
           ),
           Expanded(
             child: ListView.builder(
+              controller:
+                  Provider.of<ScrollProvider>(context, listen: false).sc,
               itemCount: mahalanobisDistances.length,
               itemBuilder: (BuildContext context, int index) {
                 final value = mahalanobisDistances[index].toString();

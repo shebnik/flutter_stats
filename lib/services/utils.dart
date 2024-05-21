@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class Utils {
   void loadCsvFile(BuildContext context) {
@@ -29,5 +30,11 @@ class Utils {
       ),
     );
     Clipboard.setData(ClipboardData(text: value));
+  }
+
+  static Future<void> openUrl(String url) async {
+    if (await canLaunchUrlString(url)) {
+      await launchUrlString(url);
+    }
   }
 }

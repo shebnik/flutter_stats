@@ -9,7 +9,7 @@ class Metrics with _$Metrics {
     double? linesOfCode,
     double? numberOfClasses,
     double? numberOfMethods,
-    double? cyclomaticComplexity,
+    double? numberOfDependencies,
   }) = _Metrics;
 
   factory Metrics.fromJson(Map<String, Object?> json)

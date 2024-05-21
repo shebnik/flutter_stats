@@ -46,7 +46,7 @@ class DataHandler {
     final urlIndex = headers.indexOf('url');
     final classesIndex = getMetricIndex(headers, ['classes', 'x', 'x1']);
     final methodsIndex = getMetricIndex(headers, ['methods', 'x2']);
-    final complexityIndex = getMetricIndex(headers, ['complexity', 'x3']);
+    final dependenciesIndex = getMetricIndex(headers, ['dependencies', 'x3']);
     final locIndex = getMetricIndex(headers, ['code', 'y', 'lines']);
 
     final projects = <Project>[];
@@ -59,7 +59,7 @@ class DataHandler {
 
       final classes = getDoubleValue(row, classesIndex);
       final methods = getDoubleValue(row, methodsIndex);
-      final complexity = getDoubleValue(row, complexityIndex);
+      final dependencies = getDoubleValue(row, dependenciesIndex);
       var loc = getDoubleValue(row, locIndex);
       if (loc != null) loc /= 1000;
 
@@ -69,7 +69,7 @@ class DataHandler {
         metrics: Metrics(
           numberOfClasses: classes,
           numberOfMethods: methods,
-          cyclomaticComplexity: complexity,
+          numberOfDependencies: dependencies,
           linesOfCode: loc,
         ),
       );

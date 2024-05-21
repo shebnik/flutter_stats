@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,7 @@ class ProjectsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      controller: Provider.of<ScrollProvider>(context, listen: false).sc,
       itemCount: projects.length,
       itemBuilder: (context, index) {
         if (outliersIndexes != null && !outliersIndexes!.contains(index)) {
@@ -26,14 +28,25 @@ class ProjectsList extends StatelessWidget {
         final metric = project.metrics!;
         var subtitle = '(Y) Lines of code in thousands: ${metric.linesOfCode}';
         if (metric.numberOfClasses != null) {
-          subtitle += '\n(X1) Number of classes: ${metric.numberOfClasses}';
+          var value = metric.numberOfClasses!.toString();
+          if (metric.numberOfClasses! % 1 == 0) {
+            value = metric.numberOfClasses!.toStringAsFixed(0);
+          }
+          subtitle += '\n(X1) Number of classes: $value';
         }
         if (metric.numberOfMethods != null) {
-          subtitle += '\n(X2) Number of methods: ${metric.numberOfMethods}';
+          var value = metric.numberOfMethods!.toString();
+          if (metric.numberOfMethods! % 1 == 0) {
+            value = metric.numberOfMethods!.toStringAsFixed(0);
+          }
+          subtitle += '\n(X2) Number of methods: $value';
         }
-        if (metric.cyclomaticComplexity != null) {
-          subtitle +=
-              '\n(X3) Cyclomatic complexity: ${metric.cyclomaticComplexity}';
+        if (metric.numberOfDependencies != null) {
+          var value = metric.numberOfDependencies!.toString();
+          if (metric.numberOfDependencies! % 1 == 0) {
+            value = metric.numberOfDependencies!.toStringAsFixed(0);
+          }
+          subtitle += '\n(X3) Number of dependencies: $value';
         }
         return MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -45,7 +58,13 @@ class ProjectsList extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            onTap: () => Utils.copyToClipboard(subtitle, context),
+            onTap: () async {
+              if (project.url != null) {
+                await Utils.openUrl(project.url!);
+              } else {
+                Utils.copyToClipboard(subtitle, context);
+              }
+            },
             title: project.url != null
                 ? Text(
                     project.url!,
