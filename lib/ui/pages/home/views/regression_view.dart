@@ -69,9 +69,25 @@ class RegressionView extends StatelessWidget {
             value: provider.modelQuality.pred.toString(),
           ),
           const SizedBox(height: 20),
-          MetricsCard(
-            title: 'Outliers',
-            value: provider.outliers.length.toString(),
+          FutureBuilder(
+            future: provider.outliers,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              final outliers = snapshot.data;
+              if (outliers == null) {
+                return const Center(
+                  child: Text('Error loading outliers'),
+                );
+              }
+              return MetricsCard(
+                title: 'Outliers',
+                value: outliers.length.toString(),
+              );
+            },
           ),
           const SizedBox(height: 20),
           MetricsCard(

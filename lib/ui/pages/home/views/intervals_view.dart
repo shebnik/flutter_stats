@@ -23,16 +23,40 @@ class _IntervalsViewState extends State<IntervalsView> {
           child: Row(
             children: [
               Expanded(
-                child: IntervalsTable(
-                  headers: const ['#', r'\hat{Z_Y}', ...intervalHeaders],
-                  intervals: model.linearIntervals,
+                child: FutureBuilder(
+                  future: model.linearIntervals,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final linearIntervals = snapshot.data;
+                    if (linearIntervals == null) {
+                      return const Center(child: Text('No data'));
+                    }
+                    return IntervalsTable(
+                      headers: const ['#', r'\hat{Z_Y}', ...intervalHeaders],
+                      intervals: linearIntervals,
+                    );
+                  },
                 ),
               ),
               const VerticalDivider(),
               Expanded(
-                child: IntervalsTable(
-                  headers: const ['#', r'\hat{Y}', ...intervalHeaders],
-                  intervals: model.nonLinearIntervals,
+                child: FutureBuilder(
+                  future: model.nonLinearIntervals,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final nonLinearIntervals = snapshot.data;
+                    if (nonLinearIntervals == null) {
+                      return const Center(child: Text('No data'));
+                    }
+                    return IntervalsTable(
+                      headers: const ['#', r'\hat{Y}', ...intervalHeaders],
+                      intervals: nonLinearIntervals,
+                    );
+                  },
                 ),
               ),
             ],

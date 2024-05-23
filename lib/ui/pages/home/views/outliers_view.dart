@@ -8,53 +8,81 @@ class OutliersView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fisherFDistribution = context.select(
+    final fisherFDistributionFuture = context.select(
       (RegressionModelProvider provider) => provider.fisherFDistribution,
     );
-    final outliersIndexes = context.select(
+    final outliersIndexesFuture = context.select(
       (RegressionModelProvider provider) => provider.outliers,
     );
     final metrics = context.select(
       (RegressionModelProvider provider) => provider.projects,
     );
-    return Container(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
+    return FutureBuilder(
+      future: outliersIndexesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        final outliersIndexes = snapshot.data;
+        if (outliersIndexes == null) {
+          return const Center(
+            child: Text('Error loading outliers'),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    FutureBuilder(
+                      future: fisherFDistributionFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        final fisherFDistribution = snapshot.data;
+                        return Text(
+                          'Fisher F-Distribution: $fisherFDistribution',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              if (outliersIndexes.isEmpty) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'No outliers',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+              ] else ...[
                 Text(
-                  'Fisher F-Distribution: $fisherFDistribution',
+                  'Outliers',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
+                Expanded(
+                  child: ProjectsList(
+                    projects: metrics,
+                    outliersIndexes: outliersIndexes,
+                    key: const Key('outliers_list'),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
-          if (outliersIndexes.isEmpty) ...[
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                'No outliers',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-          ] else ...[
-            Text(
-              'Outliers',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Expanded(
-              child: ProjectsList(
-                projects: metrics,
-                outliersIndexes: outliersIndexes,
-                key: const Key('outliers_list'),
-              ),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }

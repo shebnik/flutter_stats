@@ -10,6 +10,8 @@ dependencies:
   collection: ^1.18.0
   community_charts_flutter: ^1.0.4
   csv: ^6.0.0
+  distributions:
+    path: ../distributions
   file_picker: ^8.0.3
   flutter:
     sdk: flutter

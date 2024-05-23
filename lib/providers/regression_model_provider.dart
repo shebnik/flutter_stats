@@ -89,10 +89,11 @@ class RegressionModelProvider with ChangeNotifier {
   List<double> get testStatistics =>
       _regressionModel.calculateTestStatistics(mahalanobisDistances);
 
-  double get fisherFDistribution =>
+  Future<double> get fisherFDistribution =>
       _regressionModel.calculateFisherFDistribution();
 
-  List<int> get outliers => _regressionModel.determineOutliers(testStatistics);
+  Future<List<int>> get outliers =>
+      _regressionModel.determineOutliers(testStatistics);
 
   List<double> get coefficients =>
       _regressionModel.calculateRegressionCoefficients();
@@ -105,8 +106,8 @@ class RegressionModelProvider with ChangeNotifier {
   ModelQuality get modelQuality =>
       _regressionModel.calculateModelQuality(predictedValues);
 
-  List<ModelInterval> get linearIntervals =>
+  Future<List<ModelInterval>> get linearIntervals =>
       _regressionModel.calculateLinearIntervals();
-  List<ModelInterval> get nonLinearIntervals =>
+  Future<List<ModelInterval>> get nonLinearIntervals =>
       _regressionModel.calculatenonLinearIntervals();
 }

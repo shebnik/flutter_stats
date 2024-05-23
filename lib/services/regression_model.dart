@@ -98,7 +98,7 @@ class RegressionModel {
     return testStatistics;
   }
 
-  double calculateFisherFDistribution() {
+  Future<double> calculateFisherFDistribution() {
     return Fisher.inv(
       alpha: 0.05,
       df1: 2,
@@ -106,8 +106,8 @@ class RegressionModel {
     );
   }
 
-  List<int> determineOutliers(List<double> testStatistics) {
-    double f = calculateFisherFDistribution();
+  Future<List<int>> determineOutliers(List<double> testStatistics) async {
+    double f = await calculateFisherFDistribution();
     List<int> outliers = [];
     for (int i = 0; i < n; i++) {
       if (testStatistics[i] > f) {
@@ -178,10 +178,10 @@ class RegressionModel {
     );
   }
 
-  List<ModelInterval> calculateLinearIntervals() {
+  Future<List<ModelInterval>> calculateLinearIntervals() async {
     List<ModelInterval> intervals = [];
 
-    final q = Student.inv2T(alpha: 0.05 / 2, df: n - 2);
+    final q = await Student.inv2T(alpha: 0.05 / 2, df: n - 2);
 
     final ZyHat = calculatePredictedValues(calculateRegressionCoefficients());
     final sy = sqrt(
@@ -210,10 +210,10 @@ class RegressionModel {
     return intervals;
   }
 
-  List<ModelInterval> calculatenonLinearIntervals() {
+  Future<List<ModelInterval>> calculatenonLinearIntervals() async {
     List<ModelInterval> intervals = [];
 
-    final q = Student.inv2T(alpha: 0.05 / 2, df: n - 2);
+    final q = await Student.inv2T(alpha: 0.05 / 2, df: n - 2);
 
     final yHat = calculateYHat(
       calculatePredictedValues(calculateRegressionCoefficients()),
