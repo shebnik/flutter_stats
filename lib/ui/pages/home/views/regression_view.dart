@@ -7,21 +7,29 @@ import 'package:provider/provider.dart';
 class RegressionView extends StatelessWidget {
   const RegressionView({super.key});
 
-  String getLinearEquation(String b0, String b1) {
+  String getLinearEquation(String b0, String b1, String b2, String b3) {
     // ignore: prefer_interpolation_to_compose_strings
-    return r'\hat{Z_Y} = \beta_0 + \beta_1 \cdot Z_X=' +
+    return r'\hat{Z_Y} = \beta_0 + \beta_1 \cdot Z_{X_1} + \beta_2 \cdot Z_{X_2} + \beta_3 \cdot Z_{X_3}=' +
         b0 +
         ' + ' +
         b1 +
-        r' \cdot Z_X';
+        r' \cdot Z_{X_1} + ' +
+        b2 +
+        r' \cdot Z_{X_2} + ' +
+        b3 +
+        r' \cdot Z_{X_3}';
   }
 
-  String getNonlinearEquation(String b0, String b1) {
+  String getNonlinearEquation(String b0, String b1, String b2, String b3) {
     // ignore: prefer_interpolation_to_compose_strings
-    return r'\hat{Y} = 10^{\beta_0} \cdot X^{\beta_1}=10^{' +
+    return r'\hat{Y} = 10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}=10^{' +
         b0 +
-        r'} \cdot X^{' +
+        r'} \cdot X_1^{' +
         b1 +
+        r'} \cdot X_2^{' +
+        b2 +
+        r'} \cdot X_3^{' +
+        b3 +
         '}';
   }
 
@@ -30,6 +38,8 @@ class RegressionView extends StatelessWidget {
     final provider = context.watch<RegressionModelProvider>();
     final b0 = provider.coefficients[0].toStringAsFixed(3);
     final b1 = provider.coefficients[1].toStringAsFixed(3);
+    final b2 = provider.coefficients[2].toStringAsFixed(3);
+    final b3 = provider.coefficients[3].toStringAsFixed(3);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ListView(
@@ -42,13 +52,13 @@ class RegressionView extends StatelessWidget {
           const SizedBox(height: 20),
           MetricsCard(
             title: 'Linear Regression',
-            value: getLinearEquation(b0, b1),
+            value: getLinearEquation(b0, b1, b2, b3),
             isEquation: true,
           ),
           const SizedBox(height: 20),
           MetricsCard(
             title: 'Nonlinear Regression Equation',
-            value: getNonlinearEquation(b0, b1),
+            value: getNonlinearEquation(b0, b1, b2, b3),
             isEquation: true,
           ),
           const SizedBox(height: 20),
