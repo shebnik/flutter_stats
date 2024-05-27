@@ -15,8 +15,25 @@ class PredictionWidget extends StatefulWidget {
 }
 
 class _PredictionWidgetState extends State<PredictionWidget> {
-  final textController = TextEditingController();
+  late RegressionModelProvider provider;
+  final x1Controller = TextEditingController();
+  final x2Controller = TextEditingController();
+  final x3Controller = TextEditingController();
   num? _prediction;
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+      decoration: InputDecoration(
+        labelText: label,
+      ),
+      onChanged: (_) => makePrediction(),
+    );
+  }
 
   Widget _buildPredictionOutput() {
     if (_prediction == null ||
@@ -34,28 +51,55 @@ class _PredictionWidgetState extends State<PredictionWidget> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<RegressionModelProvider>();
+  void makePrediction() {
     final b0 = provider.coefficients[0];
     final b1 = provider.coefficients[1];
+    final b2 = provider.coefficients[2];
+    final b3 = provider.coefficients[3];
+    final x1 = double.tryParse(x1Controller.text) ?? -1;
+    final x2 = double.tryParse(x2Controller.text) ?? -1;
+    final x3 = double.tryParse(x3Controller.text) ?? -1;
+    if (x1 == -1 || x2 == -1 || x3 == -1) {
+      _prediction = null;
+      setState(() {});
+      return;
+    }
+    _prediction = pow(10, b0) * pow(x1, b1) * pow(x2, b2) * pow(x3, b3) * 1000;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    provider = context.watch<RegressionModelProvider>();
     return Column(
       children: [
         _buildPredictionOutput(),
-        TextField(
-          controller: textController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          decoration: const InputDecoration(
-            labelText: 'Enter X value (Number of Classes)',
+        const SizedBox(height: 16),
+        IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  x1Controller,
+                  'Enter X1 value (Number of Classes)',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  x2Controller,
+                  'Enter X2 value (Number of Methods)',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  x3Controller,
+                  'Enter X3 value (Number of Dependencies)',
+                ),
+              ),
+            ],
           ),
-          onChanged: (_) {
-            final x = double.tryParse(textController.text) ?? 0;
-            _prediction = pow(10, b0) * pow(x, b1) * 1000;
-            setState(() {});
-          },
         ),
       ],
     );
