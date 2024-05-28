@@ -69,12 +69,18 @@ class RegressionModelProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  List<double> get xData =>
+  List<double> get x1Data =>
       _regressionModel.metrics.map((e) => e.numberOfClasses!).toList();
+  List<double> get x2Data =>
+      _regressionModel.metrics.map((e) => e.numberOfMethods!).toList();
+  List<double> get x3Data =>
+      _regressionModel.metrics.map((e) => e.numberOfDependencies!).toList();
   List<double> get yData =>
       _regressionModel.metrics.map((e) => e.linesOfCode!).toList();
 
-  List<double> get zxData => _regressionModel.Zx1;
+  List<double> get zx1Data => _regressionModel.Zx1;
+  List<double> get zx2Data => _regressionModel.Zx2;
+  List<double> get zx3Data => _regressionModel.Zx3;
   List<double> get zyData => _regressionModel.Zy;
 
   List<List<double>> get covarianceMatrix =>

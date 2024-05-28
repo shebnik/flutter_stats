@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 
@@ -16,29 +16,36 @@ class DataHandler {
 
   final filePicker = FilePicker.platform;
 
-  Future<File?> _pickFile() async {
+  Future<Uint8List?> _pickFile() async {
     final result = await filePicker.pickFiles(
       allowedExtensions: ['csv'],
       type: FileType.custom,
     );
 
-    final path = result?.files.single.path;
-    if (path != null) {
-      return File(path);
+    final platformFile = result?.files.single;
+
+    Uint8List? bytes;
+    if (kIsWeb) {
+      bytes = platformFile?.bytes;
+    } else {
+      if (platformFile == null || platformFile.path == null) {
+        return null;
+      }
+      final file = File(platformFile.path!);
+      bytes = await file.readAsBytes();
     }
-    return null;
+
+    return bytes;
   }
 
   Future<List<Project>?> retrieveData() async {
-    final file = await _pickFile();
-    if (file == null) {
-      return null;
+    final bytes = await _pickFile();
+    if (bytes == null) {
+      throw Exception('No file selected');
     }
-    final input = file.openRead();
-    final rows = await input
-        .transform(utf8.decoder)
-        .transform(const CsvToListConverter())
-        .toList();
+    final rows = const CsvToListConverter().convert(
+      String.fromCharCodes(bytes),
+    );
 
     final headers = rows[0].map((h) => h.toString().toLowerCase()).toList();
 

@@ -8,34 +8,72 @@ class ScatterPlotView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final zxData = context.watch<RegressionModelProvider>().zxData;
-    final zyData = context.watch<RegressionModelProvider>().zyData;
-    final zyHat = context.watch<RegressionModelProvider>().predictedValues;
+    final provider = context.watch<RegressionModelProvider>();
 
-    final xData = context.watch<RegressionModelProvider>().xData;
-    final yData = context.watch<RegressionModelProvider>().yData;
-    final yHat = context.watch<RegressionModelProvider>().yHat;
+    final zx1Data = provider.zx1Data;
+    final zx2Data = provider.zx2Data;
+    final zx3Data = provider.zx3Data;
+    final zyData = provider.zyData;
+    final zyHat = provider.predictedValues;
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
+    final x1Data = provider.x1Data;
+    final x2Data = provider.x2Data;
+    final x3Data = provider.x3Data;
+    final yData = provider.yData;
+    final yHat = provider.yHat;
+
+    return SingleChildScrollView(
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(
-            child: ScatterPlot(
-              xData: zxData,
-              yData: zyData,
-              predictedValues: zyHat,
-              title: 'Zx and Zy',
-            ),
+          Column(
+            children: [
+              ScatterPlot(
+                xData: zx1Data,
+                yData: zyData,
+                predictedValues: zyHat,
+                title: 'Zx1 and Zy',
+              ),
+              const Divider(),
+              ScatterPlot(
+                xData: zx2Data,
+                yData: zyData,
+                predictedValues: zyHat,
+                title: 'Zx2 and Zy',
+              ),
+              const Divider(),
+              ScatterPlot(
+                xData: zx3Data,
+                yData: zyData,
+                predictedValues: zyHat,
+                title: 'Zx3 and Zy',
+              ),
+            ],
           ),
-          const VerticalDivider(),
-          Expanded(
-            child: ScatterPlot(
-              xData: xData,
-              yData: yData,
-              predictedValues: yHat,
-              title: 'X and Y',
-            ),
+          const Divider(),
+          Column(
+            children: [
+              ScatterPlot(
+                xData: x1Data,
+                yData: yData,
+                predictedValues: yHat,
+                title: 'X1 and Y',
+              ),
+              const Divider(),
+              ScatterPlot(
+                xData: x2Data,
+                yData: yData,
+                predictedValues: yHat,
+                title: 'X2 and Y',
+              ),
+              const Divider(),
+              ScatterPlot(
+                xData: x3Data,
+                yData: yData,
+                predictedValues: yHat,
+                title: 'X3 and Y',
+              ),
+            ],
           ),
         ],
       ),
@@ -110,15 +148,21 @@ class ScatterPlotChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return charts.ScatterPlotChart(
-      seriesList,
-      animate: true,
-      behaviors: [
-        charts.ChartTitle(
-          title,
-          subTitle: 'Red - Predicted Values',
-        ),
-      ],
+    return ConstrainedBox( // or SizedBox
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width / 3,
+        maxHeight: 300, // Provide a finite height constraint
+      ),
+      child: charts.ScatterPlotChart(
+        seriesList,
+        animate: true,
+        behaviors: [
+          charts.ChartTitle(
+            title,
+            subTitle: 'Red - Predicted Values',
+          ),
+        ],
+      ),
     );
   }
 }

@@ -5,4 +5,4 @@ const List<String> intervalHeaders = [
   'Lower prediction limit',
   'Upper prediction limit',
 ];
-const alpha = 0.05;
+const alpha = 0.005;
