@@ -1,4 +1,5 @@
-import 'package:community_charts_flutter/community_charts_flutter.dart' as charts;
+import 'package:community_charts_flutter/community_charts_flutter.dart'
+    as charts;
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +34,8 @@ class ScatterPlotView extends StatelessWidget {
                 yData: zyData,
                 predictedValues: zyHat,
                 title: 'Zx1 and Zy',
+                xLabel: 'Zx1',
+                yLabel: 'Zy',
               ),
               const Divider(),
               ScatterPlot(
@@ -40,6 +43,8 @@ class ScatterPlotView extends StatelessWidget {
                 yData: zyData,
                 predictedValues: zyHat,
                 title: 'Zx2 and Zy',
+                xLabel: 'Zx2',
+                yLabel: 'Zy',
               ),
               const Divider(),
               ScatterPlot(
@@ -47,6 +52,8 @@ class ScatterPlotView extends StatelessWidget {
                 yData: zyData,
                 predictedValues: zyHat,
                 title: 'Zx3 and Zy',
+                xLabel: 'Zx3',
+                yLabel: 'Zy',
               ),
             ],
           ),
@@ -58,6 +65,7 @@ class ScatterPlotView extends StatelessWidget {
                 yData: yData,
                 predictedValues: yHat,
                 title: 'X1 and Y',
+                xLabel: 'X1',
               ),
               const Divider(),
               ScatterPlot(
@@ -65,6 +73,7 @@ class ScatterPlotView extends StatelessWidget {
                 yData: yData,
                 predictedValues: yHat,
                 title: 'X2 and Y',
+                xLabel: 'X2',
               ),
               const Divider(),
               ScatterPlot(
@@ -72,6 +81,7 @@ class ScatterPlotView extends StatelessWidget {
                 yData: yData,
                 predictedValues: yHat,
                 title: 'X3 and Y',
+                xLabel: 'X3',
               ),
             ],
           ),
@@ -87,6 +97,8 @@ class ScatterPlot extends StatelessWidget {
     required this.yData,
     required this.predictedValues,
     required this.title,
+    this.xLabel = 'X',
+    this.yLabel = 'Y',
     super.key,
   });
 
@@ -94,6 +106,8 @@ class ScatterPlot extends StatelessWidget {
   final List<num> yData;
   final List<num> predictedValues;
   final String title;
+  final String xLabel;
+  final String yLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +145,12 @@ class ScatterPlot extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: ScatterPlotChart(series, title: title),
+      child: ScatterPlotChart(
+        series,
+        title: title,
+        xLabel: xLabel,
+        yLabel: yLabel,
+      ),
     );
   }
 }
@@ -140,18 +159,23 @@ class ScatterPlotChart extends StatelessWidget {
   const ScatterPlotChart(
     this.seriesList, {
     required this.title,
+    this.xLabel = 'X',
+    this.yLabel = 'Y',
     super.key,
   });
 
   final List<charts.Series<DataPoint, num>> seriesList;
   final String title;
+  final String xLabel;
+  final String yLabel;
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox( // or SizedBox
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    return ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width / 3,
-        maxHeight: 300, // Provide a finite height constraint
+        maxHeight: 400,
       ),
       child: charts.ScatterPlotChart(
         seriesList,
@@ -160,8 +184,85 @@ class ScatterPlotChart extends StatelessWidget {
           charts.ChartTitle(
             title,
             subTitle: 'Red - Predicted Values',
+            titleStyleSpec: charts.TextStyleSpec(
+              fontSize: 16,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+            subTitleStyleSpec: charts.TextStyleSpec(
+              fontSize: 14,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+          ),
+          charts.ChartTitle(
+            xLabel,
+            behaviorPosition: charts.BehaviorPosition.bottom,
+            titleStyleSpec: charts.TextStyleSpec(
+              fontSize: 14,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+          ),
+          charts.ChartTitle(
+            yLabel,
+            behaviorPosition: charts.BehaviorPosition.start,
+            titleStyleSpec: charts.TextStyleSpec(
+              fontSize: 14,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
           ),
         ],
+        secondaryMeasureAxis: charts.NumericAxisSpec(
+          renderSpec: charts.GridlineRendererSpec(
+            labelStyle: charts.TextStyleSpec(
+              fontSize: 14,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+            lineStyle: charts.LineStyleSpec(
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+          ),
+        ),
+        primaryMeasureAxis: charts.NumericAxisSpec(
+          renderSpec: charts.GridlineRendererSpec(
+            labelStyle: charts.TextStyleSpec(
+              fontSize: 14,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+            lineStyle: charts.LineStyleSpec(
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+          ),
+        ),
+        domainAxis: charts.NumericAxisSpec(
+          renderSpec: charts.GridlineRendererSpec(
+            labelStyle: charts.TextStyleSpec(
+              fontSize: 14,
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+            lineStyle: charts.LineStyleSpec(
+              color: isDarkTheme
+                  ? charts.MaterialPalette.white
+                  : charts.MaterialPalette.black,
+            ),
+          ),
+        ),
       ),
     );
   }

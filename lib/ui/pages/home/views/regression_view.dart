@@ -61,56 +61,78 @@ class RegressionView extends StatelessWidget {
             value: getNonlinearEquation(b0, b1, b2, b3),
             isEquation: true,
           ),
+          const ModelQuality(),
           const SizedBox(height: 20),
           const PredictionWidget(),
-          const SizedBox(height: 20),
-          MetricsCard(
-            title: 'R²',
-            value: provider.modelQuality.rSquared.toString(),
-          ),
-          const SizedBox(height: 20),
-          MetricsCard(
-            title: 'MMRE',
-            value: provider.modelQuality.mmre.toString(),
-          ),
-          const SizedBox(height: 20),
-          MetricsCard(
-            title: 'PRED(0.25)',
-            value: provider.modelQuality.pred.toString(),
-          ),
-          const SizedBox(height: 20),
-          FutureBuilder(
-            future: provider.outliers,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              final outliers = snapshot.data;
-              if (outliers == null) {
-                return const Center(
-                  child: Text('Error loading outliers'),
-                );
-              }
-              return MetricsCard(
-                title: 'Outliers',
-                value: outliers.length.toString(),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          MetricsCard(
-            title: 'Total outliers removed',
-            value: provider.outliersRemoved.toString(),
-          ),
-          const SizedBox(height: 40),
-          const Text('Good model indicators:\n'
-              'R² > 0.7\n'
-              'MMRE < 0.25\n'
-              'PRED(0.25) > 0.75'),
         ],
       ),
+    );
+  }
+}
+
+class ModelQuality extends StatelessWidget {
+  const ModelQuality({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<RegressionModelProvider>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Text(
+          'Nonlinear Regression Model Quality',
+          style: Theme.of(context).textTheme.headlineMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        MetricsCard(
+          title: 'R²',
+          value: provider.modelQuality.rSquared.toString(),
+        ),
+        const SizedBox(height: 16),
+        MetricsCard(
+          title: 'MMRE',
+          value: provider.modelQuality.mmre.toString(),
+        ),
+        const SizedBox(height: 16),
+        MetricsCard(
+          title: 'PRED(0.25)',
+          value: provider.modelQuality.pred.toString(),
+        ),
+        const SizedBox(height: 16),
+        FutureBuilder(
+          future: provider.outliers,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            final outliers = snapshot.data;
+            if (outliers == null) {
+              return const Center(
+                child: Text('Error loading outliers'),
+              );
+            }
+            return MetricsCard(
+              title: 'Outliers',
+              value: outliers.length.toString(),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        MetricsCard(
+          title: 'Total outliers removed',
+          value: provider.outliersRemoved.toString(),
+        ),
+        const SizedBox(height: 16),
+        const Text('Good model indicators:\n'
+            'R² > 0.7\n'
+            'MMRE < 0.25\n'
+            'PRED(0.25) > 0.75'),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }

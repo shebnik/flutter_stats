@@ -73,8 +73,6 @@ class _PredictionWidgetState extends State<PredictionWidget> {
     provider = context.watch<RegressionModelProvider>();
     return Column(
       children: [
-        _buildPredictionOutput(),
-        const SizedBox(height: 16),
         IntrinsicHeight(
           child: Row(
             children: [
@@ -101,6 +99,8 @@ class _PredictionWidgetState extends State<PredictionWidget> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        _buildPredictionOutput(),
       ],
     );
   }
