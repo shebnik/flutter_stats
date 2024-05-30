@@ -1,5 +1,5 @@
 name: flutter_stats
-description: "A new Flutter project."
+description: "Calculate your project size in lines of code."
 publish_to: 'none'
 version: 0.1.0
 
@@ -11,7 +11,8 @@ dependencies:
   community_charts_flutter: ^1.0.4
   csv: ^6.0.0
   distributions:
-    path: ../distributions
+    git:
+      url: https://github.com/shebnik/distributions
   file_picker: ^8.0.3
   flutter:
     sdk: flutter

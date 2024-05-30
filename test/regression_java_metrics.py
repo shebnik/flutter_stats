@@ -6,7 +6,7 @@ import os
 
 # Retrieves the data from the csv file
 def retrieve_data():
-    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "data.csv"))
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "java_metrics.csv"))
     X = df["X"].values.astype(float)
     Y = df["Y"].values.astype(float)
     for i in range(len(Y)):

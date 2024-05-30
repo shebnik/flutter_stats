@@ -95,7 +95,7 @@ class RegressionModelProvider with ChangeNotifier {
   List<double> get testStatistics =>
       _regressionModel.calculateTestStatistics(mahalanobisDistances);
 
-  Future<double> get fisherFDistribution =>
+  Future<double?> get fisherFDistribution =>
       _regressionModel.calculateFisherFDistribution();
 
   Future<List<int>> get outliers =>

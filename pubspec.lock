@@ -212,9 +212,11 @@ packages:
   distributions:
     dependency: "direct main"
     description:
-      path: "../distributions"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "64a50478a972c617f763ac4a13da8e4fb669362e"
+      url: "https://github.com/shebnik/distributions"
+    source: git
     version: "0.0.1"
   fake_async:
     dependency: transitive

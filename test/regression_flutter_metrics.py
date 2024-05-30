@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 def retrieve_data():
-    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "Metrics.csv"))
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "flutter_metrics.csv"))
     y = df["LOC (Lines of Code)"].values.astype(float)
     x1 = df["NOC (Number of Classes)"].values.astype(float)
     x2 = df["NOM (Number of Methods)"].values.astype(float)

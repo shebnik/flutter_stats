@@ -101,6 +101,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         ),
         const SizedBox(height: 16),
         _buildPredictionOutput(),
+        const SizedBox(height: 32),
       ],
     );
   }

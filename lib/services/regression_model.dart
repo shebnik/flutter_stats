@@ -2,6 +2,7 @@
 
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/models/interval/model_interval.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
@@ -135,7 +136,7 @@ class RegressionModel {
     return testStatistics;
   }
 
-  Future<double> calculateFisherFDistribution() {
+  Future<double?> calculateFisherFDistribution() {
     return Fisher.inv(
       alpha: alpha,
       df1: 4,
@@ -144,7 +145,11 @@ class RegressionModel {
   }
 
   Future<List<int>> determineOutliers(List<double> testStatistics) async {
-    double f = await calculateFisherFDistribution();
+    double? f = await calculateFisherFDistribution();
+    if (f == null) {
+      debugPrint('Failed to calculate Fisher F distribution');
+      return [];
+    }
     List<int> outliers = [];
     for (int i = 0; i < n; i++) {
       if (testStatistics[i] > f) {
@@ -230,6 +235,10 @@ class RegressionModel {
     List<ModelInterval> intervals = [];
 
     final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);
+    if (q == null) {
+      debugPrint('Failed to calculate Student T distribution');
+      return [];
+    }
 
     final ZyHat = calculatePredictedValues(calculateRegressionCoefficients());
     final sy = sqrt(
@@ -268,6 +277,10 @@ class RegressionModel {
     List<ModelInterval> intervals = [];
 
     final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);
+    if (q == null) {
+      debugPrint('Failed to calculate Student T distribution');
+      return [];
+    }
 
     final yHat = calculateYHat(
       calculatePredictedValues(calculateRegressionCoefficients()),
