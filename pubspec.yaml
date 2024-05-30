@@ -10,10 +10,12 @@ dependencies:
   collection: ^1.18.0
   community_charts_flutter: ^1.0.4
   csv: ^6.0.0
+  cupertino_icons: ^1.0.8
   distributions:
     git:
       url: https://github.com/shebnik/distributions
   file_picker: ^8.0.3
+  firebase_core: ^2.32.0
   flutter:
     sdk: flutter
   flutter_math_fork: ^0.7.2

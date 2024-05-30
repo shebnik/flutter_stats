@@ -1,6 +1,8 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/constants.dart';
+import 'package:flutter_stats/firebase_options.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
 import 'package:flutter_stats/providers/app_theme_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
@@ -10,7 +12,11 @@ import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/home_page.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MainApp());
 }
 
