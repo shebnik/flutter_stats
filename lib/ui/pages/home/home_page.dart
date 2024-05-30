@@ -6,13 +6,12 @@ import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/views/covariance_matrix_view.dart';
+import 'package:flutter_stats/ui/pages/home/views/d_square_ts_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/intervals_view.dart';
-import 'package:flutter_stats/ui/pages/home/views/mahalanobis_distances_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/metrics_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/outliers_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/regression_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/scatter_plot_view.dart';
-import 'package:flutter_stats/ui/pages/home/views/test_statistic_view.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/app_navigation_rail.dart';
 import 'package:provider/provider.dart';
 
@@ -88,16 +87,14 @@ class _HomePageState extends State<HomePage> {
       case 1:
         return const CovarianceMatrixView();
       case 2:
-        return const MahalanobisDistancesView();
+        return const DSquareTSView();
       case 3:
-        return const TestStatisticView();
-      case 4:
         return const OutliersView();
-      case 5:
+      case 4:
         return const RegressionView();
-      case 6:
+      case 5:
         return const IntervalsView();
-      case 7:
+      case 6:
         return const ScatterPlotView();
       default:
         return const MetricsView();

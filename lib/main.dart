@@ -1,65 +1,54 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/constants.dart';
+import 'package:flutter_stats/app/app.dart';
 import 'package:flutter_stats/firebase_options.dart';
-import 'package:flutter_stats/providers/app_navigation_provider.dart';
-import 'package:flutter_stats/providers/app_theme_provider.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
-import 'package:flutter_stats/providers/scroll_provider.dart';
-import 'package:flutter_stats/services/data_handler.dart';
-import 'package:flutter_stats/services/utils.dart';
-import 'package:flutter_stats/ui/pages/home/home_page.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_stats/services/logger.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+
+final _log = AppLogger().logger;
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MainApp());
+  await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    usePathUrlStrategy();
+
+    registerErrorHandlers();
+
+    // ignore: unused_local_variable
+    final firebaseApp = await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // final auth = FirebaseAuth.instanceFor(app: firebaseApp);
+
+    runApp(const App());
+  }, (error, stackTrace) {
+    _log.e(
+      'Error',
+      error: error,
+      stackTrace: stackTrace,
+    );
+  });
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider(create: (_) => DataHandler()),
-        Provider(create: (_) => Utils()),
-        ChangeNotifierProvider(
-          create: (_) => RegressionModelProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AppNavigationProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AppThemeProvider(context),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ScrollProvider(ScrollController()),
-        ),
-      ],
-      child: Builder(
-        builder: (context) => MaterialApp(
-          theme: ThemeData(
-            brightness: context.watch<AppThemeProvider>().isDarkMode
-                ? Brightness.dark
-                : Brightness.light,
-          ),
-          scrollBehavior: const MaterialScrollBehavior().copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-            },
-          ),
-          title: appName,
-          debugShowCheckedModeBanner: false,
-          home: const HomePage(),
-        ),
-      ),
+void registerErrorHandlers() {
+  FlutterError.onError = (details) {
+    _log.e(
+      'FlutterError',
+      error: details.exception,
+      stackTrace: details.stack,
     );
-  }
+  };
+
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    _log.e(
+      'PlatformDispatcher Error',
+      error: error,
+      stackTrace: stack,
+    );
+    return true;
+  };
 }

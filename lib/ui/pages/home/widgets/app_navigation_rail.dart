@@ -33,12 +33,10 @@ class AppNavigationRail extends StatelessWidget {
         NavigationRailDestination(
           icon: Icon(Icons.space_dashboard_outlined),
           selectedIcon: Icon(Icons.space_dashboard),
-          label: Text('Mahalanobis Distances'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.science_outlined),
-          selectedIcon: Icon(Icons.science),
-          label: Text('Test Statistic'),
+          label: Text(
+            'Mahalanobis Square Distances\nTest Statistic',
+            textAlign: TextAlign.center,
+          ),
         ),
         NavigationRailDestination(
           icon: Icon(Icons.circle_outlined),
