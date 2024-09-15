@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 
 def retrieve_data():
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), "flutter_metrics.csv"))
-    y = df["LOC (Lines of Code)"].values.astype(float)
-    x1 = df["NOC (Number of Classes)"].values.astype(float)
-    x2 = df["NOM (Number of Methods)"].values.astype(float)
-    x3 = df["Number of dependencies"].values.astype(float)
+    y = df["Y (Lines of Code)"].values.astype(float)
+    x1 = df["X1 (Number of Classes)"].values.astype(float)
+    x2 = df["X2 (Number of Methods)"].values.astype(float)
+    x3 = df["X3 (Number of dependencies)"].values.astype(float)
     return y / 1000, x1, x2, x3
 
 
@@ -20,24 +20,24 @@ def normalize_data(y, x1, x2, x3):
     Zx2 = np.log10(x2)
     Zx3 = np.log10(x3)
 
-    print("Нормалізовані дані (log10)")
-    print(f"Zy: {Zy}")
-    print()
-    print(f"Zx1: {Zx1}")
-    print()
-    print(f"Zx2: {Zx2}")
-    print()
-    print(f"Zx3: {Zx3}")
-    print()
+    # print("Нормалізовані дані (log10)")
+    # print(f"Zy: {Zy}")
+    # print()
+    # print(f"Zx1: {Zx1}")
+    # print()
+    # print(f"Zx2: {Zx2}")
+    # print()
+    # print(f"Zx3: {Zx3}")
+    # print()
 
     return Zy, Zx1, Zx2, Zx3
 
 
 def calculate_cov_inv(Zy, Zx1, Zx2, Zx3):
     cov = np.cov(np.column_stack((Zy, Zx1, Zx2, Zx3)), rowvar=False, bias=True)
-    print("Коваріаційна матриця:")
-    print(cov)
-    print()
+    # print("Коваріаційна матриця:")
+    # print(cov)
+    # print()
     cov_inv = np.linalg.inv(cov)
     return cov_inv
 
@@ -71,25 +71,25 @@ def calculate_test_statistic(n, mahalanobis_distances):
     return test_statistic
 
 
-def determine_outliers(y, x1, x2, x3, alpha=0.005):
+def determine_outliers(y, x1, x2, x3, alpha=0.05):
     n = len(y)
     cov_inv = calculate_cov_inv(y, x1, x2, x3)
-    print("Обернена коваріаційна матриця:")
-    print(cov_inv)
-    print()
+    # print("Обернена коваріаційна матриця:")
+    # print(cov_inv)
+    # print()
 
     mahalanobis_distances = calculate_mahalanobis_distances(y, x1, x2, x3, cov_inv)
-    print("Махаланобісові відстані:")
-    print(mahalanobis_distances)
-    print()
+    # print("Махаланобісові відстані:")
+    # print(mahalanobis_distances)
+    # print()
 
     test_statistic = calculate_test_statistic(n, mahalanobis_distances)
-    print("Тестова статистика:")
-    print(test_statistic)
-    print()
+    # print("Тестова статистика:")
+    # print(test_statistic)
+    # print()
 
     fisher_f = f.ppf(1 - alpha, 4, n - 4)
-    print(f"Критичне значення: {fisher_f:.6f}\n")
+    # print(f"Критичне значення: {fisher_f:.6f}\n")
 
     indexes = []
     for i in range(n):
@@ -101,47 +101,6 @@ def determine_outliers(y, x1, x2, x3, alpha=0.005):
             )
             indexes.append(i)
     return indexes
-
-
-def mardia_test(data, alpha=0.005):
-    N, p = data.shape
-    mean_vec = np.mean(data, axis=0)
-
-    inv_cov_mat = calculate_cov_inv(data[:, 0], data[:, 1], data[:, 2], data[:, 3])
-
-    centered_data = data - mean_vec
-
-    skewn = 0
-    for i in range(N):
-        for j in range(N):
-            delta_i = centered_data[i]
-            delta_j = centered_data[j]
-            term = (delta_i @ inv_cov_mat @ delta_j) ** 3
-            skewn += term
-    skewn /= N**2
-
-    kurt = 0
-    for i in range(N):
-        delta_i = centered_data[i]
-        term = (delta_i @ inv_cov_mat @ delta_i) ** 2
-        kurt += term
-    kurt /= N
-
-    skewn_stat = N * skewn / 6
-    kurt_stat = (kurt - p * (p + 2)) / np.sqrt(8 * p * (p + 2) / N)
-
-    skewn_crit = chi2.ppf(1 - alpha, p * (p + 1) * (p + 2) / 6)
-    kurt_crit = norm.ppf(1 - alpha)
-
-    is_normal = (skewn_stat < skewn_crit) and (abs(kurt_stat) < kurt_crit)
-
-    print(
-        f"Асиметрія Мардія: {skewn:.6f}\nТестова Статистика: {skewn_stat:.6f}\nКритичне значення: {skewn_crit:.6f}\n"
-    )
-    print(
-        f"Ексцес Мардія: {kurt:.6f}\nТестова Статистика: {abs(kurt_stat):.6f}\nКритичне значення: {kurt_crit:.6f}\n"
-    )
-    print(f"Дані нормально розподілені: {is_normal}\n")
 
 
 def calculate_regression_coefficients(y, X1, X2, X3):
@@ -192,7 +151,6 @@ def predict_new_values(coefficients):
 if __name__ == "__main__":    
     y, x1, x2, x3 = retrieve_data()
     Zy, Zx1, Zx2, Zx3 = normalize_data(y, x1, x2, x3)
-    mardia_test(np.column_stack((y, x1, x2, x3)))
 
     outliers = determine_outliers(Zy, Zx1, Zx2, Zx3)
     while len(outliers) > 0:
@@ -206,8 +164,6 @@ if __name__ == "__main__":
         Zx3 = np.delete(Zx3, outliers)
         outliers = determine_outliers(Zy, Zx1, Zx2, Zx3)
     print("Викидів не виявлено\n")
-
-    mardia_test(np.column_stack((y, x1, x2, x3)))
     
     b0, b1, b2, b3 = calculate_regression_coefficients(Zy, Zx1, Zx2, Zx3)
     print("\nRegression Coefficients:")

@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/app/app.dart';
-import 'package:flutter_stats/firebase_options.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
@@ -19,9 +17,9 @@ Future<void> main() async {
     registerErrorHandlers();
 
     // ignore: unused_local_variable
-    final firebaseApp = await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // final firebaseApp = await Firebase.initializeApp(
+    //   options: DefaultFirebaseOptions.currentPlatform,
+    // );
     // final auth = FirebaseAuth.instanceFor(app: firebaseApp);
 
     runApp(const App());
