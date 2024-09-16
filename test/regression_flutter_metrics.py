@@ -35,9 +35,9 @@ def normalize_data(y, x1, x2, x3):
 
 def calculate_cov_inv(Zy, Zx1, Zx2, Zx3):
     cov = np.cov(np.column_stack((Zy, Zx1, Zx2, Zx3)), rowvar=False, bias=True)
-    # print("Коваріаційна матриця:")
-    # print(cov)
-    # print()
+    print("Коваріаційна матриця:")
+    print(cov)
+    print()
     cov_inv = np.linalg.inv(cov)
     return cov_inv
 
@@ -74,29 +74,29 @@ def calculate_test_statistic(n, mahalanobis_distances):
 def determine_outliers(y, x1, x2, x3, alpha=0.05):
     n = len(y)
     cov_inv = calculate_cov_inv(y, x1, x2, x3)
-    # print("Обернена коваріаційна матриця:")
-    # print(cov_inv)
-    # print()
+    print("Обернена коваріаційна матриця:")
+    print(cov_inv)
+    print()
 
     mahalanobis_distances = calculate_mahalanobis_distances(y, x1, x2, x3, cov_inv)
-    # print("Махаланобісові відстані:")
-    # print(mahalanobis_distances)
-    # print()
+    print("Махаланобісові відстані:")
+    print(mahalanobis_distances)
+    print()
 
     test_statistic = calculate_test_statistic(n, mahalanobis_distances)
-    # print("Тестова статистика:")
-    # print(test_statistic)
-    # print()
+    print("Тестова статистика:")
+    print(test_statistic)
+    print()
 
     fisher_f = f.ppf(1 - alpha, 4, n - 4)
-    # print(f"Критичне значення: {fisher_f:.6f}\n")
+    print(f"Критичне значення: {fisher_f:.6f}\n")
 
     indexes = []
     for i in range(n):
         if test_statistic[i] > fisher_f:
             print(
                 "Видалено викид: y={}, x1={}, x2={}, x3={}".format(
-                    y[i], x1[i], x2[i], x3[i]
+                    10**y[i], 10**x1[i], 10**x2[i], 10**x3[i]
                 )
             )
             indexes.append(i)
@@ -151,6 +151,13 @@ def predict_new_values(coefficients):
 if __name__ == "__main__":    
     y, x1, x2, x3 = retrieve_data()
     Zy, Zx1, Zx2, Zx3 = normalize_data(y, x1, x2, x3)
+    
+    b0, b1, b2, b3 = calculate_regression_coefficients(Zy, Zx1, Zx2, Zx3)
+    print("\nRegression Coefficients:")
+    print("b0:", b0)
+    print("b1:", b1)
+    print("b2:", b2)
+    print("b3:", b3)
 
     outliers = determine_outliers(Zy, Zx1, Zx2, Zx3)
     while len(outliers) > 0:

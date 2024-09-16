@@ -5,13 +5,6 @@ from scipy.stats import f
 import os
 
 
-# Retrieves the data from the csv file
-# def retrieve_data():
-#     df = pd.read_csv(os.path.join(os.path.dirname(__file__), "flutter_metrics.csv"))
-#     Y = df["Y (Lines of Code)"].values.astype(float)
-#     X = df["X1 (Number of Classes)"].values.astype(float)
-#     return X, Y
-
 def retrieve_data():
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), "data.csv"))
     X = df["x"].values.astype(float)
@@ -139,9 +132,6 @@ if __name__ == "__main__":
 
     # Calculate the predicted values
     Zy_hat = b0 + b1 * Zx
-    print("\nPredicted Values:")
-    for i in range(len(Zy_hat)):
-        print(f"y_hat[{i}]:", Zy_hat[i])
 
     # Calculate regression model metrics
     r_squared, sy, mmre, pred = calculate_regression_metrics(Zy_hat, y)
