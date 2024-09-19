@@ -4,7 +4,7 @@ class AppLogger {
   AppLogger()
       : logger = Logger(
           printer: PrettyPrinter(
-            printTime: true,
+            dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
           ),
           // filter: PermissiveFilter(),
         );

@@ -1,3 +1,9 @@
+Remove outliers based on both Mahalanobis distance and maximum absolute deviation.
+Repeat normalization and linear regression until residuals follow a normal distribution.
+Fit a non-linear regression model after establishing a valid linear regression.
+For the non-linear model, identify and discard points outside the prediction interval.
+
+```
 import pandas as pd
 import numpy as np
 from scipy.stats import f
@@ -59,12 +65,11 @@ def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[floa
     residuals = Y_original - Y_hat_original
     y_mean = np.mean(Y_original)
     
-    sy = np.sum(residuals**2)
-    r_squared = 1 - (sy / np.sum((Y_original - y_mean)**2))
+    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y_original - y_mean)**2))
     mmre = np.mean(np.abs(residuals / Y_original))
     pred = np.sum(np.abs(residuals / Y_original) < 0.25) / n
     
-    return r_squared, sy, mmre, pred
+    return r_squared, mmre, pred
 
 def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, float, float]:
     """Remove outliers and create a regression model."""
@@ -74,32 +79,43 @@ def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, 
     
     b0, b1 = calculate_regression_coefficients(Z)
     Y_hat = b0 + b1 * Z[:, 0]
-    r_squared, sy, mmre, pred = calculate_regression_metrics(Z[:, 1], Y_hat)
+    r_squared, mmre, pred = calculate_regression_metrics(Z[:, 1], Y_hat)
     
-    return Z, b0, b1, r_squared, sy, mmre, pred
+    return Z, b0, b1, r_squared, mmre, pred
 
-def print_results(iteration: int, b0: float, b1: float, r_squared: float, sy: float, mmre: float, pred: float):
+def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float, float]:
+    """Iteratively remove outliers and create a regression model until no more outliers are found."""
+    iteration = 1
+    while True:
+        print(f"\nStarting iteration {iteration}")
+        Z_new, b0, b1, r_squared, mmre, pred = remove_outliers_and_create_model(Z)
+        print_results(iteration, b0, b1, r_squared, mmre, pred)
+        
+        if Z_new.shape[0] == Z.shape[0]:
+            print("No more outliers found. Stopping iterations.")
+            break
+        
+        Z = Z_new
+        iteration += 1
+    
+    return Z, b0, b1, r_squared, mmre, pred
+
+def print_results(iteration: int, b0: float, b1: float, r_squared: float, mmre: float, pred: float):
     """Print regression results."""
     print(f"\nIteration {iteration} Results:")
     print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}")
-    print(f"Regression Metrics: R^2 = {r_squared:.4f}, Sy = {sy:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
 
 def main():
     x, y = retrieve_data()
     Z = np.column_stack((np.log10(x), np.log10(y)))
 
-    # First iteration: Remove outliers and create model
-    Z, b0, b1, r_squared, sy, mmre, pred = remove_outliers_and_create_model(Z)
-    print_results(1, b0, b1, r_squared, sy, mmre, pred)
-
-    # Second iteration: Check for outliers again
-    outliers = determine_outliers(Z)
-    if outliers:
-        print("\nSecond Iteration: Removing additional outliers")
-        Z, b0, b1, r_squared, sy, mmre, pred = remove_outliers_and_create_model(Z)
-        print_results(2, b0, b1, r_squared, sy, mmre, pred)
-    else:
-        print("\nNo additional outliers found in the second iteration.")
+    print(f"Initial number of data points: {Z.shape[0]}")
+    Z_final, b0, b1, r_squared_final, mmre_final, pred_final = iterative_outlier_removal_and_modeling(Z)
+    print(f"\nFinal number of data points after outlier removal: {Z_final.shape[0]}")
+    print("\nFinal Model Results:")
+    print_results("Final", b0, b1, r_squared_final, mmre_final, pred_final)
 
 if __name__ == "__main__":
     main()
+```
