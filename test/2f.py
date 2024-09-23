@@ -46,6 +46,13 @@ def identify_outliers(Z: np.ndarray, lower_bound: np.ndarray, upper_bound: np.nd
     outliers = np.where((Y < lower_bound) | (Y > upper_bound))[0].tolist()
     return outliers
 
+def print_outliers(Z: np.ndarray, outliers: List[int]):
+    """Print the outliers identified."""
+    string = "Outliers found: "
+    for i in outliers:
+        string += f"{((10**Z[i, 2])*1000):.0f} "
+    print(string)
+
 def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Remove outliers and create a regression model."""
     b0, b1, b2 = calculate_regression_coefficients(Z)
@@ -55,6 +62,7 @@ def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, 
     outliers = identify_outliers(Z, lower_bound, upper_bound)
     
     if outliers:
+        print_outliers(Z, outliers)
         Z = np.delete(Z, outliers, axis=0)
         print(f"Removed {len(outliers)} outliers")
     
