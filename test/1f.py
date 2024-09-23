@@ -4,9 +4,9 @@ from scipy.stats import f
 import os
 from typing import Tuple, List
 
-def retrieve_data(filename: str = "data.csv") -> Tuple[np.ndarray, np.ndarray]:
+def retrieve_data(filename: str = "1f.csv") -> Tuple[np.ndarray, np.ndarray]:
     """Load data from CSV file and return X and Y arrays."""
-    df = pd.read_csv(os.path.join(os.path.dirname(__file__), filename))
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
     return df["x"].values.astype(float), df["y"].values.astype(float)
 
 def calculate_cov_inv(Z: np.ndarray) -> np.ndarray:
@@ -65,7 +65,7 @@ def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[floa
     
     return r_squared, mmre, pred
 
-def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, float, float]:
+def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, float, np.ndarray]:
     """Remove outliers and create a regression model."""
     outliers = determine_outliers(Z)
     if outliers:
@@ -75,14 +75,16 @@ def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, 
     Y_hat = b0 + b1 * Z[:, 0]
     r_squared, mmre, pred = calculate_regression_metrics(Z[:, 1], Y_hat)
     
-    return Z, b0, b1, r_squared, mmre, pred
+    residuals = Z[:, 1] - Y_hat
+    
+    return Z, b0, b1, r_squared, mmre, pred, residuals
 
-def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float, float]:
+def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, float, np.ndarray]:
     """Iteratively remove outliers and create a regression model until no more outliers are found."""
     iteration = 1
     while True:
         print(f"\nStarting iteration {iteration}")
-        Z_new, b0, b1, r_squared, mmre, pred = remove_outliers_and_create_model(Z)
+        Z_new, b0, b1, r_squared, mmre, pred, residuals = remove_outliers_and_create_model(Z)
         print_results(iteration, b0, b1, r_squared, mmre, pred)
         
         if Z_new.shape[0] == Z.shape[0]:
@@ -92,7 +94,13 @@ def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, n
         Z = Z_new
         iteration += 1
     
-    return Z, b0, b1, r_squared, mmre, pred
+    return Z, b0, b1, r_squared, mmre, pred, residuals
+
+def calculate_residual_statistics(residuals: np.ndarray) -> Tuple[float, float]:
+    """Calculate the sample mean and variance of residuals."""
+    mean_residual = np.mean(residuals)
+    variance_residual = np.var(residuals, ddof=1)
+    return mean_residual, variance_residual
 
 def print_results(iteration: int, b0: float, b1: float, r_squared: float, mmre: float, pred: float):
     """Print regression results."""
@@ -105,10 +113,15 @@ def main():
     Z = np.column_stack((np.log10(x), np.log10(y)))
 
     print(f"Initial number of data points: {Z.shape[0]}")
-    Z_final, b0, b1, r_squared_final, mmre_final, pred_final = iterative_outlier_removal_and_modeling(Z)
+    Z_final, b0, b1, r_squared_final, mmre_final, pred_final, residuals = iterative_outlier_removal_and_modeling(Z)
     print(f"\nFinal number of data points after outlier removal: {Z_final.shape[0]}")
     print("\nFinal Model Results:")
     print_results("Final", b0, b1, r_squared_final, mmre_final, pred_final)
+    
+    mean_residual, variance_residual = calculate_residual_statistics(residuals)
+    print(f"\nResidual Statistics:")
+    print(f"Sample Mean of Residuals: {mean_residual:.6f}")
+    print(f"Sample Variance of Residuals: {variance_residual:.6f}")
 
 if __name__ == "__main__":
     main()
