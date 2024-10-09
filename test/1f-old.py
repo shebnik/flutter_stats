@@ -6,9 +6,11 @@ import os
 
 
 def retrieve_data():
-    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "data.csv"))
-    X = df["x"].values.astype(float)
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', '3f.csv')))
+    X = df["x1"].values.astype(float)
     Y = df["y"].values.astype(float)
+    
+    Y = Y / 1000
     return X, Y
 
 # Calculates the covariance matrix
@@ -78,18 +80,19 @@ def determine_outliers(Zx, Zy):
 
 
 def calculate_regression_coefficients(Zx, Zy):
-    ZxAvg = np.mean(Zx)
-    ZyAvg = np.mean(Zy)
+    # Calculate the means of Zx and Zy
+    Zx_mean = np.mean(Zx)
+    Zy_mean = np.mean(Zy)
 
-    # Calculate the regression coefficients
-    b1_numerator = np.sum((Zx - ZxAvg) * (Zy - ZyAvg))
-    b1_denominator = np.sum((Zx - ZxAvg) ** 2)
+    # Calculate the regression coefficient b1 (slope)
+    numerator = np.sum((Zx - Zx_mean) * (Zy - Zy_mean))
+    denominator = np.sum((Zx - Zx_mean) ** 2)
+    b1 = numerator / denominator
 
-    b1 = b1_numerator / b1_denominator
-    b0 = ZyAvg - b1 * ZxAvg
+    # Calculate the regression coefficient b0 (intercept)
+    b0 = Zy_mean - b1 * Zx_mean
 
     return b0, b1
-
 
 def calculate_regression_metrics(Zy_hat, y):
     n = len(y)
@@ -115,14 +118,14 @@ if __name__ == "__main__":
     Zy = np.log10(y)
 
     # While there are outliers, remove them and recalculate the test statistic
-    outliers = determine_outliers(Zx, Zy)
-    while len(outliers) > 0:
-        x = np.delete(x, outliers)
-        y = np.delete(y, outliers)
-        Zx = np.delete(Zx, outliers)
-        Zy = np.delete(Zy, outliers)
-        n = len(Zx)
-        outliers = determine_outliers(Zx, Zy)
+    # outliers = determine_outliers(Zx, Zy)
+    # while len(outliers) > 0:
+    #     x = np.delete(x, outliers)
+    #     y = np.delete(y, outliers)
+    #     Zx = np.delete(Zx, outliers)
+    #     Zy = np.delete(Zy, outliers)
+    #     n = len(Zx)
+    #     outliers = determine_outliers(Zx, Zy)
 
     # Calculate the regression coefficients
     b0, b1 = calculate_regression_coefficients(Zx, Zy)

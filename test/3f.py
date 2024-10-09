@@ -1,163 +1,159 @@
 import pandas as pd
 import numpy as np
-from scipy import stats
+from scipy.stats import t
 import os
 from typing import Tuple, List
 
-def retrieve_data(filename: str = "3f.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def retrieve_data(filename: str = "3f-60-wmc.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Load data from CSV file and return X1, X2, X3, and Y arrays."""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
-    x1 = df["x1"].values.astype(float)
-    x2 = df["x2"].values.astype(float)
-    x3 = df["x3"].values.astype(float)
-    y = df["y"].values.astype(float)
-    if np.mean(y) > 1000:
-        y = y / 1000
-    return x1, x2, x3, y
+    return df["DIT"].values.astype(float), df["CBO"].values.astype(float), df["WMC"].values.astype(float), df["RFC"].values.astype(float)
 
-def power_model(X: np.ndarray, b0: float, b1: float, b2: float, b3: float) -> np.ndarray:
-    """Calculate the power model: Y = b0 * (X1^b1) * (X2^b2) * (X3^b3)"""
-    return b0 * np.power(X[:, 0], b1) * np.power(X[:, 1], b2) * np.power(X[:, 2], b3)
-
-def calculate_regression_coefficients(X: np.ndarray, Y: np.ndarray) -> Tuple[float, float, float, float]:
-    """Calculate regression coefficients for three-factor power model."""
-    log_Y = np.log(Y)
-    log_X = np.log(X)
-    log_X_with_intercept = np.column_stack((np.ones(X.shape[0]), log_X))
-    coeffs = np.linalg.inv(log_X_with_intercept.T @ log_X_with_intercept) @ log_X_with_intercept.T @ log_Y
-    return np.exp(coeffs[0]), coeffs[1], coeffs[2], coeffs[3]
-
-def calculate_prediction_intervals(X: np.ndarray, Y: np.ndarray, Y_pred: np.ndarray, 
-                                   b0: float, b1: float, b2: float, b3: float, 
-                                   alpha: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
-    """Calculate prediction intervals for the power model."""
-    n = X.shape[0]
-    p = 4  # number of parameters in the model
+def normalize_data(x1: np.ndarray, x2: np.ndarray, x3: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Normalize the data."""
+    x1[x1 == 0] = 1e-6
+    x2[x2 == 0] = 1e-6
+    x3[x3 == 0] = 1e-6
+    y[y == 0] = 1e-6
     
-    log_X = np.log(X)
-    log_X_with_intercept = np.column_stack((np.ones(n), log_X))
-    log_Y = np.log(Y)
-    log_Y_pred = np.log(Y_pred)
+    return np.column_stack((np.log10(x1), np.log10(x2), np.log10(x3), np.log10(y)))
+
+def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, float, float]:
+    """Calculate regression coefficients."""
+    X = Z[:, :-1]
+    Y = Z[:, -1]
+    X = np.column_stack((np.ones(X.shape[0]), X))
+    coeffs = np.linalg.inv(X.T @ X) @ X.T @ Y
+    return coeffs[0], coeffs[1], coeffs[2], coeffs[3]
+
+def calculate_prediction_interval(Z: np.ndarray, Y_hat: np.ndarray, alpha: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
+    """Calculate prediction interval for each data point."""
+    X = np.column_stack((np.ones(Z.shape[0]), Z[:, :-1]))
+    n = Z.shape[0]
+    p = X.shape[1]
     
-    residuals = log_Y - log_Y_pred
+    residuals = Z[:, -1] - Y_hat
     mse = np.sum(residuals**2) / (n - p)
     
-    X_T_X_inv = np.linalg.inv(log_X_with_intercept.T @ log_X_with_intercept)
+    leverage = np.diagonal(X @ np.linalg.inv(X.T @ X) @ X.T)
+    se = np.sqrt(mse * (1 + leverage))
     
-    leverage = np.diagonal(log_X_with_intercept @ X_T_X_inv @ log_X_with_intercept.T)
+    t_value = t.ppf(1 - alpha/2, n - p)
+    margin = t_value * se
     
-    t_value = stats.t.ppf(1 - alpha/2, n - p)
-    
-    se_pred = np.sqrt(mse * (1 + leverage))
-    margin_of_error = t_value * se_pred
-    
-    lower_bound = np.exp(log_Y_pred - margin_of_error)
-    upper_bound = np.exp(log_Y_pred + margin_of_error)
+    lower_bound = Y_hat - margin
+    upper_bound = Y_hat + margin
     
     return lower_bound, upper_bound
 
-def identify_outliers_prediction_interval(Y: np.ndarray, lower_bound: np.ndarray, upper_bound: np.ndarray) -> List[int]:
-    """Identify points outside the prediction interval."""
+def identify_outliers(Z: np.ndarray, lower_bound: np.ndarray, upper_bound: np.ndarray) -> List[int]:
+    """Identify points that fall outside the prediction interval."""
+    Y = Z[:, -1]
     outliers = np.where((Y < lower_bound) | (Y > upper_bound))[0].tolist()
-    for i in outliers:
-        print(f"Prediction Interval Outlier detected: y={Y[i]:.2f}, lower bound={lower_bound[i]:.2f}, upper bound={upper_bound[i]:.2f}")
     return outliers
 
-def calculate_cov_inv(Z: np.ndarray) -> np.ndarray:
-    """Calculate the inverse of the covariance matrix."""
-    n = Z.shape[0]
-    Z_centered = Z - np.mean(Z, axis=0)
-    cov = (Z_centered.T @ Z_centered) / n
-    return np.linalg.inv(cov)
-
-def calculate_mahalanobis_distances(Z: np.ndarray, cov_inv: np.ndarray) -> np.ndarray:
-    """Calculate Mahalanobis distances."""
-    Z_centered = Z - np.mean(Z, axis=0)
-    return np.sqrt(np.sum(Z_centered @ cov_inv * Z_centered, axis=1))
-
-def determine_outliers_mahalanobis(Z: np.ndarray, alpha: float = 0.05) -> List[int]:
-    """Determine outliers using Mahalanobis distance."""
-    cov_inv = calculate_cov_inv(Z)
-    mahalanobis_distances = calculate_mahalanobis_distances(Z, cov_inv)
-    chi2_value = stats.chi2.ppf(1 - alpha, df=Z.shape[1])
-    
-    outliers = np.where(mahalanobis_distances > chi2_value)[0].tolist()
+def print_outliers(Z: np.ndarray, outliers: List[int]):
+    """Print the outliers identified."""
+    string = "Outliers found:\n"
     for i in outliers:
-        print(f"Mahalanobis Outlier detected: x1={Z[i,0]:.2f}, x2={Z[i,1]:.2f}, x3={Z[i,2]:.2f}, y={Z[i,3]:.2f}")
-    
-    return outliers
+        x1 = 10**Z[i, 0]
+        x2 = 10**Z[i, 1]
+        x3 = 10**Z[i, 2]
+        y = 10**Z[i, 3]
+        string += f"DIT: {int(x1):d}, CBO: {int(x2):d}, WMC: {int(x3):d}, RFC: {int(y):d}\n"
+    print(string)
 
-def calculate_regression_metrics(Y: np.ndarray, Y_pred: np.ndarray) -> Tuple[float, float, float, np.ndarray]:
-    """Calculate regression model metrics."""
-    n = len(Y)
-    residuals = Y - Y_pred
-    y_mean = np.mean(Y)
-    
-    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y - y_mean)**2))
-    mmre = np.mean(np.abs(residuals / Y))
-    pred = np.sum(np.abs(residuals / Y) < 0.25) / n
-    
-    return r_squared, mmre, pred, residuals
-
-def remove_outliers_and_create_model(X: np.ndarray, Y: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float, float, float, float, float, float, float]:
+def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Remove outliers and create a regression model."""
-    Z = np.column_stack((X, Y))
+    b0, b1, b2, b3 = calculate_regression_coefficients(Z)
+    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
     
-    b0, b1, b2, b3 = calculate_regression_coefficients(X, Y)
-    Y_pred = power_model(X, b0, b1, b2, b3)
-    
-    # Identify outliers using multiple methods
-    lower_bound, upper_bound = calculate_prediction_intervals(X, Y, Y_pred, b0, b1, b2, b3)
-    outliers_pi = identify_outliers_prediction_interval(Y, lower_bound, upper_bound)
-    outliers_mahalanobis = determine_outliers_mahalanobis(Z)
-    
-    # Combine all outliers
-    outliers = list(set(outliers_pi + outliers_mahalanobis))
+    lower_bound, upper_bound = calculate_prediction_interval(Z, Y_hat)
+    outliers = identify_outliers(Z, lower_bound, upper_bound)
     
     if outliers:
-        X = np.delete(X, outliers, axis=0)
-        Y = np.delete(Y, outliers)
-        
-        # Recalculate the model after removing outliers
-        b0, b1, b2, b3 = calculate_regression_coefficients(X, Y)
-        Y_pred = power_model(X, b0, b1, b2, b3)
+        print_outliers(Z, outliers)
+        Z = np.delete(Z, outliers, axis=0)
+        print(f"Removed {len(outliers)} outliers")
     
-    r_squared, mmre, pred, residuals = calculate_regression_metrics(Y, Y_pred)
-    
-    return X, Y, b0, b1, b2, b3, r_squared, mmre, pred, residuals
+    return Z, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound
 
-def iterative_outlier_removal_and_modeling(X: np.ndarray, Y: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float, float, float, float, float, float, float]:
+def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Iteratively remove outliers and create a regression model until no more outliers are found."""
     iteration = 1
     while True:
         print(f"\nStarting iteration {iteration}")
-        X_new, Y_new, b0, b1, b2, b3, r_squared, mmre, pred, residuals = remove_outliers_and_create_model(X, Y)
-        print_results(iteration, b0, b1, b2, b3, r_squared, mmre, pred)
+        Z_new, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound = remove_outliers_and_create_model(Z)
         
-        if X_new.shape[0] == X.shape[0]:
+        if Z_new.shape[0] == Z.shape[0]:
             print("No more outliers found. Stopping iterations.")
             break
         
-        X, Y = X_new, Y_new
+        Z = Z_new
         iteration += 1
     
-    return X, Y, b0, b1, b2, b3, r_squared, mmre, pred
+    return Z, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound
 
-def print_results(iteration: int, b0: float, b1: float, b2: float, b3: float, r_squared: float, mmre: float, pred: float):
-    """Print regression results."""
-    print(f"\nIteration {iteration} Results:")
+def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float, float]:
+    """Calculate regression model metrics."""
+    n = len(Y)
+    Y_hat_original = 10**Y_hat
+    Y_original = 10**Y
+    
+    residuals = Y_original - Y_hat_original
+    y_mean = np.mean(Y_original)
+    
+    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y_original - y_mean)**2))
+    mmre = np.mean(np.abs(residuals / Y_original))
+    pred = np.sum(np.abs(residuals / Y_original) < 0.25) / n
+    
+    return r_squared, mmre, pred
+
+def calculate_residual_statistics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float]:
+    """Calculate the sample mean and variance of residuals."""
+    residuals = Y - Y_hat
+    mean_residual = np.mean(residuals)
+    variance_residual = np.var(residuals, ddof=1)
+    return mean_residual, variance_residual
+
+def print_results(b0: float, b1: float, b2: float, b3: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
+    """Print regression results and residual statistics."""
+    print(f"\nFinal Results:")
     print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
     print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    print(f"Residual Statistics:")
+    print(f"Sample Mean of Residuals: {mean_residual:.6f}")
+    print(f"Sample Variance of Residuals: {variance_residual:.6f}")
+
+def test_model(model_coefficients: Tuple[float, float, float, float], test_file: str = "3f-40-wmc.csv") -> Tuple[float, float, float]:
+    """Test the model on a separate dataset."""
+    x1, x2, x3, y = retrieve_data(test_file)
+    Z_test = normalize_data(x1, x2, x3, y)
+    
+    b0, b1, b2, b3 = model_coefficients
+    Y_test = Z_test[:, -1]
+    Y_hat_test = b0 + b1 * Z_test[:, 0] + b2 * Z_test[:, 1] + b3 * Z_test[:, 2]
+    
+    r_squared, mmre, pred = calculate_regression_metrics(Y_test, Y_hat_test)
+    
+    return r_squared, mmre, pred    
 
 def main():
     x1, x2, x3, y = retrieve_data()
-    X = np.column_stack((x1, x2, x3))
+    Z = normalize_data(x1, x2, x3, y)
 
-    print(f"Initial number of data points: {X.shape[0]}")
-    X_final, Y_final, b0, b1, b2, b3, r_squared_final, mmre_final, pred_final = iterative_outlier_removal_and_modeling(X, y)
-    print(f"\nFinal number of data points after outlier removal: {X_final.shape[0]}")
-    print("\nFinal Model Results:")
-    print_results("Final", b0, b1, b2, b3, r_squared_final, mmre_final, pred_final)
+    print(f"Initial number of data points: {Z.shape[0]}")
+    Z_final, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound = iterative_outlier_removal_and_modeling(Z)
+    print(f"\nFinal number of data points after outlier removal: {Z_final.shape[0]}")
+    
+    r_squared, mmre, pred = calculate_regression_metrics(Z_final[:, -1], Y_hat)
+    
+    mean_residual, variance_residual = calculate_residual_statistics(Z_final[:, -1], Y_hat)
+    
+    print_results(b0, b1, b2, b3, r_squared, mmre, pred, mean_residual, variance_residual)
+    
+    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2, b3), "3f-40-wmc.csv")
+    print(f"Test Results 3 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
 
 if __name__ == "__main__":
     main()

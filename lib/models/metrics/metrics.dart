@@ -6,10 +6,10 @@ part 'metrics.g.dart';
 @freezed
 class Metrics with _$Metrics {
   const factory Metrics({
-    double? linesOfCode,
-    double? numberOfClasses,
-    double? numberOfMethods,
-    double? numberOfDependencies,
+    double? dit,
+    double? rfc,
+    double? cbo,
+    double? wmc,
   }) = _Metrics;
 
   factory Metrics.fromJson(Map<String, Object?> json)

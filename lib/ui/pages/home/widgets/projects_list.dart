@@ -26,27 +26,27 @@ class ProjectsList extends StatelessWidget {
         }
         final project = projects[index];
         final metric = project.metrics!;
-        var subtitle = '(Y) Lines of code in thousands: ${metric.linesOfCode}';
-        if (metric.numberOfClasses != null) {
-          var value = metric.numberOfClasses!.toString();
-          if (metric.numberOfClasses! % 1 == 0) {
-            value = metric.numberOfClasses!.toStringAsFixed(0);
+        var subtitle = '(Y) WMC (Weighted Methods Per Class): ${metric.wmc}';
+        if (metric.dit != null) {
+          var value = metric.dit!.toString();
+          if (metric.dit! % 1 == 0) {
+            value = metric.dit!.toStringAsFixed(0);
           }
-          subtitle += '\n(X1) Number of classes: $value';
+          subtitle += '\n(X1) DIT (Depth of Inheritance Tree) : $value';
         }
-        if (metric.numberOfMethods != null) {
-          var value = metric.numberOfMethods!.toString();
-          if (metric.numberOfMethods! % 1 == 0) {
-            value = metric.numberOfMethods!.toStringAsFixed(0);
+        if (metric.rfc != null) {
+          var value = metric.rfc!.toString();
+          if (metric.rfc! % 1 == 0) {
+            value = metric.rfc!.toStringAsFixed(0);
           }
-          subtitle += '\n(X2) Number of methods: $value';
+          subtitle += '\n(X2) RFC (Response for a Class): $value';
         }
-        if (metric.numberOfDependencies != null) {
-          var value = metric.numberOfDependencies!.toString();
-          if (metric.numberOfDependencies! % 1 == 0) {
-            value = metric.numberOfDependencies!.toStringAsFixed(0);
+        if (metric.cbo != null) {
+          var value = metric.cbo!.toString();
+          if (metric.cbo! % 1 == 0) {
+            value = metric.cbo!.toStringAsFixed(0);
           }
-          subtitle += '\n(X3) Number of dependencies: $value';
+          subtitle += '\n(X3) CBO (Coupling Between Object Classes): $value';
         }
         return MouseRegion(
           cursor: SystemMouseCursors.click,

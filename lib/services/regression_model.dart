@@ -11,17 +11,18 @@ import 'package:flutter_stats/services/fisher.dart';
 import 'package:flutter_stats/services/student.dart';
 import 'package:ml_linalg/linalg.dart';
 
+const epsilon = 1e-10;
+
 class RegressionModel {
   RegressionModel(this.metrics)
-      : x1 = metrics.map((e) => e.numberOfClasses!).toList(),
-        x2 = metrics.map((e) => e.numberOfMethods!).toList(),
-        x3 = metrics.map((e) => e.numberOfDependencies!).toList(),
-        y = metrics.map((e) => e.linesOfCode!).toList(),
-        Zx1 = metrics.map((e) => log(e.numberOfClasses!) / log(10)).toList(),
-        Zx2 = metrics.map((e) => log(e.numberOfMethods!) / log(10)).toList(),
-        Zx3 =
-            metrics.map((e) => log(e.numberOfDependencies!) / log(10)).toList(),
-        Zy = metrics.map((e) => log(e.linesOfCode!) / log(10)).toList();
+      : x1 = metrics.map((e) => e.dit!).toList(),
+        x2 = metrics.map((e) => e.rfc!).toList(),
+        x3 = metrics.map((e) => e.cbo!).toList(),
+        y = metrics.map((e) => e.wmc!).toList(),
+        Zx1 = metrics.map((e) => log(e.dit! + epsilon) / log(10)).toList(),
+        Zx2 = metrics.map((e) => log(e.rfc! + epsilon) / log(10)).toList(),
+        Zx3 = metrics.map((e) => log(e.cbo! + epsilon) / log(10)).toList(),
+        Zy = metrics.map((e) => log(e.wmc! + epsilon) / log(10)).toList();
 
   List<Metrics> metrics;
   List<double> x1;
@@ -160,23 +161,28 @@ class RegressionModel {
   }
 
   List<double> calculateRegressionCoefficients() {
-    int n = y.length;
+    final z = List.generate(n, (i) {
+      return [Zx1[i], Zx2[i], Zx3[i], Zy[i]];
+    });
 
-    Matrix X = Matrix.fromRows([
-      for (int i = 0; i < n; i++) Vector.fromList([1, Zx1[i], Zx2[i], Zx3[i]]),
-    ]);
+    var x = z.map((row) => row.sublist(0, row.length - 1)).toList();
+    var y = z.map((row) => row.last).toList();
 
-    Matrix yMatrix = Matrix.column(Zy);
+    // Add a column of ones to X for the intercept term
+    x = x.map((row) => [1.0, ...row]).toList();
 
-    Matrix X_transpose = X.transpose();
-    Matrix X_transpose_X = X_transpose * X;
-    Matrix X_transpose_X_inv = X_transpose_X.inverse();
-    Matrix X_transpose_y = X_transpose * yMatrix;
-    Matrix b = X_transpose_X_inv * X_transpose_y;
+    // Convert to matrices
+    var xMatrix = Matrix.fromList(x);
+    var yMatrix = Vector.fromList(y);
 
-    List<double> coefficients = b.getColumn(0).toList();
+    // Calculate (X^T * X)^-1 * X^T * Y
+    var xTranspose = xMatrix.transpose();
+    var xTx = xTranspose * xMatrix;
+    var xTxInv = xTx.inverse();
+    var xTy = xTranspose * yMatrix;
+    var coeffs = xTxInv * xTy;
 
-    return coefficients;
+    return List.from(coeffs.map((value) => value.first));
   }
 
   List<double> calculatePredictedValues(List<double> b) {

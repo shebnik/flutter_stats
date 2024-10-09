@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,7 +45,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
     final formatted = formatter.format(_prediction?.round());
 
     return MetricsCard(
-      title: 'Y Prediction (Lines of Code)',
+      title: 'Y Prediction (WMC)',
       value: formatted.replaceAll(',', ' '),
     );
   }
@@ -64,7 +63,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
       setState(() {});
       return;
     }
-    _prediction = pow(10, b0) * pow(x1, b1) * pow(x2, b2) * pow(x3, b3) * 1000;
+    _prediction = b0 + b1 * x1 + b2 * x2 + b3 * x3;
     setState(() {});
   }
 
@@ -79,21 +78,21 @@ class _PredictionWidgetState extends State<PredictionWidget> {
               Expanded(
                 child: _buildTextField(
                   x1Controller,
-                  'Enter X1 value (Number of Classes)',
+                  'Enter X1 value (DIT)',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildTextField(
                   x2Controller,
-                  'Enter X2 value (Number of Methods)',
+                  'Enter X2 value (RFC)',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildTextField(
                   x3Controller,
-                  'Enter X3 value (Number of Dependencies)',
+                  'Enter X3 value (CBO)',
                 ),
               ),
             ],

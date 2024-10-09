@@ -51,10 +51,10 @@ class DataHandler {
 
     final nameIndex = headers.indexOf('name');
     final urlIndex = headers.indexOf('url');
-    final classesIndex = getMetricIndex(headers, ['classes', 'x', 'x1']);
-    final methodsIndex = getMetricIndex(headers, ['methods', 'x2']);
-    final dependenciesIndex = getMetricIndex(headers, ['dependencies', 'x3']);
-    final locIndex = getMetricIndex(headers, ['code', 'y', 'lines']);
+    final ditIndex = getMetricIndex(headers, ['dit', 'x', 'x1']);
+    final rfcIndex = getMetricIndex(headers, ['rfc', 'x2']);
+    final cboIndex = getMetricIndex(headers, ['cbo', 'x3']);
+    final wmcIndex = getMetricIndex(headers, ['wmc', 'y']);
 
     final projects = <Project>[];
 
@@ -64,20 +64,19 @@ class DataHandler {
       final name = getValue(row, nameIndex, '');
       final url = getValue(row, urlIndex, '');
 
-      final classes = getDoubleValue(row, classesIndex);
-      final methods = getDoubleValue(row, methodsIndex);
-      final dependencies = getDoubleValue(row, dependenciesIndex);
-      var loc = getDoubleValue(row, locIndex);
-      if (loc != null) loc /= 1000;
+      final dit = getDoubleValue(row, ditIndex);
+      final rfc = getDoubleValue(row, rfcIndex);
+      final cbo = getDoubleValue(row, cboIndex);
+      final wmc = getDoubleValue(row, wmcIndex);
 
       final project = Project(
         name: name,
         url: url,
         metrics: Metrics(
-          numberOfClasses: classes,
-          numberOfMethods: methods,
-          numberOfDependencies: dependencies,
-          linesOfCode: loc,
+          dit: dit,
+          rfc: rfc,
+          cbo: cbo,
+          wmc: wmc,
         ),
       );
 

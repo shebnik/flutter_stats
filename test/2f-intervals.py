@@ -4,18 +4,10 @@ from scipy.stats import t
 import os
 from typing import Tuple, List
 
-def retrieve_data(filename: str = "3f-60-wmc.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def retrieve_data(filename: str = "3f.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load data from CSV file and return X1, X2, and Y arrays."""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
-    return df["CBO"].values.astype(float), df["WMC"].values.astype(float), df["RFC"].values.astype(float)
-
-def normalize_data(x1: np.ndarray, x2: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Normalize the data."""
-    x1[x1 == 0] = 1e-6
-    x2[x2 == 0] = 1e-6
-    y[y == 0] = 1e-6
-    
-    return np.column_stack((np.log10(x1), np.log10(x2), np.log10(y)))
+    return df["x1"].values.astype(float), df["x2"].values.astype(float), df["y"].values.astype(float)
 
 def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, float]:
     """Calculate regression coefficients."""
@@ -53,12 +45,10 @@ def identify_outliers(Z: np.ndarray, lower_bound: np.ndarray, upper_bound: np.nd
 
 def print_outliers(Z: np.ndarray, outliers: List[int]):
     """Print the outliers identified."""
-    string = "Outliers found:\n"
+    string = "Outliers found: "
     for i in outliers:
-        x1 = 10**Z[i, 0]
-        x2 = 10**Z[i, 1]
         y = 10**Z[i, 2]
-        string += f"CBO: {int(x1):d}, WMC: {int(x2):d}, RFC: {int(y):d}\n"
+        string += f"{int(y):d} "
     print(string)
 
 def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
@@ -95,8 +85,8 @@ def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, f
 def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float, float]:
     """Calculate regression model metrics."""
     n = len(Y)
-    Y_hat_original = 10**Y_hat
-    Y_original = 10**Y
+    Y_hat_original = 10**Y_hat * 1000
+    Y_original = 10**Y * 1000
     
     residuals = Y_original - Y_hat_original
     y_mean = np.mean(Y_original)
@@ -123,10 +113,10 @@ def print_results(b0: float, b1: float, b2: float, r_squared: float, mmre: float
     print(f"Sample Mean of Residuals: {mean_residual:.6f}")
     print(f"Sample Variance of Residuals: {variance_residual:.6f}")
 
-def test_model(model_coefficients: Tuple[float, float, float], test_file: str = "3f-40-wmc.csv") -> Tuple[float, float, float]:
+def test_model(model_coefficients: Tuple[float, float, float], test_file: str = "3f-40.csv") -> Tuple[float, float, float]:
     """Test the model on a separate dataset."""
     x1, x2, y = retrieve_data(test_file)
-    Z_test = normalize_data(x1, x2, y)
+    Z_test = np.column_stack((np.log10(x1), np.log10(x2), np.log10(y)))
     
     b0, b1, b2 = model_coefficients
     Y_test = Z_test[:, -1]
@@ -137,13 +127,8 @@ def test_model(model_coefficients: Tuple[float, float, float], test_file: str = 
     return r_squared, mmre, pred    
 
 def main():
-    # Java test
-    b0, b1, b2 = -0.054776, 0.672260, 0.441541
-    r_squared, mmre, pred = test_model((b0, b1, b2), "3f-60-wmc.csv")
-    print(f"Test Results for Java: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
-    
-    x1, x2, y = retrieve_data()
-    Z = normalize_data(x1, x2, y)
+    x1, x2, y = retrieve_data("3f-60.csv")
+    Z = np.column_stack((np.log10(x1), np.log10(x2), np.log10(y)))
 
     print(f"Initial number of data points: {Z.shape[0]}")
     Z_final, b0, b1, b2, Y_hat, lower_bound, upper_bound = iterative_outlier_removal_and_modeling(Z)
@@ -155,7 +140,7 @@ def main():
     
     print_results(b0, b1, b2, r_squared, mmre, pred, mean_residual, variance_residual)
     
-    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2), "3f-40-wmc.csv")
+    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2), "3f-40.csv")
     print(f"Test Results 2 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
 
 if __name__ == "__main__":

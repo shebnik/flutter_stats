@@ -27,8 +27,12 @@ mixin _$ModelInterval {
   double get lowerPredictionLimit => throw _privateConstructorUsedError;
   double get upperPredictionLimit => throw _privateConstructorUsedError;
 
+  /// Serializes this ModelInterval to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ModelInterval
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModelIntervalCopyWith<ModelInterval> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -58,6 +62,8 @@ class _$ModelIntervalCopyWithImpl<$Res, $Val extends ModelInterval>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModelInterval
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -122,6 +128,8 @@ class __$$ModelIntervalImplCopyWithImpl<$Res>
       _$ModelIntervalImpl _value, $Res Function(_$ModelIntervalImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModelInterval
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -211,7 +219,7 @@ class _$ModelIntervalImpl implements _ModelInterval {
                 other.upperPredictionLimit == upperPredictionLimit));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -222,7 +230,9 @@ class _$ModelIntervalImpl implements _ModelInterval {
       lowerPredictionLimit,
       upperPredictionLimit);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModelInterval
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModelIntervalImplCopyWith<_$ModelIntervalImpl> get copyWith =>
@@ -260,8 +270,11 @@ abstract class _ModelInterval implements ModelInterval {
   double get lowerPredictionLimit;
   @override
   double get upperPredictionLimit;
+
+  /// Create a copy of ModelInterval
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModelIntervalImplCopyWith<_$ModelIntervalImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

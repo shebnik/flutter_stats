@@ -19,37 +19,6 @@ class RegressionModelProvider with ChangeNotifier {
   List<Project> get projects => _projects;
   late RegressionModel _regressionModel;
 
-  bool _linesOfCodeInThousands = true;
-
-  bool get linesOfCodeInThousands => _linesOfCodeInThousands;
-
-  // ignore: avoid_positional_boolean_parameters
-  void setLinesOfCodeInThousands(bool value) {
-    _linesOfCodeInThousands = value;
-    if (value) {
-      _projects = _projects
-          .map(
-            (e) => e.copyWith(
-              metrics: e.metrics!.copyWith(
-                linesOfCode: e.metrics!.linesOfCode! / 1000,
-              ),
-            ),
-          )
-          .toList();
-    } else {
-      _projects = _projects
-          .map(
-            (e) => e.copyWith(
-              metrics: e.metrics!.copyWith(
-                linesOfCode: e.metrics!.linesOfCode! * 1000,
-              ),
-            ),
-          )
-          .toList();
-    }
-    notifyListeners();
-  }
-
   void setProjects(List<Project>? projects) {
     if (projects == null) return;
     _projects = projects;
@@ -70,13 +39,13 @@ class RegressionModelProvider with ChangeNotifier {
   }
 
   List<double> get x1Data =>
-      _regressionModel.metrics.map((e) => e.numberOfClasses!).toList();
+      _regressionModel.metrics.map((e) => e.dit!).toList();
   List<double> get x2Data =>
-      _regressionModel.metrics.map((e) => e.numberOfMethods!).toList();
+      _regressionModel.metrics.map((e) => e.rfc!).toList();
   List<double> get x3Data =>
-      _regressionModel.metrics.map((e) => e.numberOfDependencies!).toList();
+      _regressionModel.metrics.map((e) => e.cbo!).toList();
   List<double> get yData =>
-      _regressionModel.metrics.map((e) => e.linesOfCode!).toList();
+      _regressionModel.metrics.map((e) => e.wmc!).toList();
 
   List<double> get zx1Data => _regressionModel.Zx1;
   List<double> get zx2Data => _regressionModel.Zx2;

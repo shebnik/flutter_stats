@@ -32,10 +32,7 @@
 def retrieve_data(filename: str = "3f.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load data from CSV file and return X1, X2, and Y arrays."""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
-    y = df["y"].values.astype(float)
-    if np.mean(y) > 1000:  # If y-values are large, scale them down
-        y /= 1000
-    return df["x1"].values.astype(float), df["x2"].values.astype(float), y
+    return df["x1"].values.astype(float), df["x2"].values.astype(float), df["y"].values.astype(float)
 
 def main():
     x1, x2, y = retrieve_data()
