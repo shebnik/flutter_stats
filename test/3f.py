@@ -141,8 +141,14 @@ def test_model(model_coefficients: Tuple[float, float, float, float], test_file:
 def main():
     x1, x2, x3, y = retrieve_data()
     Z = normalize_data(x1, x2, x3, y)
-
     print(f"Initial number of data points: {Z.shape[0]}")
+    
+    b0, b1, b2, b3 = calculate_regression_coefficients(Z)
+    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
+    r_squared, mmre, pred = calculate_regression_metrics(Z[:, -1], Y_hat)
+    print(f"Initial Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
+    print(f"Initial Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+
     Z_final, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound = iterative_outlier_removal_and_modeling(Z)
     print(f"\nFinal number of data points after outlier removal: {Z_final.shape[0]}")
     

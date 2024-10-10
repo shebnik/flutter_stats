@@ -45,7 +45,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
     final formatted = formatter.format(_prediction?.round());
 
     return MetricsCard(
-      title: 'Y Prediction (WMC)',
+      title: 'Y Prediction (RFC)',
       value: formatted.replaceAll(',', ' '),
     );
   }
@@ -85,14 +85,14 @@ class _PredictionWidgetState extends State<PredictionWidget> {
               Expanded(
                 child: _buildTextField(
                   x2Controller,
-                  'Enter X2 value (RFC)',
+                  'Enter X2 value (CBO)',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildTextField(
                   x3Controller,
-                  'Enter X3 value (CBO)',
+                  'Enter X3 value (WMC)',
                 ),
               ),
             ],

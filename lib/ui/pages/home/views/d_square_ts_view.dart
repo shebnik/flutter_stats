@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
 class DSquareTSView extends StatelessWidget {
@@ -70,7 +71,9 @@ class DSquareTSView extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(8),
                             child: Center(
-                              child: Text(mahalanobisDistances[i].toString()),
+                              child: Text(
+                                Utils.formatNumber(mahalanobisDistances[i]),
+                              ),
                             ),
                           ),
                         ),
@@ -78,7 +81,9 @@ class DSquareTSView extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(8),
                             child: Center(
-                              child: Text(testStatistics[i].toString()),
+                              child: Text(
+                                Utils.formatNumber(testStatistics[i]),
+                              ),
                             ),
                           ),
                         ),

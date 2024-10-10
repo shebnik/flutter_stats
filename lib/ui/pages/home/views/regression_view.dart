@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/metrics_card.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/prediction_widget.dart';
 import 'package:provider/provider.dart';
@@ -36,10 +37,10 @@ class RegressionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<RegressionModelProvider>();
-    final b0 = provider.coefficients[0].toStringAsFixed(3);
-    final b1 = provider.coefficients[1].toStringAsFixed(3);
-    final b2 = provider.coefficients[2].toStringAsFixed(3);
-    final b3 = provider.coefficients[3].toStringAsFixed(3);
+    final b0 = Utils.formatNumber(provider.coefficients[0]);
+    final b1 = Utils.formatNumber(provider.coefficients[1]);
+    final b2 = Utils.formatNumber(provider.coefficients[2]);
+    final b3 = Utils.formatNumber(provider.coefficients[3]);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ListView(
@@ -88,17 +89,17 @@ class ModelQuality extends StatelessWidget {
         const SizedBox(height: 16),
         MetricsCard(
           title: 'R²',
-          value: provider.modelQuality.rSquared.toString(),
+          value: Utils.formatNumber(provider.modelQuality.rSquared),
         ),
         const SizedBox(height: 16),
         MetricsCard(
           title: 'MMRE',
-          value: provider.modelQuality.mmre.toString(),
+          value: Utils.formatNumber(provider.modelQuality.mmre),
         ),
         const SizedBox(height: 16),
         MetricsCard(
           title: 'PRED(0.25)',
-          value: provider.modelQuality.pred.toString(),
+          value: Utils.formatNumber(provider.modelQuality.pred),
         ),
         const SizedBox(height: 16),
         FutureBuilder(

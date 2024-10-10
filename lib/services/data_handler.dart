@@ -52,9 +52,9 @@ class DataHandler {
     final nameIndex = headers.indexOf('name');
     final urlIndex = headers.indexOf('url');
     final ditIndex = getMetricIndex(headers, ['dit', 'x', 'x1']);
-    final rfcIndex = getMetricIndex(headers, ['rfc', 'x2']);
-    final cboIndex = getMetricIndex(headers, ['cbo', 'x3']);
-    final wmcIndex = getMetricIndex(headers, ['wmc', 'y']);
+    final cboIndex = getMetricIndex(headers, ['cbo', 'x2']);
+    final wmcIndex = getMetricIndex(headers, ['wmc', 'x3']);
+    final rfcIndex = getMetricIndex(headers, ['rfc', 'y']);
 
     final projects = <Project>[];
 
@@ -65,9 +65,9 @@ class DataHandler {
       final url = getValue(row, urlIndex, '');
 
       final dit = getDoubleValue(row, ditIndex);
-      final rfc = getDoubleValue(row, rfcIndex);
       final cbo = getDoubleValue(row, cboIndex);
       final wmc = getDoubleValue(row, wmcIndex);
+      final rfc = getDoubleValue(row, rfcIndex);
 
       final project = Project(
         name: name,

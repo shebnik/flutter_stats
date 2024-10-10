@@ -47,10 +47,10 @@ class RegressionModelProvider with ChangeNotifier {
   List<double> get yData =>
       _regressionModel.metrics.map((e) => e.wmc!).toList();
 
-  List<double> get zx1Data => _regressionModel.Zx1;
-  List<double> get zx2Data => _regressionModel.Zx2;
-  List<double> get zx3Data => _regressionModel.Zx3;
-  List<double> get zyData => _regressionModel.Zy;
+  List<double> get zx1Data => _regressionModel.zx1;
+  List<double> get zx2Data => _regressionModel.zx2;
+  List<double> get zx3Data => _regressionModel.zx3;
+  List<double> get zyData => _regressionModel.zy;
 
   List<List<double>> get covarianceMatrix =>
       _regressionModel.calculateCovarianceMatrix();

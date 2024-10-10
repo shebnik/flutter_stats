@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_final_locals, omit_local_variable_types, non_constant_identifier_names, lines_longer_than_80_chars
-
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -11,86 +9,93 @@ import 'package:flutter_stats/services/fisher.dart';
 import 'package:flutter_stats/services/student.dart';
 import 'package:ml_linalg/linalg.dart';
 
-const epsilon = 1e-10;
-
 class RegressionModel {
-  RegressionModel(this.metrics)
-      : x1 = metrics.map((e) => e.dit!).toList(),
-        x2 = metrics.map((e) => e.rfc!).toList(),
-        x3 = metrics.map((e) => e.cbo!).toList(),
-        y = metrics.map((e) => e.wmc!).toList(),
-        Zx1 = metrics.map((e) => log(e.dit! + epsilon) / log(10)).toList(),
-        Zx2 = metrics.map((e) => log(e.rfc! + epsilon) / log(10)).toList(),
-        Zx3 = metrics.map((e) => log(e.cbo! + epsilon) / log(10)).toList(),
-        Zy = metrics.map((e) => log(e.wmc! + epsilon) / log(10)).toList();
+  RegressionModel(this.metrics) {
+    _x1 = metrics.map((e) => e.dit!).toList();
+    _x2 = metrics.map((e) => e.cbo!).toList();
+    _x3 = metrics.map((e) => e.wmc!).toList();
+    _y = metrics.map((e) => e.rfc!).toList();
 
-  List<Metrics> metrics;
-  List<double> x1;
-  List<double> x2;
-  List<double> x3;
-  List<double> y;
-  List<double> Zx1;
-  List<double> Zx2;
-  List<double> Zx3;
-  List<double> Zy;
+    normalizeData();
+  }
+
+  void normalizeData() {
+    _zx1 = _x1.map(_logBase10).toList();
+    _zx2 = _x2.map(_logBase10).toList();
+    _zx3 = _x3.map(_logBase10).toList();
+    _zy = _y.map(_logBase10).toList();
+  }
+
+  late final List<Metrics> metrics;
+  late final List<double> _x1;
+  late final List<double> _x2;
+  late final List<double> _x3;
+  late final List<double> _y;
+
+  late final List<double> _zx1;
+  late final List<double> _zx2;
+  late final List<double> _zx3;
+  late final List<double> _zy;
 
   int get n => metrics.length;
-  double get x1Avg => x1.reduce((a, b) => a + b) / n;
-  double get x2Avg => x2.reduce((a, b) => a + b) / n;
-  double get x3Avg => x3.reduce((a, b) => a + b) / n;
-  double get yAvg => y.reduce((a, b) => a + b) / n;
-  double get Zx1Avg => Zx1.reduce((a, b) => a + b) / n;
-  double get Zx2Avg => Zx2.reduce((a, b) => a + b) / n;
-  double get Zx3Avg => Zx3.reduce((a, b) => a + b) / n;
-  double get ZyAvg => Zy.reduce((a, b) => a + b) / n;
+  double get x1Avg => _average(_x1);
+  double get x2Avg => _average(_x2);
+  double get x3Avg => _average(_x3);
+  double get yAvg => _average(_y);
+  double get zx1Avg => _average(_zx1);
+  double get zx2Avg => _average(_zx2);
+  double get zx3Avg => _average(_zx3);
+  double get zyAvg => _average(_zy);
+
+  List<double> get zx1 => _zx1;
+  List<double> get zx2 => _zx2;
+  List<double> get zx3 => _zx3;
+  List<double> get zy => _zy;
+
+  static double _logBase10(double value) {
+    if (value <= 0) return 0;
+    return log(value) / log(10);
+  }
+
+  static double _average(List<double> values) =>
+      values.reduce((a, b) => a + b) / values.length;
 
   List<List<double>> calculateCovarianceMatrix() {
-    List<List<double>> cov = List.generate(4, (_) => List.filled(4, 0));
-
-    List<List<double>> values = [
-      Zy,
-      Zx1,
-      Zx2,
-      Zx3,
-    ];
-
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        double sum = 0;
-        for (int k = 0; k < n; k++) {
-          sum += (values[i][k] - values[i].reduce((a, b) => a + b) / n) *
-              (values[j][k] - values[j].reduce((a, b) => a + b) / n);
-        }
-        cov[i][j] = sum / n;
-      }
-    }
-
-    return cov;
+    final values = <List<double>>[_zy, _zx1, _zx2, _zx3];
+    return List.generate(
+      4,
+      (i) => List.generate(4, (j) {
+        final sum = List.generate(
+          n,
+          (k) =>
+              (values[i][k] - _average(values[i])) *
+              (values[j][k] - _average(values[j])),
+        ).reduce((a, b) => a + b);
+        return sum / n;
+      }),
+    );
   }
 
   List<List<double>> invertMatrix(List<List<double>> matrix) {
-    int n = matrix.length;
+    final size = matrix.length;
+    final identityMatrix = List<List<double>>.generate(
+      size,
+      (i) => List.generate(size, (j) => i == j ? 1.0 : 0.0),
+    );
+    final workingMatrix = matrix.map((row) => row.toList()).toList();
 
-    List<List<double>> identityMatrix =
-        List.generate(n, (i) => List.generate(n, (j) => i == j ? 1.0 : 0.0));
-
-    List<List<double>> a = matrix.map((row) => row.toList()).toList();
-
-    for (int i = 0; i < n; i++) {
-      double diagElement = a[i][i];
-      if (diagElement == 0) {
-        throw Exception('Matrix is not invertible');
-      }
-      for (int j = 0; j < n; j++) {
-        a[i][j] /= diagElement;
+    for (var i = 0; i < size; i++) {
+      final diagElement = workingMatrix[i][i];
+      for (var j = 0; j < size; j++) {
+        workingMatrix[i][j] /= diagElement;
         identityMatrix[i][j] /= diagElement;
       }
 
-      for (int k = 0; k < n; k++) {
+      for (var k = 0; k < size; k++) {
         if (k == i) continue;
-        double factor = a[k][i];
-        for (int j = 0; j < n; j++) {
-          a[k][j] -= factor * a[i][j];
+        final factor = workingMatrix[k][i];
+        for (var j = 0; j < size; j++) {
+          workingMatrix[k][j] -= factor * workingMatrix[i][j];
           identityMatrix[k][j] -= factor * identityMatrix[i][j];
         }
       }
@@ -100,187 +105,127 @@ class RegressionModel {
   }
 
   List<double> calculateMahalanobisDistances(List<List<double>> covInv) {
-    List<double> distances = List.filled(n, 0);
+    final values = <List<double>>[_zy, _zx1, _zx2, _zx3];
+    final means = values.map(_average).toList();
 
-    List<List<double>> values = [
-      Zy,
-      Zx1,
-      Zx2,
-      Zx3,
-    ];
-
-    for (int i = 0; i < n; i++) {
-      List<double> row = List.filled(4, 0);
-      for (int j = 0; j < 4; j++) {
-        for (int k = 0; k < 4; k++) {
-          row[j] += covInv[j][k] *
-              (values[k][i] - values[k].reduce((a, b) => a + b) / n);
-        }
-      }
-
-      for (int j = 0; j < 4; j++) {
-        distances[i] +=
-            row[j] * (values[j][i] - values[j].reduce((a, b) => a + b) / n);
-      }
-    }
-
-    return distances;
+    return List.generate(n, (i) {
+      final diff = List<double>.generate(4, (j) => values[j][i] - means[j]);
+      final product = List<double>.generate(
+        4,
+        (j) => List.generate(4, (k) => covInv[j][k] * diff[k])
+            .reduce((a, b) => a + b),
+      );
+      return List.generate(4, (j) => product[j] * diff[j])
+          .reduce((a, b) => a + b);
+    });
   }
 
   List<double> calculateTestStatistics(List<double> distances) {
-    List<double> testStatistics = List.filled(n, 0);
-
-    for (int i = 0; i < n; i++) {
-      testStatistics[i] = (n - 4) * n / ((pow(n, 2) - 1) * 4) * distances[i];
-    }
-
-    return testStatistics;
+    final factor = (n - 4) * n / ((pow(n, 2) - 1) * 4);
+    return distances.map((d) => factor * d).toList();
   }
 
-  Future<double?> calculateFisherFDistribution() {
-    return Fisher.inv(
-      alpha: alpha,
-      df1: 4,
-      df2: n - 4,
-    );
-  }
+  Future<double?> calculateFisherFDistribution() =>
+      Fisher.inv(alpha: alpha, df1: 4, df2: n - 4);
 
   Future<List<int>> determineOutliers(List<double> testStatistics) async {
-    double? f = await calculateFisherFDistribution();
+    final f = await calculateFisherFDistribution();
     if (f == null) {
       debugPrint('Failed to calculate Fisher F distribution');
       return [];
     }
-    List<int> outliers = [];
-    for (int i = 0; i < n; i++) {
-      if (testStatistics[i] > f) {
-        outliers.add(i);
-      }
-    }
-    return outliers;
+    final mahalanobisOutliers =
+        List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
+
+    final intervals = await calculateLinearIntervals();
+    final lowerBound =
+        intervals.map((interval) => interval.lowerPredictionLimit).toList();
+    final upperBound =
+        intervals.map((interval) => interval.upperPredictionLimit).toList();
+    final predictionIntervalOutliers = List.generate(n, (i) => i)
+        .where((i) => _zy[i] < lowerBound[i] || _zy[i] > upperBound[i])
+        .toList();
+
+    // Combine both outlier detection methods
+    final combinedOutliers = {
+      ...mahalanobisOutliers,
+      ...predictionIntervalOutliers,
+    }.toList()
+      ..sort();
+
+    return combinedOutliers;
   }
 
   List<double> calculateRegressionCoefficients() {
-    final z = List.generate(n, (i) {
-      return [Zx1[i], Zx2[i], Zx3[i], Zy[i]];
-    });
+    final x = Matrix.fromList(
+      List.generate(n, (i) => [1.0, _zx1[i], _zx2[i], _zx3[i]]),
+    );
+    final y = Vector.fromList(_zy);
 
-    var x = z.map((row) => row.sublist(0, row.length - 1)).toList();
-    var y = z.map((row) => row.last).toList();
-
-    // Add a column of ones to X for the intercept term
-    x = x.map((row) => [1.0, ...row]).toList();
-
-    // Convert to matrices
-    var xMatrix = Matrix.fromList(x);
-    var yMatrix = Vector.fromList(y);
-
-    // Calculate (X^T * X)^-1 * X^T * Y
-    var xTranspose = xMatrix.transpose();
-    var xTx = xTranspose * xMatrix;
-    var xTxInv = xTx.inverse();
-    var xTy = xTranspose * yMatrix;
-    var coffs = xTxInv * xTy;
+    final xTranspose = x.transpose();
+    final xTx = xTranspose * x;
+    final xTxInv = xTx.inverse();
+    final xTy = xTranspose * y;
+    final coffs = xTxInv * xTy;
 
     return List.from(coffs.map((value) => value.first));
   }
 
-  List<double> calculatePredictedValues(List<double> b) {
-    double b0 = b[0];
-    double b1 = b[1];
-    double b2 = b[2];
-    double b3 = b[3];
+  List<double> calculatePredictedValues(List<double> b) => List.generate(
+        n,
+        (i) => b[0] + b[1] * _zx1[i] + b[2] * _zx2[i] + b[3] * _zx3[i],
+      );
 
-    List<double> Zy_hat = List.filled(n, 0);
-    for (int i = 0; i < n; i++) {
-      Zy_hat[i] = b0 + b1 * Zx1[i] + b2 * Zx2[i] + b3 * Zx3[i];
-    }
-
-    return Zy_hat;
-  }
-
-  List<double> calculateYHat(List<double> predictedValues) {
-    return predictedValues
-        .map((value) => pow(10, value))
-        .toList()
-        .cast<double>();
-  }
+  List<double> calculateYHat(List<double> predictedValues) =>
+      predictedValues.map((value) => pow(10, value)).toList().cast<double>();
 
   ModelQuality calculateModelQuality(List<double> predictedValues) {
     final yHat = calculateYHat(predictedValues);
 
-    final yDiffSquared =
-        y.map((value) => pow(value - yHat[y.indexOf(value)], 2)).toList();
-    final yAvgDiffSquared = y.map((value) => pow(value - yAvg, 2)).toList();
+    final yDiffSquared = List.generate(n, (i) => pow(_y[i] - yHat[i], 2));
+    final yAvgDiffSquared = _y.map((value) => pow(value - yAvg, 2)).toList();
 
-    final yDividedDiff = List.generate(y.length, (index) {
-      return (y[index] - yHat[index]) / y[index];
-    });
+    final yDividedDiff = List.generate(n, (i) => (_y[i] - yHat[i]) / _y[i]);
 
-    final sy = yDiffSquared.reduce((value, element) => value + element);
-    final rSquared =
-        1 - (sy / yAvgDiffSquared.reduce((value, element) => value + element));
+    final sy = yDiffSquared.reduce((a, b) => a + b);
+    final rSquared = 1 - (sy / yAvgDiffSquared.reduce((a, b) => a + b));
 
-    final mmre = yDividedDiff
-            .map((diff) => diff.abs())
-            .reduce((value, element) => value + element) /
-        y.length;
+    final mmre =
+        yDividedDiff.map((diff) => diff.abs()).reduce((a, b) => a + b) / n;
 
-    final pred =
-        yDividedDiff.where((diff) => diff.abs() < 0.25).length / y.length;
+    final pred = yDividedDiff.where((diff) => diff.abs() < 0.25).length / n;
 
-    return ModelQuality(
-      rSquared: rSquared,
-      mmre: mmre,
-      pred: pred,
-    );
+    return ModelQuality(rSquared: rSquared, mmre: mmre, pred: pred);
   }
 
   Future<List<ModelInterval>> calculateLinearIntervals() async {
-    List<ModelInterval> intervals = [];
-
     final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);
     if (q == null) {
       debugPrint('Failed to calculate Student T distribution');
       return [];
     }
 
-    final ZyHat = calculatePredictedValues(calculateRegressionCoefficients());
+    final zyHat = calculatePredictedValues(calculateRegressionCoefficients());
     final sy = sqrt(
       (1 / (n - 4)) *
-          Zy.map((value) => pow(value - ZyHat[Zy.indexOf(value)], 2))
-              .reduce((value, element) => value + element),
+          List.generate(n, (i) => pow(_zy[i] - zyHat[i], 2))
+              .reduce((a, b) => a + b),
     );
 
-    for (int i = 0; i < n; i++) {
-      final value = 1 / n +
-          (pow(Zx1[i] - Zx1Avg, 2) +
-                  pow(Zx2[i] - Zx2Avg, 2) +
-                  pow(Zx3[i] - Zx3Avg, 2)) /
-              (Zx1.map((value) => pow(value - Zx1Avg, 2))
-                      .reduce((value, element) => value + element) +
-                  Zx2.map((value) => pow(value - Zx2Avg, 2))
-                      .reduce((value, element) => value + element) +
-                  Zx3.map((value) => pow(value - Zx3Avg, 2))
-                      .reduce((value, element) => value + element));
-
-      intervals.add(
-        ModelInterval(
-          index: i + 1,
-          calculatedValues: ZyHat[i],
-          lowerConfidenceLimit: ZyHat[i] - q * sy * sqrt(value),
-          upperConfidenceLimit: ZyHat[i] + q * sy * sqrt(value),
-          lowerPredictionLimit: ZyHat[i] - q * sy * sqrt(1 + value),
-          upperPredictionLimit: ZyHat[i] + q * sy * sqrt(1 + value),
-        ),
-      );
-    }
-    return intervals;
+    return _calculateIntervals(
+      zyHat,
+      sy,
+      q,
+      _zx1,
+      _zx2,
+      _zx3,
+      zx1Avg,
+      zx2Avg,
+      zx3Avg,
+    );
   }
 
   Future<List<ModelInterval>> calculateNonLinearIntervals() async {
-    List<ModelInterval> intervals = [];
-
     final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);
     if (q == null) {
       debugPrint('Failed to calculate Student T distribution');
@@ -292,37 +237,43 @@ class RegressionModel {
     );
     final sy = sqrt(
       (1 / (n - 4)) *
-          y
-              .map((value) => pow(value - yHat[y.indexOf(value)], 2))
-              .reduce((value, element) => value + element),
+          List.generate(n, (i) => pow(_y[i] - yHat[i], 2))
+              .reduce((a, b) => a + b),
     );
 
-    for (int i = 0; i < n; i++) {
-      final value = 1 / n +
-          (pow(x1[i] - x1Avg, 2) +
-                  pow(x2[i] - x2Avg, 2) +
-                  pow(x3[i] - x3Avg, 2)) /
-              (x1
-                      .map((value) => pow(value - x1Avg, 2))
-                      .reduce((value, element) => value + element) +
-                  x2
-                      .map((value) => pow(value - x2Avg, 2))
-                      .reduce((value, element) => value + element) +
-                  x3
-                      .map((value) => pow(value - x3Avg, 2))
-                      .reduce((value, element) => value + element));
+    return _calculateIntervals(yHat, sy, q, _x1, _x2, _x3, x1Avg, x2Avg, x3Avg);
+  }
 
-      intervals.add(
-        ModelInterval(
-          index: i + 1,
-          calculatedValues: yHat[i],
-          lowerConfidenceLimit: yHat[i] - q * sy * sqrt(value),
-          upperConfidenceLimit: yHat[i] + q * sy * sqrt(value),
-          lowerPredictionLimit: yHat[i] - q * sy * sqrt(1 + value),
-          upperPredictionLimit: yHat[i] + q * sy * sqrt(1 + value),
-        ),
+  List<ModelInterval> _calculateIntervals(
+    List<double> yHat,
+    double sy,
+    double q,
+    List<double> x1,
+    List<double> x2,
+    List<double> x3,
+    double x1Avg,
+    double x2Avg,
+    double x3Avg,
+  ) {
+    final sumSquaredDiffs = List.generate(
+      3,
+      (j) => List.generate(n, (i) => pow(x1[i] - x1Avg, 2))
+          .reduce((a, b) => a + b),
+    );
+
+    return List.generate(n, (i) {
+      final value = 1 / n +
+          List.generate(3, (j) => pow(x1[i] - x1Avg, 2) / sumSquaredDiffs[j])
+              .reduce((a, b) => a + b);
+
+      return ModelInterval(
+        index: i + 1,
+        calculatedValues: yHat[i],
+        lowerConfidenceLimit: yHat[i] - q * sy * sqrt(value),
+        upperConfidenceLimit: yHat[i] + q * sy * sqrt(value),
+        lowerPredictionLimit: yHat[i] - q * sy * sqrt(1 + value),
+        upperPredictionLimit: yHat[i] + q * sy * sqrt(1 + value),
       );
-    }
-    return intervals;
+    });
   }
 }

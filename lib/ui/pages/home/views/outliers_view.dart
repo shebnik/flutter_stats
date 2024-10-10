@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -48,7 +49,8 @@ class OutliersView extends StatelessWidget {
                             child: CircularProgressIndicator(),
                           );
                         }
-                        final fisherFDistribution = snapshot.data;
+                        final fisherFDistribution =
+                            Utils.formatNumber(snapshot.data ?? 0);
                         return Text(
                           'Fisher F-Distribution: $fisherFDistribution',
                           style: Theme.of(context).textTheme.titleLarge,

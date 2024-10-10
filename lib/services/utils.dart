@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class Utils {
+  static String formatNumber(double number) {
+    return number.toStringAsFixed(4);
+  }
+
   void loadCsvFile(BuildContext context) {
     final model = context.read<RegressionModelProvider>();
     try {

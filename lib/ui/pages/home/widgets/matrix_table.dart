@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/services/utils.dart';
 
 class MatrixTable extends StatelessWidget {
   const MatrixTable({
@@ -66,7 +67,7 @@ class MatrixTable extends StatelessWidget {
                 (cell) => TableCell(
                   child: Padding(
                     padding: const EdgeInsets.all(8),
-                    child: Text('$cell'),
+                    child: Text(Utils.formatNumber(cell)),
                   ),
                 ),
               ),
