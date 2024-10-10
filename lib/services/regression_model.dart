@@ -180,9 +180,9 @@ class RegressionModel {
     var xTx = xTranspose * xMatrix;
     var xTxInv = xTx.inverse();
     var xTy = xTranspose * yMatrix;
-    var coeffs = xTxInv * xTy;
+    var coffs = xTxInv * xTy;
 
-    return List.from(coeffs.map((value) => value.first));
+    return List.from(coffs.map((value) => value.first));
   }
 
   List<double> calculatePredictedValues(List<double> b) {
@@ -231,7 +231,6 @@ class RegressionModel {
 
     return ModelQuality(
       rSquared: rSquared,
-      sy: sy.toDouble(),
       mmre: mmre,
       pred: pred,
     );
@@ -279,7 +278,7 @@ class RegressionModel {
     return intervals;
   }
 
-  Future<List<ModelInterval>> calculatenonLinearIntervals() async {
+  Future<List<ModelInterval>> calculateNonLinearIntervals() async {
     List<ModelInterval> intervals = [];
 
     final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);

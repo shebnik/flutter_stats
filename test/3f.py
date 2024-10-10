@@ -23,8 +23,8 @@ def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, floa
     X = Z[:, :-1]
     Y = Z[:, -1]
     X = np.column_stack((np.ones(X.shape[0]), X))
-    coeffs = np.linalg.inv(X.T @ X) @ X.T @ Y
-    return coeffs[0], coeffs[1], coeffs[2], coeffs[3]
+    coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
+    return coffs[0], coffs[1], coffs[2], coffs[3]
 
 def calculate_prediction_interval(Z: np.ndarray, Y_hat: np.ndarray, alpha: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
     """Calculate prediction interval for each data point."""

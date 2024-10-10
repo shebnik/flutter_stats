@@ -8,7 +8,6 @@ part 'model_quality.g.dart';
 class ModelQuality with _$ModelQuality {
   const factory ModelQuality({
     required double rSquared,
-    required double sy,
     required double mmre,
     required double pred,
   }) = _ModelQuality;

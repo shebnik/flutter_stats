@@ -21,7 +21,6 @@ ModelQuality _$ModelQualityFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ModelQuality {
   double get rSquared => throw _privateConstructorUsedError;
-  double get sy => throw _privateConstructorUsedError;
   double get mmre => throw _privateConstructorUsedError;
   double get pred => throw _privateConstructorUsedError;
 
@@ -41,7 +40,7 @@ abstract class $ModelQualityCopyWith<$Res> {
           ModelQuality value, $Res Function(ModelQuality) then) =
       _$ModelQualityCopyWithImpl<$Res, ModelQuality>;
   @useResult
-  $Res call({double rSquared, double sy, double mmre, double pred});
+  $Res call({double rSquared, double mmre, double pred});
 }
 
 /// @nodoc
@@ -60,7 +59,6 @@ class _$ModelQualityCopyWithImpl<$Res, $Val extends ModelQuality>
   @override
   $Res call({
     Object? rSquared = null,
-    Object? sy = null,
     Object? mmre = null,
     Object? pred = null,
   }) {
@@ -68,10 +66,6 @@ class _$ModelQualityCopyWithImpl<$Res, $Val extends ModelQuality>
       rSquared: null == rSquared
           ? _value.rSquared
           : rSquared // ignore: cast_nullable_to_non_nullable
-              as double,
-      sy: null == sy
-          ? _value.sy
-          : sy // ignore: cast_nullable_to_non_nullable
               as double,
       mmre: null == mmre
           ? _value.mmre
@@ -93,7 +87,7 @@ abstract class _$$ModelQualityImplCopyWith<$Res>
       __$$ModelQualityImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({double rSquared, double sy, double mmre, double pred});
+  $Res call({double rSquared, double mmre, double pred});
 }
 
 /// @nodoc
@@ -110,7 +104,6 @@ class __$$ModelQualityImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? rSquared = null,
-    Object? sy = null,
     Object? mmre = null,
     Object? pred = null,
   }) {
@@ -118,10 +111,6 @@ class __$$ModelQualityImplCopyWithImpl<$Res>
       rSquared: null == rSquared
           ? _value.rSquared
           : rSquared // ignore: cast_nullable_to_non_nullable
-              as double,
-      sy: null == sy
-          ? _value.sy
-          : sy // ignore: cast_nullable_to_non_nullable
               as double,
       mmre: null == mmre
           ? _value.mmre
@@ -139,10 +128,7 @@ class __$$ModelQualityImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ModelQualityImpl implements _ModelQuality {
   const _$ModelQualityImpl(
-      {required this.rSquared,
-      required this.sy,
-      required this.mmre,
-      required this.pred});
+      {required this.rSquared, required this.mmre, required this.pred});
 
   factory _$ModelQualityImpl.fromJson(Map<String, dynamic> json) =>
       _$$ModelQualityImplFromJson(json);
@@ -150,15 +136,13 @@ class _$ModelQualityImpl implements _ModelQuality {
   @override
   final double rSquared;
   @override
-  final double sy;
-  @override
   final double mmre;
   @override
   final double pred;
 
   @override
   String toString() {
-    return 'ModelQuality(rSquared: $rSquared, sy: $sy, mmre: $mmre, pred: $pred)';
+    return 'ModelQuality(rSquared: $rSquared, mmre: $mmre, pred: $pred)';
   }
 
   @override
@@ -168,14 +152,13 @@ class _$ModelQualityImpl implements _ModelQuality {
             other is _$ModelQualityImpl &&
             (identical(other.rSquared, rSquared) ||
                 other.rSquared == rSquared) &&
-            (identical(other.sy, sy) || other.sy == sy) &&
             (identical(other.mmre, mmre) || other.mmre == mmre) &&
             (identical(other.pred, pred) || other.pred == pred));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, rSquared, sy, mmre, pred);
+  int get hashCode => Object.hash(runtimeType, rSquared, mmre, pred);
 
   /// Create a copy of ModelQuality
   /// with the given fields replaced by the non-null parameter values.
@@ -196,7 +179,6 @@ class _$ModelQualityImpl implements _ModelQuality {
 abstract class _ModelQuality implements ModelQuality {
   const factory _ModelQuality(
       {required final double rSquared,
-      required final double sy,
       required final double mmre,
       required final double pred}) = _$ModelQualityImpl;
 
@@ -205,8 +187,6 @@ abstract class _ModelQuality implements ModelQuality {
 
   @override
   double get rSquared;
-  @override
-  double get sy;
   @override
   double get mmre;
   @override

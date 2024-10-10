@@ -84,5 +84,5 @@ class RegressionModelProvider with ChangeNotifier {
   Future<List<ModelInterval>> get linearIntervals =>
       _regressionModel.calculateLinearIntervals();
   Future<List<ModelInterval>> get nonLinearIntervals =>
-      _regressionModel.calculatenonLinearIntervals();
+      _regressionModel.calculateNonLinearIntervals();
 }

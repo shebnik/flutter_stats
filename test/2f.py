@@ -142,6 +142,11 @@ def main():
     r_squared, mmre, pred = test_model((b0, b1, b2), "3f-60-wmc.csv")
     print(f"Test Results for Java: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     
+    # Kotlin test
+    b0, b1, b2 = 1.36206, 0.306892, 0.228584
+    r_squared, mmre, pred = test_model((b0, b1, b2), "3f-60-wmc.csv")
+    print(f"Test Results for Kotlin: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    
     x1, x2, y = retrieve_data()
     Z = normalize_data(x1, x2, y)
 
