@@ -15,14 +15,14 @@ class DSquareTSView extends StatelessWidget {
       (RegressionModelProvider provider) => provider.testStatistics,
     );
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           Text(
             'Mahalanobis Square Distances and Test Statistics',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Expanded(
             child: SingleChildScrollView(
               child: Table(
@@ -61,7 +61,7 @@ class DSquareTSView extends StatelessWidget {
                       children: [
                         TableCell(
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(16),
                             child: Center(
                               child: Text((i + 1).toString()),
                             ),
@@ -69,7 +69,7 @@ class DSquareTSView extends StatelessWidget {
                         ),
                         TableCell(
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(16),
                             child: Center(
                               child: Text(
                                 Utils.formatNumber(mahalanobisDistances[i]),
@@ -79,7 +79,7 @@ class DSquareTSView extends StatelessWidget {
                         ),
                         TableCell(
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(16),
                             child: Center(
                               child: Text(
                                 Utils.formatNumber(testStatistics[i]),

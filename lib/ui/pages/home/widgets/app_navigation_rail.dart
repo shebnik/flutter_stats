@@ -21,22 +21,9 @@ class AppNavigationRail extends StatelessWidget {
       ),
       destinations: const <NavigationRailDestination>[
         NavigationRailDestination(
-          icon: Icon(Icons.analytics_outlined),
-          selectedIcon: Icon(Icons.analytics),
+          icon: Icon(Icons.dataset_outlined),
+          selectedIcon: Icon(Icons.dataset),
           label: Text('Metrics'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.grid_view),
-          selectedIcon: Icon(Icons.grid_view_rounded),
-          label: Text('Covariance Matrix'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.space_dashboard_outlined),
-          selectedIcon: Icon(Icons.space_dashboard),
-          label: Text(
-            'Mahalanobis Square Distances\nTest Statistic',
-            textAlign: TextAlign.center,
-          ),
         ),
         NavigationRailDestination(
           icon: Icon(Icons.circle_outlined),
@@ -49,8 +36,13 @@ class AppNavigationRail extends StatelessWidget {
           label: Text('Regression'),
         ),
         NavigationRailDestination(
+          icon: Icon(Icons.analytics_outlined),
+          selectedIcon: Icon(Icons.analytics),
+          label: Text('Prediction'),
+        ),
+        NavigationRailDestination(
           icon: Icon(Icons.settings_ethernet_outlined),
-          selectedIcon: Icon(Icons.settings_ethernet),
+          selectedIcon: Icon(Icons.settings_ethernet_rounded),
           label: Text('Intervals'),
         ),
         NavigationRailDestination(

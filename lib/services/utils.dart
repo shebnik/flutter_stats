@@ -41,4 +41,44 @@ class Utils {
       await launchUrlString(url);
     }
   }
+
+  static Color getColor(MetricsType metricsType, double val) {
+    // Ensure value is between 0 and 1
+    final value = val.clamp(0.0, 1.0);
+
+    switch (metricsType) {
+      case MetricsType.rSquared:
+        if (value <= 0.7) {
+          // Gradient from red (0) to orange (0.7)
+          return Color.lerp(Colors.red, Colors.orange, value / 0.7)!;
+        } else {
+          // Gradient from orange (0.7) to green (1.0)
+          return Color.lerp(Colors.orange, Colors.green, (value - 0.7) / 0.3)!;
+        }
+
+      case MetricsType.mmre:
+        if (value <= 0.25) {
+          // Gradient from green (0) to light green (0.25)
+          return Color.lerp(Colors.green, Colors.lightGreen, value / 0.25)!;
+        } else {
+          // Gradient from orange (0.25) to red (1.0)
+          return Color.lerp(Colors.orange, Colors.red, (value - 0.25) / 0.75)!;
+        }
+
+      case MetricsType.pred:
+        if (value >= 0.75) {
+          // Gradient from light green (0.75) to green (1.0)
+          return Color.lerp(
+            Colors.lightGreen,
+            Colors.green,
+            (value - 0.75) / 0.25,
+          )!;
+        } else {
+          // Gradient from red (0) to orange (0.75)
+          return Color.lerp(Colors.red, Colors.orange, value / 0.75)!;
+        }
+    }
+  }
 }
+
+enum MetricsType { rSquared, mmre, pred }

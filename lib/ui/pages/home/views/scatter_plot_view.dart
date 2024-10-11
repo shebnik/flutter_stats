@@ -23,70 +23,68 @@ class ScatterPlotView extends StatelessWidget {
     final yData = provider.yData;
     final yHat = provider.yHat;
 
-    return SingleChildScrollView(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Column(
-            children: [
-              ScatterPlot(
-                xData: zx1Data,
-                yData: zyData,
-                predictedValues: zyHat,
-                title: 'Zx1 and Zy',
-                xLabel: 'Zx1',
-                yLabel: 'Zy',
-              ),
-              const Divider(),
-              ScatterPlot(
-                xData: zx2Data,
-                yData: zyData,
-                predictedValues: zyHat,
-                title: 'Zx2 and Zy',
-                xLabel: 'Zx2',
-                yLabel: 'Zy',
-              ),
-              const Divider(),
-              ScatterPlot(
-                xData: zx3Data,
-                yData: zyData,
-                predictedValues: zyHat,
-                title: 'Zx3 and Zy',
-                xLabel: 'Zx3',
-                yLabel: 'Zy',
-              ),
-            ],
-          ),
-          const Divider(),
-          Column(
-            children: [
-              ScatterPlot(
-                xData: x1Data,
-                yData: yData,
-                predictedValues: yHat,
-                title: 'X1 and Y',
-                xLabel: 'X1',
-              ),
-              const Divider(),
-              ScatterPlot(
-                xData: x2Data,
-                yData: yData,
-                predictedValues: yHat,
-                title: 'X2 and Y',
-                xLabel: 'X2',
-              ),
-              const Divider(),
-              ScatterPlot(
-                xData: x3Data,
-                yData: yData,
-                predictedValues: yHat,
-                title: 'X3 and Y',
-                xLabel: 'X3',
-              ),
-            ],
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Column(
+          children: [
+            ScatterPlot(
+              xData: zx1Data,
+              yData: zyData,
+              predictedValues: zyHat,
+              title: 'Zx1 and Zy',
+              xLabel: 'Zx1',
+              yLabel: 'Zy',
+            ),
+            const Divider(),
+            ScatterPlot(
+              xData: zx2Data,
+              yData: zyData,
+              predictedValues: zyHat,
+              title: 'Zx2 and Zy',
+              xLabel: 'Zx2',
+              yLabel: 'Zy',
+            ),
+            const Divider(),
+            ScatterPlot(
+              xData: zx3Data,
+              yData: zyData,
+              predictedValues: zyHat,
+              title: 'Zx3 and Zy',
+              xLabel: 'Zx3',
+              yLabel: 'Zy',
+            ),
+          ],
+        ),
+        const Divider(),
+        Column(
+          children: [
+            ScatterPlot(
+              xData: x1Data,
+              yData: yData,
+              predictedValues: yHat,
+              title: 'X1 and Y',
+              xLabel: 'X1',
+            ),
+            const Divider(),
+            ScatterPlot(
+              xData: x2Data,
+              yData: yData,
+              predictedValues: yHat,
+              title: 'X2 and Y',
+              xLabel: 'X2',
+            ),
+            const Divider(),
+            ScatterPlot(
+              xData: x3Data,
+              yData: yData,
+              predictedValues: yHat,
+              title: 'X3 and Y',
+              xLabel: 'X3',
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

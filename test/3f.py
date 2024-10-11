@@ -11,10 +11,10 @@ def retrieve_data(filename: str = "3f-60-wmc.csv") -> Tuple[np.ndarray, np.ndarr
 
 def normalize_data(x1: np.ndarray, x2: np.ndarray, x3: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Normalize the data."""
-    x1[x1 == 0] = 1e-6
-    x2[x2 == 0] = 1e-6
-    x3[x3 == 0] = 1e-6
-    y[y == 0] = 1e-6
+    x1[x1 == 0] = 1
+    x2[x2 == 0] = 1
+    x3[x3 == 0] = 1
+    y[y == 0] = 1
     
     return np.column_stack((np.log10(x1), np.log10(x2), np.log10(x3), np.log10(y)))
 
@@ -24,7 +24,15 @@ def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, floa
     Y = Z[:, -1]
     X = np.column_stack((np.ones(X.shape[0]), X))
     coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
-    return coffs[0], coffs[1], coffs[2], coffs[3]
+    
+    # Calculate residuals in log space
+    Y_hat = X @ coffs
+    residuals = Y - Y_hat
+    
+    # Estimate standard deviation of residuals
+    sigma = np.std(residuals, ddof=1)
+    
+    return coffs[0], coffs[1], coffs[2], coffs[3], residuals, sigma
 
 def calculate_prediction_interval(Z: np.ndarray, Y_hat: np.ndarray, alpha: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
     """Calculate prediction interval for each data point."""
@@ -56,16 +64,16 @@ def print_outliers(Z: np.ndarray, outliers: List[int]):
     """Print the outliers identified."""
     string = "Outliers found:\n"
     for i in outliers:
-        x1 = 10**Z[i, 0]
-        x2 = 10**Z[i, 1]
-        x3 = 10**Z[i, 2]
-        y = 10**Z[i, 3]
-        string += f"DIT: {int(x1):d}, CBO: {int(x2):d}, WMC: {int(x3):d}, RFC: {int(y):d}\n"
+        x1 = int(round(10**Z[i, 0]))
+        x2 = int(round(10**Z[i, 1]))
+        x3 = int(round(10**Z[i, 2]))
+        y = int(round(10**Z[i, 3]))
+        string += f"DIT: {x1}, CBO: {x2}, WMC: {x3}, RFC: {y}\n"
     print(string)
 
 def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Remove outliers and create a regression model."""
-    b0, b1, b2, b3 = calculate_regression_coefficients(Z)
+    b0, b1, b2, b3, residuals, sigma = calculate_regression_coefficients(Z)
     Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
     
     lower_bound, upper_bound = calculate_prediction_interval(Z, Y_hat)
@@ -116,10 +124,10 @@ def calculate_residual_statistics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[flo
     variance_residual = np.var(residuals, ddof=1)
     return mean_residual, variance_residual
 
-def print_results(b0: float, b1: float, b2: float, b3: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
+def print_results(sigma: float, b0: float, b1: float, b2: float, b3: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
     """Print regression results and residual statistics."""
     print(f"\nFinal Results:")
-    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
+    print(f"Regression Coefficients: ε = {sigma:.4f}, b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
     print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     print(f"Residual Statistics:")
     print(f"Sample Mean of Residuals: {mean_residual:.6f}")
@@ -136,30 +144,39 @@ def test_model(model_coefficients: Tuple[float, float, float, float], test_file:
     
     r_squared, mmre, pred = calculate_regression_metrics(Y_test, Y_hat_test)
     
-    return r_squared, mmre, pred    
+    return r_squared, mmre, pred
 
 def main():
     x1, x2, x3, y = retrieve_data()
     Z = normalize_data(x1, x2, x3, y)
     print(f"Initial number of data points: {Z.shape[0]}")
     
-    b0, b1, b2, b3 = calculate_regression_coefficients(Z)
+    b0, b1, b2, b3, residuals, sigma = calculate_regression_coefficients(Z)
     Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
     r_squared, mmre, pred = calculate_regression_metrics(Z[:, -1], Y_hat)
-    print(f"Initial Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
-    print(f"Initial Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
+    print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
 
     Z_final, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound = iterative_outlier_removal_and_modeling(Z)
     print(f"\nFinal number of data points after outlier removal: {Z_final.shape[0]}")
     
     r_squared, mmre, pred = calculate_regression_metrics(Z_final[:, -1], Y_hat)
+    mean_residual, variance_residual = calculate_residual_statistics(Z_final[:, -1], Y_hat)    
+    print_results(sigma, b0, b1, b2, b3, r_squared, mmre, pred, mean_residual, variance_residual)
     
-    mean_residual, variance_residual = calculate_residual_statistics(Z_final[:, -1], Y_hat)
-    
-    print_results(b0, b1, b2, b3, r_squared, mmre, pred, mean_residual, variance_residual)
+    # Linear Model Y = b0 + b1 * X1 + b2 * X2 + b3 * X3
+    print(f"\nLinear Model: Y = {b0:.4f} + {b1:.4f} * X1 + {b2:.4f} * X2 + {b3:.4f} * X3")
+    # Nonlinear Model Y = 10^b0 * X1^b1 * X2^b2 * X3^b3
+    print(f"Nonlinear Model: Y = 10^{b0:.4f} * X1^{b1:.4f} * X2^{b2:.4f} * X3^{b3:.4f}")
     
     test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2, b3), "3f-40-wmc.csv")
-    print(f"Test Results 3 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
+    print(f"\nTest Results 3 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
+    
+    while True:
+        dit, cbo, wmc = input("Enter DIT, CBO, and WMC values separated by spaces: ").split()
+        dit, cbo, wmc = float(dit), float(cbo), float(wmc)
+        rfc = 10**b0 * dit**b1 * cbo**b2 * wmc**b3
+        print(f"Predicted RFC: {int(round(rfc))}")
 
 if __name__ == "__main__":
     main()

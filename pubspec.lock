@@ -226,10 +226,10 @@ packages:
     dependency: "direct main"
     description:
       name: distributions
-      sha256: a431f9fb8aa2f249e442f9132a04f07eda5a34f50bab6ce724ffbd871187fa0f
+      sha256: af52685d40707afd08807b55ce7885d89a4aa87777208720b65f299d9c4e3f7c
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.2"
+    version: "0.0.3"
   fake_async:
     dependency: transitive
     description:

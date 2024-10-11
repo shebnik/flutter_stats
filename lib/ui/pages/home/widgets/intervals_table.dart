@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_stats/models/interval/model_interval.dart';
+import 'package:flutter_stats/services/utils.dart';
 
 class IntervalsTable extends StatelessWidget {
   const IntervalsTable({
@@ -15,7 +16,9 @@ class IntervalsTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Table(
-      border: TableBorder.all(),
+      border: TableBorder.all(
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         TableRow(
@@ -23,7 +26,7 @@ class IntervalsTable extends StatelessWidget {
               .map(
                 (header) => TableCell(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(16),
                     child: header.contains(r'\')
                         ? Center(
                             child: Math.tex(
@@ -52,7 +55,7 @@ class IntervalsTable extends StatelessWidget {
             children: [
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
                     interval.index.toString(),
                     style: const TextStyle(
@@ -64,9 +67,9 @@ class IntervalsTable extends StatelessWidget {
               ),
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    interval.calculatedValues.toStringAsFixed(6),
+                    Utils.formatNumber(interval.calculatedValues),
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -76,9 +79,9 @@ class IntervalsTable extends StatelessWidget {
               ),
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    interval.lowerConfidenceLimit.toStringAsFixed(6),
+                    Utils.formatNumber(interval.lowerConfidenceLimit),
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -88,9 +91,9 @@ class IntervalsTable extends StatelessWidget {
               ),
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    interval.upperConfidenceLimit.toStringAsFixed(6),
+                    Utils.formatNumber(interval.upperConfidenceLimit),
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -100,9 +103,9 @@ class IntervalsTable extends StatelessWidget {
               ),
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    interval.lowerPredictionLimit.toStringAsFixed(6),
+                    Utils.formatNumber(interval.lowerPredictionLimit),
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -112,9 +115,9 @@ class IntervalsTable extends StatelessWidget {
               ),
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    interval.upperPredictionLimit.toStringAsFixed(6),
+                    Utils.formatNumber(interval.upperPredictionLimit),
                     style: const TextStyle(
                       fontSize: 16,
                     ),

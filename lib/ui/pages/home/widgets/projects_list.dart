@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
-import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -17,9 +16,15 @@ class ProjectsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      controller: Provider.of<ScrollProvider>(context, listen: false).sc,
+    return ListView.separated(
+      shrinkWrap: true,
       itemCount: projects.length,
+      separatorBuilder: (context, index) {
+        if (outliersIndexes != null && !outliersIndexes!.contains(index)) {
+          return const SizedBox.shrink();
+        }
+        return const Divider();
+      },
       itemBuilder: (context, index) {
         if (outliersIndexes != null && !outliersIndexes!.contains(index)) {
           return const SizedBox.shrink();
@@ -58,10 +63,15 @@ class ProjectsList extends StatelessWidget {
         return MouseRegion(
           cursor: SystemMouseCursors.click,
           child: ListTile(
+            dense: true,
+            visualDensity: const VisualDensity(
+              horizontal: -4,
+              vertical: -4,
+            ),
             leading: Text(
               '${index + 1}',
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -75,10 +85,18 @@ class ProjectsList extends StatelessWidget {
             title: project.url != null
                 ? Text(
                     project.url!,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      height: 2,
+                      color: Colors.blue,
+                    ),
                   )
                 : null,
             subtitle: Text(
               subtitle,
+              style: const TextStyle(
+                height: 2,
+              ),
             ),
             isThreeLine: true,
             trailing: IconButton(

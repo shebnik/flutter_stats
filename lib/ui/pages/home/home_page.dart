@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
-import 'package:flutter_stats/providers/app_theme_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
-import 'package:flutter_stats/providers/scroll_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/utils.dart';
-import 'package:flutter_stats/ui/pages/home/views/covariance_matrix_view.dart';
-import 'package:flutter_stats/ui/pages/home/views/d_square_ts_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/intervals_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/metrics_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/outliers_view.dart';
+import 'package:flutter_stats/ui/pages/home/views/prediction_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/regression_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/scatter_plot_view.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/app_navigation_rail.dart';
 import 'package:provider/provider.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,53 +22,37 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final dataHandler = DataHandler();
-  late final scrollProvider = Provider.of<ScrollProvider>(
-    context,
-    listen: false,
-  );
+  final scrollController = ScrollController();
+  ValueNotifier<bool> showScrollToTopButton = ValueNotifier(false);
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController.addListener(() {
+      if (scrollController.offset > 100) {
+        showScrollToTopButton.value = true;
+      } else {
+        showScrollToTopButton.value = false;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter Stats'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: context.read<AppThemeProvider>().toggleTheme,
-            icon: context.watch<AppThemeProvider>().isDarkMode
-                ? const Icon(Icons.dark_mode)
-                : const Icon(Icons.light_mode),
-          ),
-        ],
-      ),
-      body: Row(
-        children: [
-          const AppNavigationRail(),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: Consumer<RegressionModelProvider>(
-              builder: (context, value, child) {
-                if (value.projects.isEmpty) {
-                  return Center(
-                    child: ElevatedButton(
-                      onPressed: () =>
-                          context.read<Utils>().loadCsvFile(context),
-                      child: const Text('Load csv File'),
-                    ),
-                  );
-                }
-                return _buildView();
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: Consumer<ScrollProvider>(
+      body: ResponsiveBreakpoints.of(context).isMobile
+          ? _buildMobileView()
+          : _buildDesktopView(),
+      floatingActionButton: ValueListenableBuilder(
+        valueListenable: showScrollToTopButton,
         builder: (context, value, child) {
-          if (value.showScrollToTopButton) {
+          if (value) {
             return FloatingActionButton(
-              onPressed: value.scrollToTop,
+              onPressed: () => scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+              ),
               child: const Icon(Icons.arrow_upward),
             );
           }
@@ -80,21 +62,59 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildMobileView() {
+    return _buildView();
+  }
+
+  Widget _buildDesktopView() {
+    return Row(
+      children: [
+        const AppNavigationRail(),
+        const VerticalDivider(thickness: 1, width: 1),
+        Expanded(
+          child: Consumer<RegressionModelProvider>(
+            builder: (context, value, child) {
+              if (value.projects.isEmpty) {
+                return Center(
+                  child: ElevatedButton(
+                    onPressed: () => context.read<Utils>().loadCsvFile(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                        'Load .csv File',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return SingleChildScrollView(
+                controller: scrollController,
+                child: _buildView(),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildView() {
     switch (context.watch<AppNavigationProvider>().currentIndex) {
       case 0:
         return const MetricsView();
       case 1:
-        return const CovarianceMatrixView();
-      case 2:
-        return const DSquareTSView();
-      case 3:
         return const OutliersView();
-      case 4:
+      case 2:
         return const RegressionView();
-      case 5:
+      case 3:
+        return const PredictionView();
+      case 4:
         return const IntervalsView();
-      case 6:
+      case 5:
         return const ScatterPlotView();
       default:
         return const MetricsView();

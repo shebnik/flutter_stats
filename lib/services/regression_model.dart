@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/constants.dart';
+import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/interval/model_interval.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
@@ -104,7 +105,8 @@ class RegressionModel {
     return identityMatrix;
   }
 
-  List<double> calculateMahalanobisDistances(List<List<double>> covInv) {
+  List<double> calculateMahalanobisDistances() {
+    final covInv = invertMatrix(calculateCovarianceMatrix());
     final values = <List<double>>[_zy, _zx1, _zx2, _zx3];
     final means = values.map(_average).toList();
 
@@ -120,7 +122,8 @@ class RegressionModel {
     });
   }
 
-  List<double> calculateTestStatistics(List<double> distances) {
+  List<double> calculateTestStatistics() {
+    final distances = calculateMahalanobisDistances();
     final factor = (n - 4) * n / ((pow(n, 2) - 1) * 4);
     return distances.map((d) => factor * d).toList();
   }
@@ -128,59 +131,103 @@ class RegressionModel {
   Future<double?> calculateFisherFDistribution() =>
       Fisher.inv(alpha: alpha, df1: 4, df2: n - 4);
 
-  Future<List<int>> determineOutliers(List<double> testStatistics) async {
-    final f = await calculateFisherFDistribution();
-    if (f == null) {
-      debugPrint('Failed to calculate Fisher F distribution');
-      return [];
-    }
-    final mahalanobisOutliers =
-        List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
+  Future<(List<double>, List<double>)> calculatePredictionInterval() async {
+    final yHat = calculatePredictedValues();
 
-    final intervals = await calculateLinearIntervals();
-    final lowerBound =
-        intervals.map((interval) => interval.lowerPredictionLimit).toList();
-    final upperBound =
-        intervals.map((interval) => interval.upperPredictionLimit).toList();
-    final predictionIntervalOutliers = List.generate(n, (i) => i)
-        .where((i) => _zy[i] < lowerBound[i] || _zy[i] > upperBound[i])
+    final zx = Matrix.fromColumns([
+      Vector.fromList(List.filled(n, 1.0)),
+      Vector.fromList(_zx1),
+      Vector.fromList(_zx2),
+      Vector.fromList(_zx3),
+    ]);
+
+    final residuals = Vector.fromList(
+      List.generate(n, (i) => _zy[i] - yHat[i]),
+    );
+    final mse = residuals.dot(residuals) / (n - 4);
+
+    final leverage = zx * (zx.transpose() * zx).inverse() * zx.transpose();
+    final leverageDiagonal = List.generate(n, (i) => leverage[i][i]);
+    final se = List.generate(n, (i) => sqrt(mse * (1 + leverageDiagonal[i])));
+
+    final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - 4);
+    final margin = List.generate(n, (i) => tValue! * se[i]);
+
+    final lowerBound = List.generate(n, (i) => yHat[i] - margin[i]);
+    final upperBound = List.generate(n, (i) => yHat[i] + margin[i]);
+
+    return (lowerBound, upperBound);
+  }
+
+  Future<List<int>> determineOutliers() async {
+    // List<double> testStatistics = calculateTestStatistics();
+    // final f = await calculateFisherFDistribution();
+    // if (f == null) {
+    //   debugPrint('Failed to calculate Fisher F distribution');
+    //   return [];
+    // }
+
+    // final mahalanobisOutliers =
+    // List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
+
+    final (lower, upper) = await calculatePredictionInterval();
+
+    final intervalOutliers = List.generate(n, (i) => i)
+        .where((i) => _zy[i] < lower[i] || _zy[i] > upper[i])
         .toList();
 
-    // Combine both outlier detection methods
-    final combinedOutliers = {
-      ...mahalanobisOutliers,
-      ...predictionIntervalOutliers,
-    }.toList()
-      ..sort();
-
-    return combinedOutliers;
+    return intervalOutliers;
   }
 
-  List<double> calculateRegressionCoefficients() {
-    final x = Matrix.fromList(
-      List.generate(n, (i) => [1.0, _zx1[i], _zx2[i], _zx3[i]]),
+  Coefficients calculateRegressionCoefficients() {
+    final designMatrix = Matrix.fromColumns([
+      Vector.fromList(List.filled(n, 1.0)),
+      Vector.fromList(_zx1),
+      Vector.fromList(_zx2),
+      Vector.fromList(_zx3),
+    ]);
+
+    final yVector = Vector.fromList(_zy);
+    final xt = designMatrix.transpose();
+    final xtX = xt * designMatrix;
+    final xtXInverse = xtX.inverse();
+    final xtY = xt * yVector;
+    final coefficientsVector = xtXInverse * xtY;
+    final coefficientsList =
+        List<double>.from(coefficientsVector.map((value) => value.first));
+
+    final residuals = yVector - designMatrix * coefficientsVector;
+    final sigma = sqrt(residuals.dot(residuals) / (n - 4));
+
+    return Coefficients(
+      b0: coefficientsList[0],
+      b1: coefficientsList[1],
+      b2: coefficientsList[2],
+      b3: coefficientsList[3],
+      sigma: sigma,
     );
-    final y = Vector.fromList(_zy);
-
-    final xTranspose = x.transpose();
-    final xTx = xTranspose * x;
-    final xTxInv = xTx.inverse();
-    final xTy = xTranspose * y;
-    final coffs = xTxInv * xTy;
-
-    return List.from(coffs.map((value) => value.first));
   }
 
-  List<double> calculatePredictedValues(List<double> b) => List.generate(
-        n,
-        (i) => b[0] + b[1] * _zx1[i] + b[2] * _zx2[i] + b[3] * _zx3[i],
-      );
+  List<double> calculatePredictedValues() {
+    final _ = calculateRegressionCoefficients();
+    return List.generate(
+      n,
+      (i) => _.b0 + _.b1 * _zx1[i] + _.b2 * _zx2[i] + _.b3 * _zx3[i],
+    );
+  }
 
-  List<double> calculateYHat(List<double> predictedValues) =>
-      predictedValues.map((value) => pow(10, value)).toList().cast<double>();
+  List<double> calculateYHat() => calculatePredictedValues()
+      .map((value) => pow(10, value))
+      .toList()
+      .cast<double>();
+
+  num predictY(double x1, double x2, double x3) {
+    final _ = calculateRegressionCoefficients();
+    return pow(10, _.b0) * pow(x1, _.b1) * pow(x2, _.b2) * pow(x3, _.b3);
+  }
 
   ModelQuality calculateModelQuality(List<double> predictedValues) {
-    final yHat = calculateYHat(predictedValues);
+    final yHat = calculateYHat();
 
     final yDiffSquared = List.generate(n, (i) => pow(_y[i] - yHat[i], 2));
     final yAvgDiffSquared = _y.map((value) => pow(value - yAvg, 2)).toList();
@@ -195,17 +242,21 @@ class RegressionModel {
 
     final pred = yDividedDiff.where((diff) => diff.abs() < 0.25).length / n;
 
-    return ModelQuality(rSquared: rSquared, mmre: mmre, pred: pred);
+    return ModelQuality(
+      rSquared: rSquared,
+      mmre: mmre,
+      pred: pred,
+    );
   }
 
   Future<List<ModelInterval>> calculateLinearIntervals() async {
-    final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);
+    final q = await Student.inv2T(alpha: 1 - alpha / 2, df: n - 4);
     if (q == null) {
       debugPrint('Failed to calculate Student T distribution');
       return [];
     }
 
-    final zyHat = calculatePredictedValues(calculateRegressionCoefficients());
+    final zyHat = calculatePredictedValues();
     final sy = sqrt(
       (1 / (n - 4)) *
           List.generate(n, (i) => pow(_zy[i] - zyHat[i], 2))
@@ -226,15 +277,13 @@ class RegressionModel {
   }
 
   Future<List<ModelInterval>> calculateNonLinearIntervals() async {
-    final q = await Student.inv2T(alpha: alpha / 2, df: n - 4);
+    final q = await Student.inv2T(alpha: 1 - alpha / 2, df: n - 4);
     if (q == null) {
       debugPrint('Failed to calculate Student T distribution');
       return [];
     }
 
-    final yHat = calculateYHat(
-      calculatePredictedValues(calculateRegressionCoefficients()),
-    );
+    final yHat = calculateYHat();
     final sy = sqrt(
       (1 / (n - 4)) *
           List.generate(n, (i) => pow(_y[i] - yHat[i], 2))

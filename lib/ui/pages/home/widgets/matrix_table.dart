@@ -13,7 +13,7 @@ class MatrixTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -25,17 +25,19 @@ class MatrixTable extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _buildMatrixTable(),
+          _buildMatrixTable(context),
         ],
       ),
     );
   }
 
-  Widget _buildMatrixTable() {
+  Widget _buildMatrixTable(BuildContext context) {
     final labels = List<String>.generate(matrix.length, (i) => 'X$i');
 
     return Table(
-      border: TableBorder.all(),
+      border: TableBorder.all(
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
       children: [
         TableRow(
           children: [
@@ -45,7 +47,7 @@ class MatrixTable extends StatelessWidget {
             ...labels.map(
               (label) => TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(label, textAlign: TextAlign.center),
                 ),
               ),
@@ -57,7 +59,7 @@ class MatrixTable extends StatelessWidget {
             children: [
               TableCell(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
                     'Y${matrix.indexOf(row)}',
                   ),
@@ -66,7 +68,7 @@ class MatrixTable extends StatelessWidget {
               ...row.map(
                 (cell) => TableCell(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(16),
                     child: Text(Utils.formatNumber(cell)),
                   ),
                 ),

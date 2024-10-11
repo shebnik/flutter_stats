@@ -16,6 +16,6 @@ class Student {
     } on PlatformException catch (e) {
       debugPrint('Failed to get result: ${e.message}');
     }
-    return result;
+    return result?.abs();
   }
 }

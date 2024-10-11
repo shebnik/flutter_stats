@@ -19,7 +19,7 @@ class _IntervalsViewState extends State<IntervalsView> {
       alignment: Alignment.topCenter,
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Expanded(
@@ -27,7 +27,7 @@ class _IntervalsViewState extends State<IntervalsView> {
                   future: model.linearIntervals,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const SizedBox.shrink();
                     }
                     final linearIntervals = snapshot.data;
                     if (linearIntervals == null) {
@@ -46,7 +46,7 @@ class _IntervalsViewState extends State<IntervalsView> {
                   future: model.nonLinearIntervals,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const SizedBox.shrink();
                     }
                     final nonLinearIntervals = snapshot.data;
                     if (nonLinearIntervals == null) {

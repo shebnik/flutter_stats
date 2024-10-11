@@ -11,7 +11,7 @@ class CovarianceMatrixView extends StatelessWidget {
     final provider = context.watch<RegressionModelProvider>();
 
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           Expanded(

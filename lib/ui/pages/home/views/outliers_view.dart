@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
-import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
-class OutliersView extends StatelessWidget {
+class OutliersView extends StatefulWidget {
   const OutliersView({super.key});
 
   @override
+  State<OutliersView> createState() => _OutliersViewState();
+}
+
+class _OutliersViewState extends State<OutliersView> {
+  final isRemoving = ValueNotifier<bool>(false);
+  late Future<List<int>> outliersIndexesFuture;
+  late List<Project> metrics;
+
+  @override
   Widget build(BuildContext context) {
-    final fisherFDistributionFuture = context.select(
-      (RegressionModelProvider provider) => provider.fisherFDistribution,
-    );
-    final outliersIndexesFuture = context.select(
+    outliersIndexesFuture = context.select(
       (RegressionModelProvider provider) => provider.outliers,
     );
-    final metrics = context.select(
+    metrics = context.select(
       (RegressionModelProvider provider) => provider.projects,
     );
     return FutureBuilder(
       future: outliersIndexesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const SizedBox.shrink();
         }
         final outliersIndexes = snapshot.data;
         if (outliersIndexes == null) {
@@ -33,35 +37,11 @@ class OutliersView extends StatelessWidget {
           );
         }
 
-        return Container(
-          padding: const EdgeInsets.all(8),
+        return Padding(
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    FutureBuilder(
-                      future: fisherFDistributionFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        final fisherFDistribution =
-                            Utils.formatNumber(snapshot.data ?? 0);
-                        return Text(
-                          'Fisher F-Distribution: $fisherFDistribution',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
               if (outliersIndexes.isEmpty) ...[
-                const SizedBox(height: 16),
                 Center(
                   child: Text(
                     'No outliers',
@@ -69,16 +49,28 @@ class OutliersView extends StatelessWidget {
                   ),
                 ),
               ] else ...[
-                Text(
-                  'Outliers',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                Expanded(
-                  child: ProjectsList(
-                    projects: metrics,
-                    outliersIndexes: outliersIndexes,
-                    key: const Key('outliers_list'),
+                Center(
+                  child: ValueListenableBuilder(
+                    valueListenable: isRemoving,
+                    builder: (_, disabled, __) => ElevatedButton(
+                      onPressed: disabled
+                          ? null
+                          : () => _removeAllClick(outliersIndexes),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(
+                          'Remove all outliers',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                ProjectsList(
+                  projects: metrics,
+                  outliersIndexes: outliersIndexes,
+                  key: const Key('outliers_list'),
                 ),
               ],
             ],
@@ -86,5 +78,23 @@ class OutliersView extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _removeAllClick(List<int> outliersIndexes) async {
+    if (isRemoving.value) return;
+    isRemoving.value = true;
+    await _removeAllOutliers(outliersIndexes);
+    isRemoving.value = false;
+  }
+
+  Future<void> _removeAllOutliers(List<int> outliersIndexes) async {
+    final provider = context.read<RegressionModelProvider>()
+      ..removeProjects(outliersIndexes);
+
+    final newOutliers = await provider.outliers;
+    if (newOutliers.isEmpty) {
+      return;
+    }
+    return _removeAllOutliers(newOutliers);
   }
 }
