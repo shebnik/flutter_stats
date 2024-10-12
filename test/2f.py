@@ -4,16 +4,16 @@ from scipy.stats import t
 import os
 from typing import Tuple, List
 
-def retrieve_data(filename: str = "3f-60-wmc.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def retrieve_data(filename: str = "results-60.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load data from CSV file and return X1, X2, and Y arrays."""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
     return df["CBO"].values.astype(float), df["WMC"].values.astype(float), df["RFC"].values.astype(float)
 
 def normalize_data(x1: np.ndarray, x2: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Normalize the data."""
-    x1[x1 == 0] = 1e-6
-    x2[x2 == 0] = 1e-6
-    y[y == 0] = 1e-6
+    x1[x1 == 0] = 1
+    x2[x2 == 0] = 1
+    y[y == 0] = 1
     
     return np.column_stack((np.log10(x1), np.log10(x2), np.log10(y)))
 
@@ -22,8 +22,8 @@ def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, floa
     X = Z[:, :-1]
     Y = Z[:, -1]
     X = np.column_stack((np.ones(X.shape[0]), X))
-    coeffs = np.linalg.inv(X.T @ X) @ X.T @ Y
-    return coeffs[0], coeffs[1], coeffs[2]
+    coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
+    return coffs[0], coffs[1], coffs[2]
 
 def calculate_prediction_interval(Z: np.ndarray, Y_hat: np.ndarray, alpha: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
     """Calculate prediction interval for each data point."""
@@ -55,10 +55,10 @@ def print_outliers(Z: np.ndarray, outliers: List[int]):
     """Print the outliers identified."""
     string = "Outliers found:\n"
     for i in outliers:
-        x1 = 10**Z[i, 0]
-        x2 = 10**Z[i, 1]
-        y = 10**Z[i, 2]
-        string += f"CBO: {int(x1):d}, WMC: {int(x2):d}, RFC: {int(y):d}\n"
+        x1 = int(round(10**Z[i, 0]))
+        x2 = int(round(10**Z[i, 1]))
+        y = int(round(10**Z[i, 2]))
+        string += f"CBO: {x1}, WMC: {x2}, RFC: {y}\n"
     print(string)
 
 def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
@@ -123,14 +123,14 @@ def print_results(b0: float, b1: float, b2: float, r_squared: float, mmre: float
     print(f"Sample Mean of Residuals: {mean_residual:.6f}")
     print(f"Sample Variance of Residuals: {variance_residual:.6f}")
 
-def test_model(model_coefficients: Tuple[float, float, float], test_file: str = "3f-40-wmc.csv") -> Tuple[float, float, float]:
+def test_model(model_coefficients: Tuple[float, float, float], test_file: str = "results-40.csv", sigma: float = 0) -> Tuple[float, float, float]:
     """Test the model on a separate dataset."""
     x1, x2, y = retrieve_data(test_file)
     Z_test = normalize_data(x1, x2, y)
     
     b0, b1, b2 = model_coefficients
     Y_test = Z_test[:, -1]
-    Y_hat_test = b0 + b1 * Z_test[:, 0] + b2 * Z_test[:, 1]
+    Y_hat_test = b0 + b1 * Z_test[:, 0] + b2 * Z_test[:, 1] + sigma
     
     r_squared, mmre, pred = calculate_regression_metrics(Y_test, Y_hat_test)
     
@@ -139,14 +139,15 @@ def test_model(model_coefficients: Tuple[float, float, float], test_file: str = 
 def main():
     # Java test
     b0, b1, b2 = -0.054776, 0.672260, 0.441541
-    r_squared, mmre, pred = test_model((b0, b1, b2), "3f-60-wmc.csv")
+    r_squared, mmre, pred = test_model((b0, b1, b2), "results-60.csv", 0.06538)
     print(f"Test Results for Java: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     
     # Kotlin test
-    b0, b1, b2 = 1.36206, 0.306892, 0.228584
-    r_squared, mmre, pred = test_model((b0, b1, b2), "3f-60-wmc.csv")
+    b0, b1, b2 = 0.306892, 0.228584, 1.36206
+    r_squared, mmre, pred = test_model((b2, b1, b0), "results-60.csv", 0.1128)
     print(f"Test Results for Kotlin: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     
+    # Build model
     x1, x2, y = retrieve_data()
     Z = normalize_data(x1, x2, y)
 
@@ -160,8 +161,14 @@ def main():
     
     print_results(b0, b1, b2, r_squared, mmre, pred, mean_residual, variance_residual)
     
-    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2), "3f-40-wmc.csv")
+    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2), "results-40.csv")
     print(f"Test Results 2 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
+    
+    while True:
+        cbo, wmc = input("Enter CBO and WMC values separated by a space: ").split()
+        cbo, wmc = float(cbo), float(wmc)
+        rfc = 10**b0 * cbo**b1 * wmc**b2
+        print(f"Predicted RFC: {int(round(rfc))}")
 
 if __name__ == "__main__":
     main()

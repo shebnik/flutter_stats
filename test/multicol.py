@@ -8,7 +8,7 @@ import os
 # Read the CSV file
 # Assuming the CSV file is named 'metrics.csv'
 df = pd.read_csv(
-    os.path.join(os.path.dirname(__file__), os.path.join("data", "3f-60-wmc.csv"))
+    os.path.join(os.path.dirname(__file__), os.path.join("data", "results-60.csv"))
 )
 
 # Remove the URL column as it's not needed for the analysis

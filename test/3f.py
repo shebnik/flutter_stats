@@ -4,7 +4,7 @@ from scipy.stats import t
 import os
 from typing import Tuple, List
 
-def retrieve_data(filename: str = "3f-60-wmc.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def retrieve_data(filename: str = "results-60.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Load data from CSV file and return X1, X2, X3, and Y arrays."""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
     return df["DIT"].values.astype(float), df["CBO"].values.astype(float), df["WMC"].values.astype(float), df["RFC"].values.astype(float)
@@ -133,7 +133,7 @@ def print_results(sigma: float, b0: float, b1: float, b2: float, b3: float, r_sq
     print(f"Sample Mean of Residuals: {mean_residual:.6f}")
     print(f"Sample Variance of Residuals: {variance_residual:.6f}")
 
-def test_model(model_coefficients: Tuple[float, float, float, float], test_file: str = "3f-40-wmc.csv") -> Tuple[float, float, float]:
+def test_model(model_coefficients: Tuple[float, float, float, float], test_file: str = "results-40.csv") -> Tuple[float, float, float]:
     """Test the model on a separate dataset."""
     x1, x2, x3, y = retrieve_data(test_file)
     Z_test = normalize_data(x1, x2, x3, y)
