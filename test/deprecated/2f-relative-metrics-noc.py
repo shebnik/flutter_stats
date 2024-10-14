@@ -3,36 +3,32 @@ import numpy as np
 from scipy.stats import t
 import os
 from typing import Tuple, List
+from sklearn.metrics import r2_score
 
-def retrieve_data(filename: str = "results-60.csv") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Load data from CSV file and return X1, X2, X3, and Y arrays."""
+def retrieve_data(filename: str = "results-60.csv", relative_by_noc: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Load data from CSV file and return X1, X2, and Y arrays."""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), os.path.join('data', filename)))
-    return df["DIT"].values.astype(float), df["CBO"].values.astype(float), df["WMC"].values.astype(float), df["RFC"].values.astype(float)
+    cbo, wmc, rfc = df["CBO"].values.astype(float), df["WMC"].values.astype(float), df["RFC"].values.astype(float)
+    if relative_by_noc:
+        noc = df["NOC"].values.astype(float)
+        return cbo / noc, wmc / noc, rfc / noc
+    return cbo, wmc, rfc
 
-def normalize_data(x1: np.ndarray, x2: np.ndarray, x3: np.ndarray, y: np.ndarray) -> np.ndarray:
+def normalize_data(x1: np.ndarray, x2: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Normalize the data."""
-    x1[x1 == 0] = 1
-    x2[x2 == 0] = 1
-    x3[x3 == 0] = 1
-    y[y == 0] = 1
+    x1 = np.maximum(x1, 1)
+    x2 = np.maximum(x2, 1)
+    y = np.maximum(y, 1) 
     
-    return np.column_stack((np.log10(x1), np.log10(x2), np.log10(x3), np.log10(y)))
+    return np.column_stack((np.log10(x1), np.log10(x2), np.log10(y)))
 
-def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, float, float]:
+def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, float]:
     """Calculate regression coefficients."""
     X = Z[:, :-1]
     Y = Z[:, -1]
     X = np.column_stack((np.ones(X.shape[0]), X))
     coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
-    
-    # Calculate residuals in log space
-    Y_hat = X @ coffs
-    residuals = Y - Y_hat
-    
-    # Estimate standard deviation of residuals
-    sigma = np.std(residuals, ddof=1)
-    
-    return coffs[0], coffs[1], coffs[2], coffs[3], residuals, sigma
+    return coffs[0], coffs[1], coffs[2]
 
 def calculate_prediction_interval(Z: np.ndarray, Y_hat: np.ndarray, alpha: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
     """Calculate prediction interval for each data point."""
@@ -66,15 +62,14 @@ def print_outliers(Z: np.ndarray, outliers: List[int]):
     for i in outliers:
         x1 = int(round(10**Z[i, 0]))
         x2 = int(round(10**Z[i, 1]))
-        x3 = int(round(10**Z[i, 2]))
-        y = int(round(10**Z[i, 3]))
-        string += f"DIT: {x1}, CBO: {x2}, WMC: {x3}, RFC: {y}\n"
+        y = int(round(10**Z[i, 2]))
+        string += f"CBO: {x1}, WMC: {x2}, RFC: {y}\n"
     print(string)
 
-def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
+def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Remove outliers and create a regression model."""
-    b0, b1, b2, b3, residuals, sigma = calculate_regression_coefficients(Z)
-    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
+    b0, b1, b2 = calculate_regression_coefficients(Z)
+    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1]
     
     lower_bound, upper_bound = calculate_prediction_interval(Z, Y_hat)
     outliers = identify_outliers(Z, lower_bound, upper_bound)
@@ -84,14 +79,14 @@ def remove_outliers_and_create_model(Z: np.ndarray) -> Tuple[np.ndarray, float, 
         Z = np.delete(Z, outliers, axis=0)
         print(f"Removed {len(outliers)} outliers")
     
-    return Z, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound
+    return Z, b0, b1, b2, Y_hat, lower_bound, upper_bound
 
-def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
+def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Iteratively remove outliers and create a regression model until no more outliers are found."""
     iteration = 1
     while True:
         print(f"\nStarting iteration {iteration}")
-        Z_new, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound = remove_outliers_and_create_model(Z)
+        Z_new, b0, b1, b2, Y_hat, lower_bound, upper_bound = remove_outliers_and_create_model(Z)
         
         if Z_new.shape[0] == Z.shape[0]:
             print("No more outliers found. Stopping iterations.")
@@ -100,7 +95,7 @@ def iterative_outlier_removal_and_modeling(Z: np.ndarray) -> Tuple[np.ndarray, f
         Z = Z_new
         iteration += 1
     
-    return Z, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound
+    return Z, b0, b1, b2, Y_hat, lower_bound, upper_bound
 
 def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float, float]:
     """Calculate regression model metrics."""
@@ -124,58 +119,60 @@ def calculate_residual_statistics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[flo
     variance_residual = np.var(residuals, ddof=1)
     return mean_residual, variance_residual
 
-def print_results(sigma: float, b0: float, b1: float, b2: float, b3: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
+def print_results(b0: float, b1: float, b2: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
     """Print regression results and residual statistics."""
     print(f"\nFinal Results:")
-    print(f"Regression Coefficients: ε = {sigma:.4f}, b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
+    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}")
     print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     print(f"Residual Statistics:")
     print(f"Sample Mean of Residuals: {mean_residual:.6f}")
     print(f"Sample Variance of Residuals: {variance_residual:.6f}")
 
-def test_model(model_coefficients: Tuple[float, float, float, float], test_file: str = "results-40.csv") -> Tuple[float, float, float]:
+def test_model(model_coefficients: Tuple[float, float, float], test_file: str = "results-40.csv", sigma: float = 0) -> Tuple[float, float, float]:
     """Test the model on a separate dataset."""
-    x1, x2, x3, y = retrieve_data(test_file)
-    Z_test = normalize_data(x1, x2, x3, y)
+    x1, x2, y = retrieve_data(test_file)
+    Z_test = normalize_data(x1, x2, y)
     
-    b0, b1, b2, b3 = model_coefficients
+    b0, b1, b2 = model_coefficients
     Y_test = Z_test[:, -1]
-    Y_hat_test = b0 + b1 * Z_test[:, 0] + b2 * Z_test[:, 1] + b3 * Z_test[:, 2]
+    Y_hat_test = b0 + b1 * Z_test[:, 0] + b2 * Z_test[:, 1] + sigma
     
     r_squared, mmre, pred = calculate_regression_metrics(Y_test, Y_hat_test)
     
-    return r_squared, mmre, pred
+    return r_squared, mmre, pred    
 
 def main():
-    x1, x2, x3, y = retrieve_data()
-    Z = normalize_data(x1, x2, x3, y)
-    print(f"Initial number of data points: {Z.shape[0]}")
+    # Java test
+    b0, b1, b2 = -0.054776, 0.672260, 0.441541
+    r_squared, mmre, pred = test_model((b0, b1, b2), "100.csv", 0.06538)
+    print(f"Test Results for Java: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     
-    b0, b1, b2, b3, residuals, sigma = calculate_regression_coefficients(Z)
-    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
-    r_squared, mmre, pred = calculate_regression_metrics(Z[:, -1], Y_hat)
-    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}")
-    print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    # Kotlin test
+    b0, b1, b2 = 0.306892, 0.228584, 1.36206
+    r_squared, mmre, pred = test_model((b0, b1, b2), "100.csv", 0.1128)
+    print(f"Test Results for Kotlin: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    
+    # Build model
+    x1, x2, y = retrieve_data()
+    Z = normalize_data(x1, x2, y)
 
-    Z_final, b0, b1, b2, b3, Y_hat, lower_bound, upper_bound = iterative_outlier_removal_and_modeling(Z)
+    print(f"Initial number of data points: {Z.shape[0]}")
+    Z_final, b0, b1, b2, Y_hat, lower_bound, upper_bound = iterative_outlier_removal_and_modeling(Z)
     print(f"\nFinal number of data points after outlier removal: {Z_final.shape[0]}")
     
     r_squared, mmre, pred = calculate_regression_metrics(Z_final[:, -1], Y_hat)
-    mean_residual, variance_residual = calculate_residual_statistics(Z_final[:, -1], Y_hat)    
-    print_results(sigma, b0, b1, b2, b3, r_squared, mmre, pred, mean_residual, variance_residual)
     
-    # Linear Model Y = b0 + b1 * X1 + b2 * X2 + b3 * X3
-    print(f"\nLinear Model: Y = {b0:.4f} + {b1:.4f} * X1 + {b2:.4f} * X2 + {b3:.4f} * X3")
-    # Nonlinear Model Y = 10^b0 * X1^b1 * X2^b2 * X3^b3
-    print(f"Nonlinear Model: Y = 10^{b0:.4f} * X1^{b1:.4f} * X2^{b2:.4f} * X3^{b3:.4f}")
+    mean_residual, variance_residual = calculate_residual_statistics(Z_final[:, -1], Y_hat)
     
-    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2, b3), "3f-40-wmc.csv")
-    print(f"\nTest Results 3 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
+    print_results(b0, b1, b2, r_squared, mmre, pred, mean_residual, variance_residual)
+    
+    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2), "results-40.csv")
+    print(f"Test Results 2 factor model: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
     
     while True:
-        dit, cbo, wmc = input("Enter DIT, CBO, and WMC values separated by spaces: ").split()
-        dit, cbo, wmc = float(dit), float(cbo), float(wmc)
-        rfc = 10**b0 * dit**b1 * cbo**b2 * wmc**b3
+        cbo, wmc = input("Enter CBO and WMC values separated by a space: ").split()
+        cbo, wmc = float(cbo), float(wmc)
+        rfc = 10**b0 * cbo**b1 * wmc**b2
         print(f"Predicted RFC: {int(round(rfc))}")
 
 if __name__ == "__main__":

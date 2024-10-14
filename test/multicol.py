@@ -8,12 +8,25 @@ import os
 # Read the CSV file
 # Assuming the CSV file is named 'metrics.csv'
 df = pd.read_csv(
-    os.path.join(os.path.dirname(__file__), os.path.join("data", "results-60.csv"))
+    os.path.join(os.path.dirname(__file__), os.path.join("data", "100.csv"))
 )
 
 # Remove the URL column as it's not needed for the analysis
 features = ["SLOC", "NOC", "NOM", "DIT", "RFC", "CBO", "WMC"]
 df_metrics = df[features]
+
+min_cbo = np.min(df_metrics["CBO"])
+max_cbo = np.max(df_metrics["CBO"])
+
+min_wmc = np.min(df_metrics["WMC"])
+max_wmc = np.max(df_metrics["WMC"])
+
+min_rfc = np.min(df_metrics["RFC"])
+max_rfc = np.max(df_metrics["RFC"])
+
+print(f"Min CBO: {min_cbo}, Max CBO: {max_cbo}")
+print(f"Min WMC: {min_wmc}, Max WMC: {max_wmc}")
+print(f"Min RFC: {min_rfc}, Max RFC: {max_rfc}")
 
 # Calculate correlation matrix
 correlation_matrix = df_metrics.corr()
