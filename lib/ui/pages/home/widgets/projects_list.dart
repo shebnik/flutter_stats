@@ -33,32 +33,39 @@ class ProjectsList extends StatelessWidget {
         final metric = project.metrics!;
         var subtitle = '';
         if (metric.rfc != null) {
-          var value = metric.rfc!.toString();
+          var value = Utils.formatNumber(metric.rfc!);
           if (metric.dit! % 1 == 0) {
             value = metric.rfc!.toStringAsFixed(0);
           }
           subtitle += '(Y) RFC (Response for a Class): $value';
         }
         if (metric.dit != null) {
-          var value = metric.dit!.toString();
+          var value = Utils.formatNumber(metric.dit!);
           if (metric.dit! % 1 == 0) {
             value = metric.dit!.toStringAsFixed(0);
           }
           subtitle += '\n(X1) DIT (Depth of Inheritance Tree) : $value';
         }
         if (metric.cbo != null) {
-          var value = metric.cbo!.toString();
+          var value = Utils.formatNumber(metric.cbo!);
           if (metric.cbo! % 1 == 0) {
             value = metric.cbo!.toStringAsFixed(0);
           }
           subtitle += '\n(X2) CBO (Coupling Between Object Classes): $value';
         }
         if (metric.wmc != null) {
-          var value = metric.wmc!.toString();
+          var value = Utils.formatNumber(metric.wmc!);
           if (metric.wmc! % 1 == 0) {
             value = metric.wmc!.toStringAsFixed(0);
           }
           subtitle += '\n(X3) WMC (Weighted Methods Per Class): $value';
+        }
+        if (metric.noc != null) {
+          var value = metric.noc!.toString();
+          if (metric.noc! % 1 == 0) {
+            value = metric.noc!.toStringAsFixed(0);
+          }
+          subtitle += '\nNOC (Number of Classes): $value';
         }
         return MouseRegion(
           cursor: SystemMouseCursors.click,

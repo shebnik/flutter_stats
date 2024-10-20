@@ -15,7 +15,7 @@ class AppNavigationRail extends StatelessWidget {
       labelType: NavigationRailLabelType.all,
       leading: FloatingActionButton(
         elevation: 0,
-        onPressed: () => context.read<Utils>().loadCsvFile(context),
+        onPressed: () => context.read<Utils>().loadDataFile(context),
         tooltip: 'Load CSV file',
         child: const Icon(Icons.add),
       ),
@@ -40,16 +40,17 @@ class AppNavigationRail extends StatelessWidget {
           selectedIcon: Icon(Icons.analytics),
           label: Text('Prediction'),
         ),
-        NavigationRailDestination(
-          icon: Icon(Icons.settings_ethernet_outlined),
-          selectedIcon: Icon(Icons.settings_ethernet_rounded),
-          label: Text('Intervals'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.scatter_plot_outlined),
-          selectedIcon: Icon(Icons.scatter_plot),
-          label: Text('Scatter Plot'),
-        ),
+        // TODO(dev): Fix the following destinations
+        // NavigationRailDestination(
+        //   icon: Icon(Icons.settings_ethernet_outlined),
+        //   selectedIcon: Icon(Icons.settings_ethernet_rounded),
+        //   label: Text('Intervals'),
+        // ),
+        // NavigationRailDestination(
+        //   icon: Icon(Icons.scatter_plot_outlined),
+        //   selectedIcon: Icon(Icons.scatter_plot),
+        //   label: Text('Scatter Plot'),
+        // ),
       ],
     );
   }

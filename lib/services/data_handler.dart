@@ -55,6 +55,7 @@ class DataHandler {
     final cboIndex = getMetricIndex(headers, ['cbo', 'x2']);
     final wmcIndex = getMetricIndex(headers, ['wmc', 'x3']);
     final rfcIndex = getMetricIndex(headers, ['rfc', 'y']);
+    final nocIndex = getMetricIndex(headers, ['noc']);
 
     final projects = <Project>[];
 
@@ -68,6 +69,7 @@ class DataHandler {
       final cbo = getDoubleValue(row, cboIndex);
       final wmc = getDoubleValue(row, wmcIndex);
       final rfc = getDoubleValue(row, rfcIndex);
+      final noc = getDoubleValue(row, nocIndex);
 
       final project = Project(
         name: name,
@@ -77,6 +79,7 @@ class DataHandler {
           rfc: rfc,
           cbo: cbo,
           wmc: wmc,
+          noc: noc,
         ),
       );
 

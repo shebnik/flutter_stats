@@ -10,7 +10,7 @@ class Utils {
     return number.toStringAsFixed(4);
   }
 
-  void loadCsvFile(BuildContext context) {
+  void loadDataFile(BuildContext context) {
     final model = context.read<RegressionModelProvider>();
     try {
       context.read<DataHandler>().retrieveData().then(model.setProjects);

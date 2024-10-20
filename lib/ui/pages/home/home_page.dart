@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_stats/ui/pages/home/views/prediction_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/regression_view.dart';
 import 'package:flutter_stats/ui/pages/home/views/scatter_plot_view.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/app_navigation_rail.dart';
+import 'package:flutter_stats/ui/pages/home/widgets/styled_button.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
@@ -76,18 +78,11 @@ class _HomePageState extends State<HomePage> {
             builder: (context, value, child) {
               if (value.projects.isEmpty) {
                 return Center(
-                  child: ElevatedButton(
-                    onPressed: () => context.read<Utils>().loadCsvFile(context),
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Text(
-                        'Load .csv File',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  child: StyledButton(
+                    text: 'Load Data File',
+                    onPressed: () =>
+                        context.read<Utils>().loadDataFile(context),
+                    svgPicturePath: excelSVG,
                   ),
                 );
               }

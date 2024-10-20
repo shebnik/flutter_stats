@@ -74,11 +74,7 @@ def determine_outliers(projects: List[Project], alpha: float = 0.05) -> List[int
     
     fisher_f = f.ppf(1 - alpha, 3, n - 3)
     
-    outliers = np.where(test_statistic > fisher_f)[0].tolist()
-    for i in outliers:
-        print(f"Outlier detected: {projects[i].url}")
-    
-    return outliers
+    return np.where(test_statistic > fisher_f)[0].tolist()
 
 def remove_outliers(projects: List[Project]) -> List[Project]:
     """Remove outliers"""
@@ -104,6 +100,29 @@ def iterative_outlier_removal(projects: List[Project]) -> List[Project]:
         iteration += 1
     
     return projects
+
+def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, float]:
+    """Calculate regression coefficients."""
+    X = Z[:, :-1]
+    Y = Z[:, -1]
+    X = np.column_stack((np.ones(X.shape[0]), X))
+    coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
+    return coffs[0], coffs[1], coffs[2]
+
+def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float, float]:
+    """Calculate regression model metrics."""
+    n = len(Y)
+    Y_hat_original = 10**Y_hat
+    Y_original = 10**Y
+    
+    residuals = Y_original - Y_hat_original
+    y_mean = np.mean(Y_original)
+    
+    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y_original - y_mean)**2))
+    mmre = np.mean(np.abs(residuals / Y_original))
+    pred = np.sum(np.abs(residuals / Y_original) < 0.25) / n
+    
+    return r_squared, mmre, pred
 
 def split_data(projects: List[Project], train_ratio: float = 0.6) -> Tuple[List[Project], List[Project]]:
     """
@@ -163,17 +182,28 @@ def main():
     final_projects = iterative_outlier_removal(normalized_projects)
     
     print(f"\nFinal number of data points after outlier removal: {len(final_projects)}")
+    
+    Z = projects_to_array(final_projects)
+    b0, b1, b2 = calculate_regression_coefficients(Z)
+    print(f"\nRegression coefficients: b0 = {b0}, b1 = {b1}, b2 = {b2}")
+    
+    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1]
+    r_squared, mmre, pred = calculate_regression_metrics(Z[:, 2], Y_hat)
+    print(f"\nRegression model metrics:")
+    print(f"R-squared: {r_squared}")
+    print(f"MMRE: {mmre}")
+    print(f"Pred: {pred}")
 
     # Split the data into training and testing sets
-    train_projects, test_projects = split_data(final_projects)
+    # train_projects, test_projects = split_data(final_projects)
     
-    print(f"\nNumber of training data points: {len(train_projects)}")
-    print(f"Number of testing data points: {len(test_projects)}")
+    # print(f"\nNumber of training data points: {len(train_projects)}")
+    # print(f"Number of testing data points: {len(test_projects)}")
 
-    # Save the training and testing sets to CSV files
-    save_to_csv(train_projects, 'train_data.csv')
-    save_to_csv(test_projects, 'test_data.csv')
-    print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")
+    # # Save the training and testing sets to CSV files
+    # save_to_csv(train_projects, 'train_data.csv')
+    # save_to_csv(test_projects, 'test_data.csv')
+    # print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")
 
 if __name__ == "__main__":
     main()

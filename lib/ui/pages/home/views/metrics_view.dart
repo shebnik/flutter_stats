@@ -8,10 +8,19 @@ class MetricsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final projects = context.watch<RegressionModelProvider>().projects;
-    return ProjectsList(
-      projects: projects,
-      key: const Key('projects_list'),
+    final provider = context.watch<RegressionModelProvider>();
+    return Column(
+      children: [
+        CheckboxListTile(
+          value: provider.useRelativeNOC,
+          onChanged: provider.setUseRelativeNOC,
+          title: const Text('Use relative NOC (Divide all metrics by NOC)'),
+        ),
+        ProjectsList(
+          projects: provider.projects,
+          key: const Key('projects_list'),
+        ),
+      ],
     );
   }
 }

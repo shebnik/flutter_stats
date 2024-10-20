@@ -10,6 +10,7 @@ class Metrics with _$Metrics {
     double? rfc,
     double? cbo,
     double? wmc,
+    double? noc,
   }) = _Metrics;
 
   factory Metrics.fromJson(Map<String, Object?> json)

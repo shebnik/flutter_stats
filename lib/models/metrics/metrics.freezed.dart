@@ -24,6 +24,7 @@ mixin _$Metrics {
   double? get rfc => throw _privateConstructorUsedError;
   double? get cbo => throw _privateConstructorUsedError;
   double? get wmc => throw _privateConstructorUsedError;
+  double? get noc => throw _privateConstructorUsedError;
 
   /// Serializes this Metrics to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -39,7 +40,7 @@ abstract class $MetricsCopyWith<$Res> {
   factory $MetricsCopyWith(Metrics value, $Res Function(Metrics) then) =
       _$MetricsCopyWithImpl<$Res, Metrics>;
   @useResult
-  $Res call({double? dit, double? rfc, double? cbo, double? wmc});
+  $Res call({double? dit, double? rfc, double? cbo, double? wmc, double? noc});
 }
 
 /// @nodoc
@@ -61,6 +62,7 @@ class _$MetricsCopyWithImpl<$Res, $Val extends Metrics>
     Object? rfc = freezed,
     Object? cbo = freezed,
     Object? wmc = freezed,
+    Object? noc = freezed,
   }) {
     return _then(_value.copyWith(
       dit: freezed == dit
@@ -79,6 +81,10 @@ class _$MetricsCopyWithImpl<$Res, $Val extends Metrics>
           ? _value.wmc
           : wmc // ignore: cast_nullable_to_non_nullable
               as double?,
+      noc: freezed == noc
+          ? _value.noc
+          : noc // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -90,7 +96,7 @@ abstract class _$$MetricsImplCopyWith<$Res> implements $MetricsCopyWith<$Res> {
       __$$MetricsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({double? dit, double? rfc, double? cbo, double? wmc});
+  $Res call({double? dit, double? rfc, double? cbo, double? wmc, double? noc});
 }
 
 /// @nodoc
@@ -110,6 +116,7 @@ class __$$MetricsImplCopyWithImpl<$Res>
     Object? rfc = freezed,
     Object? cbo = freezed,
     Object? wmc = freezed,
+    Object? noc = freezed,
   }) {
     return _then(_$MetricsImpl(
       dit: freezed == dit
@@ -128,6 +135,10 @@ class __$$MetricsImplCopyWithImpl<$Res>
           ? _value.wmc
           : wmc // ignore: cast_nullable_to_non_nullable
               as double?,
+      noc: freezed == noc
+          ? _value.noc
+          : noc // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -135,7 +146,7 @@ class __$$MetricsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$MetricsImpl implements _Metrics {
-  const _$MetricsImpl({this.dit, this.rfc, this.cbo, this.wmc});
+  const _$MetricsImpl({this.dit, this.rfc, this.cbo, this.wmc, this.noc});
 
   factory _$MetricsImpl.fromJson(Map<String, dynamic> json) =>
       _$$MetricsImplFromJson(json);
@@ -148,10 +159,12 @@ class _$MetricsImpl implements _Metrics {
   final double? cbo;
   @override
   final double? wmc;
+  @override
+  final double? noc;
 
   @override
   String toString() {
-    return 'Metrics(dit: $dit, rfc: $rfc, cbo: $cbo, wmc: $wmc)';
+    return 'Metrics(dit: $dit, rfc: $rfc, cbo: $cbo, wmc: $wmc, noc: $noc)';
   }
 
   @override
@@ -162,12 +175,13 @@ class _$MetricsImpl implements _Metrics {
             (identical(other.dit, dit) || other.dit == dit) &&
             (identical(other.rfc, rfc) || other.rfc == rfc) &&
             (identical(other.cbo, cbo) || other.cbo == cbo) &&
-            (identical(other.wmc, wmc) || other.wmc == wmc));
+            (identical(other.wmc, wmc) || other.wmc == wmc) &&
+            (identical(other.noc, noc) || other.noc == noc));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, dit, rfc, cbo, wmc);
+  int get hashCode => Object.hash(runtimeType, dit, rfc, cbo, wmc, noc);
 
   /// Create a copy of Metrics
   /// with the given fields replaced by the non-null parameter values.
@@ -190,7 +204,8 @@ abstract class _Metrics implements Metrics {
       {final double? dit,
       final double? rfc,
       final double? cbo,
-      final double? wmc}) = _$MetricsImpl;
+      final double? wmc,
+      final double? noc}) = _$MetricsImpl;
 
   factory _Metrics.fromJson(Map<String, dynamic> json) = _$MetricsImpl.fromJson;
 
@@ -202,6 +217,8 @@ abstract class _Metrics implements Metrics {
   double? get cbo;
   @override
   double? get wmc;
+  @override
+  double? get noc;
 
   /// Create a copy of Metrics
   /// with the given fields replaced by the non-null parameter values.

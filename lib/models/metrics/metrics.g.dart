@@ -12,6 +12,7 @@ _$MetricsImpl _$$MetricsImplFromJson(Map<String, dynamic> json) =>
       rfc: (json['rfc'] as num?)?.toDouble(),
       cbo: (json['cbo'] as num?)?.toDouble(),
       wmc: (json['wmc'] as num?)?.toDouble(),
+      noc: (json['noc'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$MetricsImplToJson(_$MetricsImpl instance) =>
@@ -20,4 +21,5 @@ Map<String, dynamic> _$$MetricsImplToJson(_$MetricsImpl instance) =>
       'rfc': instance.rfc,
       'cbo': instance.cbo,
       'wmc': instance.wmc,
+      'noc': instance.noc,
     };
