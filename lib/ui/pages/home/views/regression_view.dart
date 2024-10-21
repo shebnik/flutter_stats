@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
+import 'package:flutter_stats/models/model_quality/model_quality.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/metrics_card.dart';
@@ -9,10 +11,10 @@ class RegressionView extends StatelessWidget {
   const RegressionView({super.key});
 
   String getLinearEquation(Coefficients coefficients) {
-    final b0 = Utils.formatNumber(coefficients.b0);
-    dynamic b1 = coefficients.b1;
-    dynamic b2 = coefficients.b2;
-    dynamic b3 = coefficients.b3;
+    final b0 = Utils.formatNumber(coefficients.b[0]);
+    dynamic b1 = coefficients.b[1];
+    dynamic b2 = coefficients.b[2];
+    dynamic b3 = coefficients.b[3];
 
     if ((b1 as double) < 0) {
       b1 = ' - ${Utils.formatNumber(b1.abs())}';
@@ -44,10 +46,10 @@ class RegressionView extends StatelessWidget {
   }
 
   String getNonlinearEquation(Coefficients coefficients) {
-    final b0 = Utils.formatNumber(coefficients.b0);
-    final b1 = Utils.formatNumber(coefficients.b1);
-    final b2 = Utils.formatNumber(coefficients.b2);
-    final b3 = Utils.formatNumber(coefficients.b3);
+    final b0 = Utils.formatNumber(coefficients.b[0]);
+    final b1 = Utils.formatNumber(coefficients.b[1]);
+    final b2 = Utils.formatNumber(coefficients.b[2]);
+    final b3 = Utils.formatNumber(coefficients.b[3]);
     // ignore: prefer_interpolation_to_compose_strings
     return r'\hat{Y} = 10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}=10^{' +
         b0 +
@@ -62,7 +64,8 @@ class RegressionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<RegressionModelProvider>();
+    final model = context.watch<RegressionModelProvider>().model;
+    final outliersProvider = context.watch<OutliersProvider>();
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -76,28 +79,33 @@ class RegressionView extends StatelessWidget {
           const SizedBox(height: 20),
           MetricsCard(
             title: 'Linear Regression: ',
-            value: getLinearEquation(provider.coefficients),
+            value: getLinearEquation(model.coefficients),
             isEquation: true,
           ),
           const SizedBox(height: 20),
           MetricsCard(
             title: 'Nonlinear Regression Equation: ',
-            value: getNonlinearEquation(provider.coefficients),
+            value: getNonlinearEquation(model.coefficients),
             isEquation: true,
           ),
           const SizedBox(height: 16),
           MetricsCard(
-            title: 'Data points: ',
-            value: provider.yData.length.toString(),
+            title: 'Train data points: ',
+            value: model.trainProjects.length.toString(),
+          ),
+          const SizedBox(height: 16),
+          MetricsCard(
+            title: 'Test data points: ',
+            value: model.testProjects.length.toString(),
           ),
           const SizedBox(height: 16),
           MetricsCard(
             title: 'Total outliers removed: ',
-            value: provider.outliersRemoved.toString(),
+            value: outliersProvider.outliersRemoved.toString(),
           ),
           const SizedBox(height: 16),
           FutureBuilder(
-            future: provider.outliers,
+            future: outliersProvider.outliers,
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return const SizedBox.shrink();
@@ -121,78 +129,18 @@ class RegressionView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Row(
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'R² = ',
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      Utils.formatNumber(provider.modelQuality.rSquared),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Utils.getColor(
-                          MetricsType.rSquared,
-                          provider.modelQuality.rSquared,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 32),
-                Row(
-                  children: [
-                    const Text(
-                      'MMRE = ',
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      Utils.formatNumber(provider.modelQuality.mmre),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Utils.getColor(
-                          MetricsType.mmre,
-                          provider.modelQuality.mmre,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 32),
-                Row(
-                  children: [
-                    const Text(
-                      'PRED(0.25) = ',
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      Utils.formatNumber(provider.modelQuality.pred),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Utils.getColor(
-                          MetricsType.pred,
-                          provider.modelQuality.pred,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          _ModelQualityWidget(
+            modelQuality: model.modelQuality,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Test Model Quality (${model.testProjects.length} data points)',
+            style: Theme.of(context).textTheme.headlineMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          _ModelQualityWidget(
+            modelQuality: model.testModelQuality,
           ),
           const SizedBox(height: 16),
           const Text(
@@ -200,6 +148,91 @@ class RegressionView extends StatelessWidget {
             'R² > 0.7\n'
             'MMRE < 0.25\n'
             'PRED(0.25) > 0.75',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModelQualityWidget extends StatelessWidget {
+  const _ModelQualityWidget({
+    required this.modelQuality,
+  });
+
+  final ModelQuality modelQuality;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Row(
+        children: [
+          Row(
+            children: [
+              const Text(
+                'R² = ',
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                Utils.formatNumber(modelQuality.rSquared),
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Utils.getColor(
+                    ModelQualityTypes.rSquared,
+                    modelQuality.rSquared,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 32),
+          Row(
+            children: [
+              const Text(
+                'MMRE = ',
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                Utils.formatNumber(modelQuality.mmre),
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Utils.getColor(
+                    ModelQualityTypes.mmre,
+                    modelQuality.mmre,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 32),
+          Row(
+            children: [
+              const Text(
+                'PRED(0.25) = ',
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                Utils.formatNumber(modelQuality.pred),
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Utils.getColor(
+                    ModelQualityTypes.pred,
+                    modelQuality.pred,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
-import 'package:flutter_stats/services/utils.dart';
+import 'package:flutter_stats/services/data_handler.dart';
 import 'package:provider/provider.dart';
 
 class AppNavigationRail extends StatelessWidget {
@@ -15,7 +15,7 @@ class AppNavigationRail extends StatelessWidget {
       labelType: NavigationRailLabelType.all,
       leading: FloatingActionButton(
         elevation: 0,
-        onPressed: () => context.read<Utils>().loadDataFile(context),
+        onPressed: () => context.read<DataHandler>().loadDataFile(context),
         tooltip: 'Load CSV file',
         child: const Icon(Icons.add),
       ),

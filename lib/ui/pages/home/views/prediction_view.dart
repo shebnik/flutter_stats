@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/metrics_card.dart';
 import 'package:intl/intl.dart';
@@ -15,7 +15,8 @@ class PredictionView extends StatefulWidget {
 }
 
 class _PredictionViewState extends State<PredictionView> {
-  late RegressionModelProvider provider;
+  late RegressionModel model;
+
   final x1Controller = TextEditingController();
   final x2Controller = TextEditingController();
   final x3Controller = TextEditingController();
@@ -79,7 +80,7 @@ class _PredictionViewState extends State<PredictionView> {
       setState(() {});
       return;
     }
-    _prediction = provider.predictY(x1!, x2!, x3!);
+    _prediction = model.predictY([x1!, x2!, x3!]);
     setState(() {});
   }
 
@@ -102,23 +103,23 @@ class _PredictionViewState extends State<PredictionView> {
     }
     // ignore: prefer_interpolation_to_compose_strings
     return r'RFC = 10^{\beta_0} \cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3}=10^{' +
-        Utils.formatNumber(coefficients.b0) +
+        Utils.formatNumber(coefficients.b[0]) +
         '} \\cdot $x1Str^{' +
-        Utils.formatNumber(coefficients.b1) +
+        Utils.formatNumber(coefficients.b[1]) +
         '} \\cdot $x2Str^{' +
-        Utils.formatNumber(coefficients.b2) +
+        Utils.formatNumber(coefficients.b[2]) +
         '} \\cdot $x3Str^{' +
-        Utils.formatNumber(coefficients.b3) +
+        Utils.formatNumber(coefficients.b[3]) +
         '}';
   }
 
   Widget predictionWidget() {
-    provider = context.watch<RegressionModelProvider>();
+    model = context.watch<RegressionModel>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MetricsCard(
-          value: getPredictionEquation(provider.coefficients),
+          value: getPredictionEquation(model.coefficients),
           isEquation: true,
         ),
         const SizedBox(height: 32),

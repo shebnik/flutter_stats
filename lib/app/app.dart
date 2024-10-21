@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/app_navigation_provider.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/services/data_handler.dart';
@@ -15,12 +16,16 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final regressionModelProvider = RegressionModelProvider();
     return MultiProvider(
       providers: [
         Provider(create: (_) => DataHandler()),
         Provider(create: (_) => Utils()),
         ChangeNotifierProvider(
-          create: (_) => RegressionModelProvider(),
+          create: (_) => OutliersProvider(regressionModelProvider),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => regressionModelProvider,
         ),
         ChangeNotifierProvider(
           create: (_) => AppNavigationProvider(),

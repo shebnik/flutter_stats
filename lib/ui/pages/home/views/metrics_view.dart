@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +8,7 @@ class MetricsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<RegressionModelProvider>();
+    final provider = context.watch<OutliersProvider>();
     return Column(
       children: [
         CheckboxListTile(

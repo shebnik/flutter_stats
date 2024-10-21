@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -19,10 +19,10 @@ class _OutliersViewState extends State<OutliersView> {
   @override
   Widget build(BuildContext context) {
     outliersIndexesFuture = context.select(
-      (RegressionModelProvider provider) => provider.outliers,
+      (OutliersProvider provider) => provider.outliers,
     );
     metrics = context.select(
-      (RegressionModelProvider provider) => provider.projects,
+      (OutliersProvider provider) => provider.projects,
     );
     return FutureBuilder(
       future: outliersIndexesFuture,
@@ -88,7 +88,7 @@ class _OutliersViewState extends State<OutliersView> {
   }
 
   Future<void> _removeAllOutliers(List<int> outliersIndexes) async {
-    final provider = context.read<RegressionModelProvider>()
+    final provider = context.read<OutliersProvider>()
       ..removeProjects(outliersIndexes);
 
     final newOutliers = await provider.outliers;

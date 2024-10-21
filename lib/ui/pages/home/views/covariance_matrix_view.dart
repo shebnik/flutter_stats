@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/ui/pages/home/widgets/matrix_table.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +8,7 @@ class CovarianceMatrixView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<RegressionModelProvider>();
+    final provider = context.watch<OutliersProvider>();
 
     return Padding(
       padding: const EdgeInsets.all(16),

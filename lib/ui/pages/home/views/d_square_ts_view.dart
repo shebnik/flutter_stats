@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -9,10 +9,10 @@ class DSquareTSView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mahalanobisDistances = context.select(
-      (RegressionModelProvider provider) => provider.mahalanobisDistances,
+      (OutliersProvider provider) => provider.mahalanobisDistances,
     );
     final testStatistics = context.select(
-      (RegressionModelProvider provider) => provider.testStatistics,
+      (OutliersProvider provider) => provider.testStatistics,
     );
     return Container(
       padding: const EdgeInsets.all(16),

@@ -1,20 +1,51 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
+import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/services/logger.dart';
+import 'package:flutter_stats/services/regression_model.dart';
+import 'package:provider/provider.dart';
 
 class DataHandler {
-  factory DataHandler() {
-    return _dataHandler;
-  }
-
-  DataHandler._internal();
-  static final DataHandler _dataHandler = DataHandler._internal();
-
+  final _logger = AppLogger().logger;
   final filePicker = FilePicker.platform;
+
+  Future<void> loadDataFile(BuildContext context) async {
+    final model = context.read<OutliersProvider>();
+    try {
+      final projects = await retrieveData();
+      if (projects == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No file selected'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+      model.setProjects(projects);
+      context
+          .read<RegressionModelProvider>()
+          .setModel(RegressionModel(projects!));
+    } catch (e, s) {
+      _logger.e('Error loading data file', error: e, stackTrace: s);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Invalid file format'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
 
   Future<Uint8List?> _pickFile() async {
     final result = await filePicker.pickFiles(
