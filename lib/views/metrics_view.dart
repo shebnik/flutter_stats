@@ -65,6 +65,7 @@ class MetricsView extends StatelessWidget {
         ],
         Expanded(
           child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             child: ProjectsList(
               projects: projects,
             ),

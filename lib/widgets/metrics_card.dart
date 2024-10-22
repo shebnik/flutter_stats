@@ -35,6 +35,7 @@ class MetricsCard extends StatelessWidget {
         ],
         LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -72,7 +73,7 @@ class MetricsCard extends StatelessWidget {
                               textStyle: TextStyle(
                                 fontSize: isMobile ? 16 : 18,
                               ),
-                              textScaleFactor: isMobile ? 1 : 1.5,
+                              textScaleFactor: isMobile ? 1.2 : 1.5,
                             ),
                           ] else ...[
                             Text(

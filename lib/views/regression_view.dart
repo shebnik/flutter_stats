@@ -8,13 +8,15 @@ import 'package:flutter_stats/widgets/metrics_card.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
-class RegressionView extends StatelessWidget {
+class RegressionView extends StatefulWidget {
   const RegressionView({super.key});
 
-  String getLinearEquation(
-    Coefficients coefficients, {
-    bool isMobile = false,
-  }) {
+  @override
+  State<RegressionView> createState() => _RegressionViewState();
+}
+
+class _RegressionViewState extends State<RegressionView> {
+  String getLinearEquation(Coefficients coefficients) {
     final b0 = Utils.formatNumber(coefficients.b[0]);
     dynamic b1 = coefficients.b[1];
     dynamic b2 = coefficients.b[2];
@@ -40,7 +42,7 @@ class RegressionView extends StatelessWidget {
 
     // ignore: prefer_interpolation_to_compose_strings
     var str = r'\hat{Z_Y} = ';
-    if (!isMobile) {
+    if (ResponsiveBreakpoints.of(context).isDesktop) {
       str +=
           r'\beta_0 + \beta_1 \cdot Z_{X_1} + \beta_2 \cdot Z_{X_2} + \beta_3 \cdot Z_{X_3}=';
     }
@@ -59,8 +61,14 @@ class RegressionView extends StatelessWidget {
     final b1 = Utils.formatNumber(coefficients.b[1]);
     final b2 = Utils.formatNumber(coefficients.b[2]);
     final b3 = Utils.formatNumber(coefficients.b[3]);
+    var str = r'\hat{Y} = ';
+    if (ResponsiveBreakpoints.of(context).isDesktop) {
+      str +=
+          r'10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}=';
+    }
     // ignore: prefer_interpolation_to_compose_strings
-    return r'\hat{Y} = 10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}=10^{' +
+    return str +
+        '10^{' +
         b0 +
         r'} \cdot X_1^{' +
         b1 +
@@ -122,6 +130,7 @@ class RegressionView extends StatelessWidget {
     ];
 
     return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -137,7 +146,7 @@ class RegressionView extends StatelessWidget {
             ],
             MetricsCard(
               title: 'Linear Regression',
-              value: getLinearEquation(model.coefficients, isMobile: isMobile),
+              value: getLinearEquation(model.coefficients),
               isEquation: true,
             ),
             const SizedBox(height: 20),
@@ -217,16 +226,16 @@ class _ModelQualityWidget extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'R² = ',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                     ),
                   ),
                   Text(
                     Utils.formatNumber(modelQuality.rSquared),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                       color: Utils.getColor(
                         ModelQualityTypes.rSquared,
                         modelQuality.rSquared,
@@ -238,16 +247,16 @@ class _ModelQualityWidget extends StatelessWidget {
               if (!isMobile) const SizedBox(width: 32),
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'MMRE = ',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                     ),
                   ),
                   Text(
                     Utils.formatNumber(modelQuality.mmre),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                       color: Utils.getColor(
                         ModelQualityTypes.mmre,
                         modelQuality.mmre,
@@ -259,16 +268,16 @@ class _ModelQualityWidget extends StatelessWidget {
               if (!isMobile) const SizedBox(width: 32),
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'PRED(0.25) = ',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                     ),
                   ),
                   Text(
                     Utils.formatNumber(modelQuality.pred),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                       color: Utils.getColor(
                         ModelQualityTypes.pred,
                         modelQuality.pred,

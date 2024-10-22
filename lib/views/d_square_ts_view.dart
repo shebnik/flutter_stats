@@ -25,6 +25,7 @@ class DSquareTSView extends StatelessWidget {
           const SizedBox(height: 16),
           Expanded(
             child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
               child: Table(
                 border: TableBorder.all(),
                 children: [

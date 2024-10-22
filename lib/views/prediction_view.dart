@@ -101,8 +101,14 @@ class _PredictionViewState extends State<PredictionView> {
     if (x3 != null) {
       x3Str = x3!.toInt().toString();
     }
+    var str = 'RFC = ';
+    if (ResponsiveBreakpoints.of(context).isDesktop) {
+      str +=
+          r'10^{\beta_0} \cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3}=';
+    }
     // ignore: prefer_interpolation_to_compose_strings
-    return r'RFC = 10^{\beta_0} \cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3}=10^{' +
+    return str +
+        '10^{' +
         Utils.formatNumber(coefficients.b[0]) +
         '} \\cdot $x1Str^{' +
         Utils.formatNumber(coefficients.b[1]) +

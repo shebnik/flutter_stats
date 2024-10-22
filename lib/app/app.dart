@@ -64,6 +64,8 @@ class App extends StatelessWidget {
               dragDevices: {
                 PointerDeviceKind.touch,
                 PointerDeviceKind.mouse,
+                PointerDeviceKind.stylus,
+                PointerDeviceKind.unknown,
               },
             ),
             title: appName,
