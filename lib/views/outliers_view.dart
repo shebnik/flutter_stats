@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/outliers_provider.dart';
-import 'package:flutter_stats/ui/pages/home/widgets/projects_list.dart';
+import 'package:flutter_stats/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
 class OutliersView extends StatefulWidget {
@@ -37,44 +37,42 @@ class _OutliersViewState extends State<OutliersView> {
           );
         }
 
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              if (outliersIndexes.isEmpty) ...[
-                Center(
-                  child: Text(
-                    'No outliers',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+        return ListView(
+          children: [
+            const SizedBox(height: 16),
+            if (outliersIndexes.isEmpty) ...[
+              Center(
+                child: Text(
+                  'No outliers',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              ] else ...[
-                Center(
-                  child: ValueListenableBuilder(
-                    valueListenable: isRemoving,
-                    builder: (_, disabled, __) => ElevatedButton(
-                      onPressed: disabled
-                          ? null
-                          : () => _removeAllClick(outliersIndexes),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          'Remove all outliers',
-                          style: TextStyle(fontSize: 16),
-                        ),
+              ),
+            ] else ...[
+              Center(
+                child: ValueListenableBuilder(
+                  valueListenable: isRemoving,
+                  builder: (_, disabled, __) => ElevatedButton(
+                    onPressed: disabled
+                        ? null
+                        : () => _removeAllClick(outliersIndexes),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                        'Remove all outliers',
+                        style: TextStyle(fontSize: 16),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                ProjectsList(
-                  projects: metrics,
-                  outliersIndexes: outliersIndexes,
-                  key: const Key('outliers_list'),
-                ),
-              ],
+              ),
+              const SizedBox(height: 16),
+              ProjectsList(
+                projects: metrics,
+                outliersIndexes: outliersIndexes,
+                key: const Key('outliers_list'),
+              ),
             ],
-          ),
+          ],
         );
       },
     );

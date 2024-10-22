@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
+import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
-import 'package:flutter_stats/ui/pages/home/widgets/metrics_card.dart';
+import 'package:flutter_stats/widgets/metrics_card.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 class PredictionView extends StatefulWidget {
   const PredictionView({super.key});
@@ -61,14 +63,12 @@ class _PredictionViewState extends State<PredictionView> {
       final formatter = NumberFormat('#,###');
       final formatted = formatter.format(_prediction?.round());
       return MetricsCard(
-        title: 'Y Prediction (RFC) = ',
+        title: 'Y Prediction (RFC)',
         value: formatted.replaceAll(',', ' '),
       );
     }
 
-    return const MetricsCard(
-      title: 'Y Prediction (RFC)',
-    );
+    return const SizedBox.shrink();
   }
 
   void makePrediction() {
@@ -114,43 +114,61 @@ class _PredictionViewState extends State<PredictionView> {
   }
 
   Widget predictionWidget() {
-    model = context.watch<RegressionModel>();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    model = context.watch<RegressionModelProvider>().model;
+    return ListView(
+      shrinkWrap: true,
       children: [
         MetricsCard(
           value: getPredictionEquation(model.coefficients),
           isEquation: true,
         ),
         const SizedBox(height: 32),
-        _buildPredictionOutput(),
-        const SizedBox(height: 32),
-        IntrinsicHeight(
-          child: Row(
+        if (ResponsiveBreakpoints.of(context).isDesktop)
+          Row(
             children: [
               Expanded(
                 child: _buildTextField(
                   x1Controller,
-                  'Enter X1 value (DIT)',
+                  'Enter X1 (DIT)',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildTextField(
                   x2Controller,
-                  'Enter X2 value (CBO)',
+                  'Enter X2 (CBO)',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildTextField(
                   x3Controller,
-                  'Enter X3 value (WMC)',
+                  'Enter X3 (WMC)',
                 ),
               ),
             ],
+          )
+        else
+          Column(
+            children: [
+              _buildTextField(
+                x1Controller,
+                'Enter X1 (DIT)',
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                x2Controller,
+                'Enter X2 (CBO)',
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                x3Controller,
+                'Enter X3 (WMC)',
+              ),
+            ],
           ),
-        ),
+        const SizedBox(height: 32),
+        _buildPredictionOutput(),
       ],
     );
   }

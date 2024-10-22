@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/constants.dart';
-import 'package:flutter_stats/providers/app_navigation_provider.dart';
+import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/outliers_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/router/router.dart';
@@ -28,7 +28,7 @@ class App extends StatelessWidget {
           create: (_) => regressionModelProvider,
         ),
         ChangeNotifierProvider(
-          create: (_) => AppNavigationProvider(),
+          create: (_) => MetricsNavigationProvider(),
         ),
       ],
       child: Builder(

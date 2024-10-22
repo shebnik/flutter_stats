@@ -37,19 +37,6 @@ class Outliers {
   late final List<double> _zy;
 
   int get n => metrics.length;
-  double get x1Avg => _algebra.average(_x1);
-  double get x2Avg => _algebra.average(_x2);
-  double get x3Avg => _algebra.average(_x3);
-  double get yAvg => _algebra.average(_y);
-  double get zx1Avg => _algebra.average(_zx1);
-  double get zx2Avg => _algebra.average(_zx2);
-  double get zx3Avg => _algebra.average(_zx3);
-  double get zyAvg => _algebra.average(_zy);
-
-  List<double> get zx1 => _zx1;
-  List<double> get zx2 => _zx2;
-  List<double> get zx3 => _zx3;
-  List<double> get zy => _zy;
 
   List<List<double>> calculateCovarianceMatrix() {
     final values = <List<double>>[_zy, _zx1, _zx2, _zx3];
@@ -138,7 +125,7 @@ class Outliers {
 
   //   final leverage = zx * (zx.transpose() * zx).inverse() * zx.transpose();
   //   final leverageDiagonal = List.generate(n, (i) => leverage[i][i]);
-  //   final se = 
+  //   final se =
   //    List.generate(n, (i) => sqrt(mse * (1 + leverageDiagonal[i])));
 
   //   final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - 4);

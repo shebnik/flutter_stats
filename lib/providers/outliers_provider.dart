@@ -29,8 +29,7 @@ class OutliersProvider with ChangeNotifier {
   bool get useRelativeNOC => _useRelativeNOC;
 
   // ignore: avoid_positional_boolean_parameters
-  void setUseRelativeNOC(bool? value) {
-    if (value == null) return;
+  void setUseRelativeNOC(bool value) {
     _useRelativeNOC = value;
     if (_useRelativeNOC) {
       _projects = _fileProjects.map((e) {
@@ -94,11 +93,11 @@ class OutliersProvider with ChangeNotifier {
     _regressionModelProvider.setModel(RegressionModel(_projects));
   }
 
-  List<List<double>> get covarianceMatrix =>
-      _outliers.calculateCovarianceMatrix();
+  // List<List<double>> get covarianceMatrix =>
+  //     _outliers.calculateCovarianceMatrix();
 
-  List<List<double>> get covarianceMatrixInverse =>
-      _outliers.invertMatrix(covarianceMatrix);
+  // List<List<double>> get covarianceMatrixInverse =>
+  //     _outliers.invertMatrix(covarianceMatrix);
 
   List<double> get mahalanobisDistances =>
       _outliers.calculateMahalanobisDistances();

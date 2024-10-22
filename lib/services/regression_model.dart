@@ -14,6 +14,7 @@ class RegressionModel {
   RegressionModel(this._projects) {
     _splitData(_projects);
     _evaluateModel();
+    _testModel();
   }
 
   final _logger = AppLogger().logger;
@@ -24,6 +25,7 @@ class RegressionModel {
   late final List<Project> _trainProjects;
   late final List<Project> _testProjects;
 
+  List<Project> get projects => _projects;
   List<Project> get trainProjects => _trainProjects;
   List<Project> get testProjects => _testProjects;
 
@@ -132,7 +134,7 @@ class RegressionModel {
   double predictY(List<double> x) {
     var prediction = pow(10, _coefficients.b[0]);
     for (var i = 1; i < _coefficients.b.length; i++) {
-      prediction += pow(x[i], _coefficients.b[i]);
+      prediction += pow(x[i - 1], _coefficients.b[i]);
     }
     return prediction.toDouble();
   }
@@ -186,11 +188,15 @@ class RegressionModel {
       yHat: _predictedValues,
     );
     _logger.i('Model quality: $_modelQuality');
+  }
 
+  void _testModel() {
     final normalizedTestProjects =
         _normalization.normalizeProjects(_testProjects);
+
     final testFactors =
         normalizedTestProjects.map(RegressionFactors.fromProject).toList();
+
     _testModelQuality = _calculateModelQuality(
       y: testFactors.map((f) => f.y).toList(),
       yHat: _calculatePredictedValues(factors: testFactors),

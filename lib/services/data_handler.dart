@@ -6,6 +6,7 @@ import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/outliers_provider.dart';
@@ -13,16 +14,21 @@ import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:provider/provider.dart';
+import 'package:universal_html/html.dart' as html;
 
 class DataHandler {
   final _logger = AppLogger().logger;
   final filePicker = FilePicker.platform;
 
-  Future<void> loadDataFile(BuildContext context) async {
+  Future<void> loadDataFile(
+    BuildContext context, {
+    bool useAssetDataset = false,
+  }) async {
     final model = context.read<OutliersProvider>();
     try {
-      final projects = await retrieveData();
+      final projects = await retrieveData(useAssetDataset: useAssetDataset);
       if (projects == null) {
+        _logger.i('No file selected');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('No file selected'),
@@ -47,7 +53,13 @@ class DataHandler {
     }
   }
 
-  Future<Uint8List?> _pickFile() async {
+  Future<Uint8List?> _pickFile({
+    bool useAssetDataset = false,
+  }) async {
+    if (useAssetDataset) {
+      final asset = await rootBundle.load('assets/dataset.csv');
+      return asset.buffer.asUint8List();
+    }
     final result = await filePicker.pickFiles(
       allowedExtensions: ['csv'],
       type: FileType.custom,
@@ -69,8 +81,10 @@ class DataHandler {
     return bytes;
   }
 
-  Future<List<Project>?> retrieveData() async {
-    final bytes = await _pickFile();
+  Future<List<Project>?> retrieveData({
+    bool useAssetDataset = false,
+  }) async {
+    final bytes = await _pickFile(useAssetDataset: useAssetDataset);
     if (bytes == null) {
       throw Exception('No file selected');
     }
@@ -140,5 +154,62 @@ class DataHandler {
 
   double? getDoubleValue(List<dynamic> row, int index) {
     return index >= 0 ? double.tryParse(row[index].toString()) : null;
+  }
+
+  Future<void> downloadFile({
+    required String fileName,
+    required List<Project> projects,
+  }) async {
+    fileName = fileName.endsWith('.csv') ? fileName : '$fileName.csv';
+    final csv = const ListToCsvConverter().convert(
+      projects.map((project) {
+        final metrics = project.metrics;
+        return [
+          project.name,
+          project.url,
+          if (metrics != null) metrics.dit,
+          if (metrics != null) metrics.cbo,
+          if (metrics != null) metrics.wmc,
+          if (metrics != null) metrics.rfc,
+          if (metrics != null) metrics.noc,
+        ];
+      }).toList(),
+    );
+
+    final bytes = Uint8List.fromList(csv.codeUnits);
+
+    if (kIsWeb) {
+      // Web platform implementation
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.document.createElement('a') as html.AnchorElement
+        ..href = url
+        ..style.display = 'none'
+        ..download = fileName;
+
+      html.document.body?.children.add(anchor);
+      anchor.click();
+      html.document.body?.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+    } else {
+      try {
+        // Show save file dialog
+        final outputFile = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save CSV file',
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['csv'],
+        );
+
+        if (outputFile != null) {
+          final file = File(outputFile);
+          await file.writeAsBytes(bytes);
+        }
+      } catch (e) {
+        // Handle any errors that occur during file saving
+        _logger.e('Error saving file', error: e);
+        rethrow;
+      }
+    }
   }
 }

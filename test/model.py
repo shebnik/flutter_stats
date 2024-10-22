@@ -58,7 +58,7 @@ def projects_to_array(projects: List[Project]) -> np.ndarray:
     """Convert a list of Project objects to a numpy array."""
     return np.array([[p.zx1, p.zx2, p.zy] for p in projects])
 
-def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, float]:
+def calculate_regression_coefficients(Z: np.ndarray) -> tuple[float, float, float]:
     """Calculate regression coefficients."""
     X = Z[:, :-1]
     Y = Z[:, -1]
@@ -66,34 +66,46 @@ def calculate_regression_coefficients(Z: np.ndarray) -> Tuple[float, float, floa
     coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
     return coffs[0], coffs[1], coffs[2]
 
-def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float, float]:
-    """Calculate regression model metrics."""
-    n = len(Y)
-    Y_hat_original = 10**Y_hat
-    Y_original = 10**Y
-    
-    residuals = Y_original - Y_hat_original
-    y_mean = np.mean(Y_original)
-    
-    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y_original - y_mean)**2))
-    mmre = np.mean(np.abs(residuals / Y_original))
-    pred = np.sum(np.abs(residuals / Y_original) < 0.25) / n
-    
-    return r_squared, mmre, pred
-
-def build_model(projects: List[Project]) -> Tuple[float, float, float, np.ndarray, np.ndarray]:
-    """Build a regression model."""
-    Z = projects_to_array(projects)
-    b0, b1, b2 = calculate_regression_coefficients(Z)
-    Y_hat = b0 + b1 * Z[:, 0] + b2 * Z[:, 1]
-    return b0, b1, b2, Y_hat, Z[:, -1]
-
-def calculate_residual_statistics(Y: np.ndarray, Y_hat: np.ndarray) -> Tuple[float, float]:
+def calculate_residual_statistics(Y: np.ndarray, Y_hat: np.ndarray) -> tuple[float, float]:
     """Calculate the sample mean and variance of residuals."""
     residuals = Y - Y_hat
     mean_residual = np.mean(residuals)
     variance_residual = np.var(residuals, ddof=1)
     return mean_residual, variance_residual
+
+def calculate_epsilon_std(Y: np.ndarray, Y_hat: np.ndarray) -> float:
+    """Calculate the standard deviation of epsilon."""
+    residuals = np.log10(Y) - np.log10(Y_hat)
+    n = len(residuals)
+    epsilon_std = np.sqrt(np.sum(residuals**2) / (n - 3))
+    return epsilon_std
+
+def build_model(projects: list[Project]) -> tuple[float, float, float, np.ndarray, np.ndarray, float]:
+    """Build a regression model and calculate epsilon standard deviation."""
+    Z = projects_to_array(projects)
+    b0, b1, b2 = calculate_regression_coefficients(Z)
+    
+    # Calculate Y_hat using the model Y = 10^b0 * X1^b1 * X2^b2
+    Y_hat = 10**b0 * (10**Z[:, 0])**b1 * (10**Z[:, 1])**b2
+    Y = 10**Z[:, -1]  # Convert Y back to original scale
+    
+    # Calculate epsilon standard deviation
+    epsilon_std = calculate_epsilon_std(Y, Y_hat)
+    
+    return b0, b1, b2, Y_hat, Y, epsilon_std
+
+def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> tuple[float, float, float]:
+    """Calculate regression model metrics."""
+    n = len(Y)
+    
+    residuals = Y - Y_hat
+    y_mean = np.mean(Y)
+    
+    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y - y_mean)**2))
+    mmre = np.mean(np.abs(residuals / Y))
+    pred = np.sum(np.abs(residuals / Y) < 0.25) / n
+    
+    return r_squared, mmre, pred
 
 def print_results(b0: float, b1: float, b2: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
     """Print regression results and residual statistics."""
@@ -131,9 +143,12 @@ def main():
     print(f"Test Results for Kotlin: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
     
     # Model test
-    b0, b1, b2, Y_hat, Y = build_model(retrieve_data())
+    b0, b1, b2, Y_hat, Y, epsilon_std = build_model(retrieve_data())
     r_squared, mmre, pred = calculate_regression_metrics(Y, Y_hat)
-    print_results(b0, b1, b2, r_squared, mmre, pred, *calculate_residual_statistics(Y, Y_hat))
+    print(f"Model Results:")
+    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}")
+    print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
+    print(f"Estimated standard deviation of epsilon: {epsilon_std:.6f}")
     
     # Test model on a separate dataset
     test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2))
