@@ -4,7 +4,6 @@ import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/widgets/app_drawer.dart';
 import 'package:flutter_stats/widgets/app_header.dart';
-import 'package:flutter_stats/widgets/scroll_to_top.dart';
 import 'package:provider/provider.dart';
 
 class ScaffoldWithNavigationBar extends StatefulWidget {
@@ -49,7 +48,6 @@ class _ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
             )
             .toList(),
       ),
-      floatingActionButton: const ScrollToTop(),
       // floatingActionButtonLocation: 
       // FloatingActionButtonLocation.centerDocked,
       // floatingActionButton: FloatingActionButton(

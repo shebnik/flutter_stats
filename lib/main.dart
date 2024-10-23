@@ -21,7 +21,6 @@ Future<void> main() async {
     //   options: DefaultFirebaseOptions.currentPlatform,
     // );
     // final auth = FirebaseAuth.instanceFor(app: firebaseApp);
-
     runApp(const App());
   }, (error, stackTrace) {
     _log.e(

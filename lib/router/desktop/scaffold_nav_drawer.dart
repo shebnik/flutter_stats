@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/services/data_handler.dart';
-import 'package:flutter_stats/widgets/scroll_to_top.dart';
 import 'package:provider/provider.dart';
 
 class ScaffoldWithNavigationDrawer extends StatefulWidget {
@@ -68,7 +67,6 @@ class _ScaffoldWithNavigationDrawerState
           ),
         ],
       ),
-      floatingActionButton: const ScrollToTop(),
     );
   }
 }

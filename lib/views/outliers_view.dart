@@ -24,12 +24,16 @@ class _OutliersViewState extends State<OutliersView> {
     metrics = context.select(
       (OutliersProvider provider) => provider.projects,
     );
+
     return FutureBuilder(
       future: outliersIndexesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const SizedBox.shrink();
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
         }
+
         final outliersIndexes = snapshot.data;
         if (outliersIndexes == null) {
           return const Center(
@@ -37,41 +41,51 @@ class _OutliersViewState extends State<OutliersView> {
           );
         }
 
-        return ListView(
-          children: [
-            const SizedBox(height: 16),
-            if (outliersIndexes.isEmpty) ...[
-              Center(
-                child: Text(
-                  'No outliers',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-            ] else ...[
-              Center(
-                child: ValueListenableBuilder(
-                  valueListenable: isRemoving,
-                  builder: (_, disabled, __) => ElevatedButton(
-                    onPressed: disabled
-                        ? null
-                        : () => _removeAllClick(outliersIndexes),
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Text(
-                        'Remove all outliers',
-                        style: TextStyle(fontSize: 16),
+        if (outliersIndexes.isEmpty) {
+          return Center(
+            child: Text(
+              'No outliers',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          );
+        }
+
+        return CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.only(top: 16),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ValueListenableBuilder(
+                    valueListenable: isRemoving,
+                    builder: (_, disabled, __) => ElevatedButton(
+                      onPressed: disabled
+                          ? null
+                          : () => _removeAllClick(outliersIndexes),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(
+                          'Remove all outliers',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              ProjectsList(
+            ),
+            const SliverPadding(
+              padding: EdgeInsets.only(top: 16),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: ProjectsList(
                 projects: metrics,
                 outliersIndexes: outliersIndexes,
                 key: const Key('outliers_list'),
               ),
-            ],
+            ),
           ],
         );
       },
@@ -81,8 +95,11 @@ class _OutliersViewState extends State<OutliersView> {
   Future<void> _removeAllClick(List<int> outliersIndexes) async {
     if (isRemoving.value) return;
     isRemoving.value = true;
-    await _removeAllOutliers(outliersIndexes);
-    isRemoving.value = false;
+    try {
+      await _removeAllOutliers(outliersIndexes);
+    } finally {
+      isRemoving.value = false;
+    }
   }
 
   Future<void> _removeAllOutliers(List<int> outliersIndexes) async {
