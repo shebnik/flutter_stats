@@ -6,7 +6,6 @@ import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 
 class OutliersProvider with ChangeNotifier {
-
   OutliersProvider(this._regressionModelProvider);
 
   final RegressionModelProvider _regressionModelProvider;
@@ -57,9 +56,7 @@ class OutliersProvider with ChangeNotifier {
     _projects = projects;
     _fileProjects = List.from(projects);
     _outliersRemoved = 0;
-    _outliers = Outliers(
-      projects.map((e) => e.metrics!).toList(),
-    );
+    _outliers = Outliers(projects);
     notifyListeners();
     refitModel();
   }
@@ -71,9 +68,7 @@ class OutliersProvider with ChangeNotifier {
       _fileProjects.removeAt(indexes[i]);
     }
     _outliersRemoved += indexes.length;
-    _outliers = Outliers(
-      _projects.map((e) => e.metrics!).toList(),
-    );
+    _outliers = Outliers(_projects);
     notifyListeners();
     refitModel();
   }
@@ -82,9 +77,7 @@ class OutliersProvider with ChangeNotifier {
     _projects.removeAt(index);
     _fileProjects.removeAt(index);
     _outliersRemoved++;
-    _outliers = Outliers(
-      _projects.map((e) => e.metrics!).toList(),
-    );
+    _outliers = Outliers(_projects);
     notifyListeners();
     refitModel();
   }
@@ -92,20 +85,6 @@ class OutliersProvider with ChangeNotifier {
   void refitModel() {
     _regressionModelProvider.setModel(RegressionModel(_projects));
   }
-
-  // List<List<double>> get covarianceMatrix =>
-  //     _outliers.calculateCovarianceMatrix();
-
-  // List<List<double>> get covarianceMatrixInverse =>
-  //     _outliers.invertMatrix(covarianceMatrix);
-
-  List<double> get mahalanobisDistances =>
-      _outliers.calculateMahalanobisDistances();
-
-  List<double> get testStatistics => _outliers.calculateTestStatistics();
-
-  Future<double?> get fisherFDistribution =>
-      _outliers.calculateFisherFDistribution();
 
   Future<List<int>> get outliers => _outliers.determineOutliers();
 }

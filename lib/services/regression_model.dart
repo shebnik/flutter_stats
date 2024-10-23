@@ -61,14 +61,14 @@ class RegressionModel {
 
     // Get min and max projects for each metric
     final minMaxProjects = {
+      sortedByDit.first,
+      sortedByDit.last,
       sortedByCbo.first,
       sortedByCbo.last,
       sortedByWmc.first,
       sortedByWmc.last,
       sortedByRfc.first,
       sortedByRfc.last,
-      sortedByDit.first,
-      sortedByDit.last,
     };
 
     // Remove min and max projects from the main list and shuffle the rest

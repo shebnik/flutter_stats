@@ -18,10 +18,19 @@ class RegressionFactors with _$RegressionFactors {
     return RegressionFactors(
       y: project.metrics!.rfc!,
       x: [
+        project.metrics!.dit!,
         project.metrics!.cbo!,
         project.metrics!.wmc!,
-        project.metrics!.dit!,
       ],
     );
+  }
+}
+
+extension RegressionFactorsList on List<RegressionFactors> {
+  List<List<double>> toArray() {
+    return [
+      map((f) => f.y).toList(),
+      ...List.generate(first.x.length, (i) => map((f) => f.x[i]).toList()),
+    ];
   }
 }

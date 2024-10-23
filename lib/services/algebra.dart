@@ -9,16 +9,17 @@ class Algebra {
   double average(List<double> values) =>
       values.reduce((a, b) => a + b) / values.length;
 
-  List<List<double>> calculateCovarianceMatrix(List<List<double>> matrix) {
-    final n = matrix.length;
+  List<List<double>> calculateCovarianceMatrix(List<List<double>> values) {
+    final n = values.first.length;
+    final p = values.length;
     return List.generate(
-      4,
-      (i) => List.generate(4, (j) {
+      p,
+      (i) => List.generate(p, (j) {
         final sum = List.generate(
           n,
           (k) =>
-              (matrix[i][k] - average(matrix[i])) *
-              (matrix[j][k] - average(matrix[j])),
+              (values[i][k] - average(values[i])) *
+              (values[j][k] - average(values[j])),
         ).reduce((a, b) => a + b);
         return sum / n;
       }),
@@ -52,5 +53,4 @@ class Algebra {
 
     return identityMatrix;
   }
-
 }

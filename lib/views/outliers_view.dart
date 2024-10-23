@@ -79,7 +79,6 @@ class _OutliersViewState extends State<OutliersView> {
               padding: EdgeInsets.only(top: 16),
             ),
             SliverFillRemaining(
-              hasScrollBody: true,
               child: ProjectsList(
                 projects: metrics,
                 outliersIndexes: outliersIndexes,

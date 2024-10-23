@@ -10,9 +10,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/outliers_provider.dart';
-import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/logger.dart';
-import 'package:flutter_stats/services/regression_model.dart';
+import 'package:flutter_stats/services/normalization.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -38,9 +37,6 @@ class DataHandler {
         );
       }
       model.setProjects(projects);
-      context
-          .read<RegressionModelProvider>()
-          .setModel(RegressionModel(projects!));
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,20 +157,42 @@ class DataHandler {
     required List<Project> projects,
   }) async {
     fileName = fileName.endsWith('.csv') ? fileName : '$fileName.csv';
-    final csv = const ListToCsvConverter().convert(
-      projects.map((project) {
+    final normalizedProjects = Normalization().normalizeProjects(projects);
+    final csv = const ListToCsvConverter().convert([
+      [
+        'No.',
+        'URL',
+        'NOC',
+        'DIT',
+        'CBO',
+        'WMC',
+        'RFC',
+        '',
+        'Zy',
+        'Zx1',
+        'Zx2',
+        'Zx3',
+      ],
+      ...List.generate(projects.length, (i) {
+        final project = projects[i];
         final metrics = project.metrics;
+        final normalized = normalizedProjects[i].metrics;
         return [
-          project.name,
+          i + 1,
           project.url,
+          if (metrics != null) metrics.noc,
           if (metrics != null) metrics.dit,
           if (metrics != null) metrics.cbo,
           if (metrics != null) metrics.wmc,
           if (metrics != null) metrics.rfc,
-          if (metrics != null) metrics.noc,
+          '',
+          if (normalized != null) normalized.rfc,
+          if (normalized != null) normalized.dit,
+          if (normalized != null) normalized.cbo,
+          if (normalized != null) normalized.wmc,
         ];
-      }).toList(),
-    );
+      }),
+    ]);
 
     final bytes = Uint8List.fromList(csv.codeUnits);
 
