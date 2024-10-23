@@ -36,51 +36,57 @@ class App extends StatelessWidget {
         builder: (context) {
           final isDark =
               PlatformDispatcher.instance.platformBrightness == Brightness.dark;
-          SystemChrome.setSystemUIOverlayStyle(
-            isDark
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: isDark
                 ? SystemUiOverlayStyle.dark.copyWith(
-                    systemNavigationBarIconBrightness: Brightness.dark,
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: Brightness.dark,
+                    systemNavigationBarColor: Colors.black,
                   )
                 : SystemUiOverlayStyle.light,
-          );
-          return ResponsiveBreakpoints.builder(
-            breakpoints: [
-              const Breakpoint(start: 0, end: 800, name: MOBILE),
-              const Breakpoint(start: 801, end: double.infinity, name: DESKTOP),
-            ],
-            child: MaterialApp.router(
-              theme: isDark
-                  ? ThemeData.dark(
-                      useMaterial3: true,
-                    ).copyWith(
-                      colorScheme: ColorScheme.fromSeed(
-                        brightness: Brightness.dark,
-                        seedColor: Colors.blue,
+            child: ResponsiveBreakpoints.builder(
+              breakpoints: [
+                const Breakpoint(start: 0, end: 800, name: MOBILE),
+                const Breakpoint(
+                  start: 801,
+                  end: double.infinity,
+                  name: DESKTOP,
+                ),
+              ],
+              child: MaterialApp.router(
+                theme: isDark
+                    ? ThemeData.dark(
+                        useMaterial3: true,
+                      ).copyWith(
+                        colorScheme: ColorScheme.fromSeed(
+                          brightness: Brightness.dark,
+                          seedColor: Colors.blue,
+                        ),
+                        scaffoldBackgroundColor: const Color(0xFF121212),
+                        indicatorColor: Colors.white,
+                        cardColor: const Color(0xFF1E1E1E),
+                      )
+                    : ThemeData.light(
+                        useMaterial3: true,
+                      ).copyWith(
+                        colorScheme: ColorScheme.fromSeed(
+                          seedColor: Colors.blue,
+                        ),
+                        scaffoldBackgroundColor: const Color(0xFFEFEFEF),
+                        indicatorColor: Colors.black,
                       ),
-                      scaffoldBackgroundColor: const Color(0xFF121212),
-                      indicatorColor: Colors.white,
-                      cardColor: const Color(0xFF1E1E1E),
-                    )
-                  : ThemeData.light(
-                      useMaterial3: true,
-                    ).copyWith(
-                      colorScheme: ColorScheme.fromSeed(
-                        seedColor: Colors.blue,
-                      ),
-                      scaffoldBackgroundColor: const Color(0xFFEFEFEF),
-                      indicatorColor: Colors.black,
-                    ),
-              scrollBehavior: const MaterialScrollBehavior().copyWith(
-                dragDevices: {
-                  PointerDeviceKind.touch,
-                  PointerDeviceKind.mouse,
-                  PointerDeviceKind.stylus,
-                  PointerDeviceKind.unknown,
-                },
+                scrollBehavior: const MaterialScrollBehavior().copyWith(
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.stylus,
+                    PointerDeviceKind.unknown,
+                  },
+                ),
+                title: appName,
+                debugShowCheckedModeBanner: false,
+                routerConfig: router,
               ),
-              title: appName,
-              debugShowCheckedModeBanner: false,
-              routerConfig: router,
             ),
           );
         },
