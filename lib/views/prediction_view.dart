@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/regression_model.dart';
@@ -162,7 +163,10 @@ class _PredictionViewState extends State<PredictionView> {
     setState(() {});
   }
 
-  String getPredictionEquation(Coefficients coefficients) {
+  String getPredictionEquation(
+    Coefficients coefficients, {
+    bool useSigma = false,
+  }) {
     var x1Str = 'X_1';
     var x2Str = 'X_2';
     var x3Str = 'X_3';
@@ -180,10 +184,20 @@ class _PredictionViewState extends State<PredictionView> {
     }
     var str = 'RFC = ';
     if (ResponsiveBreakpoints.of(context).isDesktop) {
-      str +=
-          r'10^{\beta_0} \cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3}=';
+      if (useSigma) {
+        str += r'10^{\beta_0 + \sigma}';
+      } else {
+        str += r'10^{\beta_0}';
+      }
+      str += r'\cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3} =';
     }
-    return '${str}10^{${Utils.formatNumber(coefficients.b[0])}} \\cdot $x1Str^{${Utils.formatNumber(coefficients.b[1])}} \\cdot $x2Str^{${Utils.formatNumber(coefficients.b[2])}} \\cdot $x3Str^{${Utils.formatNumber(coefficients.b[3])}}';
+    if (useSigma) {
+      str += '10^{${Utils.formatNumber(coefficients.b[1])} '
+          '+ ${Utils.formatNumber(coefficients.sigma)}}';
+    } else {
+      str += '10^{${Utils.formatNumber(coefficients.b[1])}}';
+    }
+    return '$str \\cdot $x1Str^{${Utils.formatNumber(coefficients.b[1])}} \\cdot $x2Str^{${Utils.formatNumber(coefficients.b[2])}} \\cdot $x3Str^{${Utils.formatNumber(coefficients.b[3])}}';
   }
 
   Widget get x1Field => _buildTextField(
@@ -216,9 +230,14 @@ class _PredictionViewState extends State<PredictionView> {
         return ListView(
           shrinkWrap: true,
           children: [
-            MetricsCard(
-              value: getPredictionEquation(model.coefficients),
-              isEquation: true,
+            Consumer<ProjectsProvider>(
+              builder: (context, provider, _) => MetricsCard(
+                value: getPredictionEquation(
+                  model.coefficients,
+                  useSigma: provider.useSigma,
+                ),
+                isEquation: true,
+              ),
             ),
             const SizedBox(height: 32),
             if (ResponsiveBreakpoints.of(context).isDesktop)

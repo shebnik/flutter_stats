@@ -73,28 +73,27 @@ class _RegressionViewState extends State<RegressionView> {
     final b3 = Utils.formatNumber(coefficients.b[3]);
     var str = r'\hat{Y} = ';
     if (ResponsiveBreakpoints.of(context).isDesktop) {
-      str +=
-          r'10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}';
       if (useSigma) {
-        str += r' + \sigma =';
+        str += r'10^{\beta_0 + \sigma}';
       } else {
-        str += '=';
+        str += r'10^{\beta_0}';
       }
+      str += r' \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3} = ';
+    }
+    if (useSigma) {
+      str += '10^{$b0 + ${Utils.formatNumber(coefficients.sigma)}}';
+    } else {
+      str += '10^{$b0}';
     }
     // ignore: prefer_interpolation_to_compose_strings
-    str += '10^{' +
-        b0 +
-        r'} \cdot X_1^{' +
+    return str +
+        r'\cdot X_1^{' +
         b1 +
         r'} \cdot X_2^{' +
         b2 +
         r'} \cdot X_3^{' +
         b3 +
         '}';
-    if (useSigma) {
-      str += ' + ${Utils.formatNumber(coefficients.sigma)}';
-    }
-    return str;
   }
 
   @override
