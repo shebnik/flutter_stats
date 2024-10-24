@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/models/project/project.dart';
-import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -13,35 +12,12 @@ class OutliersView extends StatefulWidget {
 
 class _OutliersViewState extends State<OutliersView> {
   final isRemoving = ValueNotifier<bool>(false);
-  late Future<List<int>> outliersIndexesFuture;
-  late List<Project> metrics;
 
   @override
   Widget build(BuildContext context) {
-    outliersIndexesFuture = context.select(
-      (OutliersProvider provider) => provider.outliers,
-    );
-    metrics = context.select(
-      (OutliersProvider provider) => provider.projects,
-    );
-
-    return FutureBuilder(
-      future: outliersIndexesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        final outliersIndexes = snapshot.data;
-        if (outliersIndexes == null) {
-          return const Center(
-            child: Text('Error loading outliers'),
-          );
-        }
-
-        if (outliersIndexes.isEmpty) {
+    return Consumer<ProjectsProvider>(
+      builder: (context, provider, _) {
+        if (provider.outliers.isEmpty) {
           return Center(
             child: Text(
               'No outliers',
@@ -62,7 +38,7 @@ class _OutliersViewState extends State<OutliersView> {
                     builder: (_, disabled, __) => ElevatedButton(
                       onPressed: disabled
                           ? null
-                          : () => _removeAllClick(outliersIndexes),
+                          : () => _removeAllClick(provider),
                       child: const Padding(
                         padding: EdgeInsets.all(8),
                         child: Text(
@@ -80,8 +56,8 @@ class _OutliersViewState extends State<OutliersView> {
             ),
             SliverFillRemaining(
               child: ProjectsList(
-                projects: metrics,
-                outliersIndexes: outliersIndexes,
+                projects: provider.projects,
+                outliersIndexes: provider.outliers,
                 key: const Key('outliers_list'),
               ),
             ),
@@ -91,24 +67,22 @@ class _OutliersViewState extends State<OutliersView> {
     );
   }
 
-  Future<void> _removeAllClick(List<int> outliersIndexes) async {
+  Future<void> _removeAllClick(ProjectsProvider provider) async {
     if (isRemoving.value) return;
     isRemoving.value = true;
     try {
-      await _removeAllOutliers(outliersIndexes);
+      await _removeAllOutliers(provider);
     } finally {
       isRemoving.value = false;
     }
   }
 
-  Future<void> _removeAllOutliers(List<int> outliersIndexes) async {
-    final provider = context.read<OutliersProvider>()
-      ..removeProjects(outliersIndexes);
+  Future<void> _removeAllOutliers(ProjectsProvider provider) async {
+    await provider.removeProjects(provider.outliers);
 
-    final newOutliers = await provider.outliers;
-    if (newOutliers.isEmpty) {
+    if (provider.outliers.isEmpty) {
       return;
     }
-    return _removeAllOutliers(newOutliers);
+    return _removeAllOutliers(provider);
   }
 }

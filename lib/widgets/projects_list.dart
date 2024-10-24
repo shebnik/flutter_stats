@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
-import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -109,7 +109,7 @@ class ProjectsList extends StatelessWidget {
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                context.read<OutliersProvider>().removeProject(index);
+                context.read<ProjectsProvider>().removeProject(index);
               },
             ),
           ),

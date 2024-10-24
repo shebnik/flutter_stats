@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
-import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/services/data_handler.dart';
@@ -23,7 +23,7 @@ class App extends StatelessWidget {
         Provider(create: (_) => DataHandler()),
         Provider(create: (_) => Utils()),
         ChangeNotifierProvider(
-          create: (_) => OutliersProvider(regressionModelProvider),
+          create: (_) => ProjectsProvider(regressionModelProvider),
         ),
         ChangeNotifierProvider(
           create: (_) => regressionModelProvider,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/widgets/app_drawer.dart';
@@ -26,7 +26,7 @@ class ScaffoldWithNavigationBar extends StatefulWidget {
 class _ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
   @override
   Widget build(BuildContext context) {
-    final outliersProvider = context.watch<OutliersProvider>();
+    final outliersProvider = context.watch<ProjectsProvider>();
     return Scaffold(
       appBar: outliersProvider.projects.isNotEmpty && widget.selectedIndex == 0
           ? const AppHeader()

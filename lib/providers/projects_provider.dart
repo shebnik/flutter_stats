@@ -5,8 +5,8 @@ import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 
-class OutliersProvider with ChangeNotifier {
-  OutliersProvider(this._regressionModelProvider);
+class ProjectsProvider with ChangeNotifier {
+  ProjectsProvider(this._regressionModelProvider);
 
   final RegressionModelProvider _regressionModelProvider;
 
@@ -51,40 +51,56 @@ class OutliersProvider with ChangeNotifier {
     refitModel();
   }
 
-  void setProjects(List<Project>? projects) {
+  Future<void> setProjects(List<Project>? projects) async {
     if (projects == null) return;
     _projects = projects;
     _fileProjects = List.from(projects);
     _outliersRemoved = 0;
-    _outliers = Outliers(projects);
+    await refitOutliers(projects);
     notifyListeners();
     refitModel();
   }
 
-  void removeProjects(List<int> indexes) {
+  Future<void> removeProjects(List<int> indexes) async {
     indexes.sort();
     for (var i = indexes.length - 1; i >= 0; i--) {
       _projects.removeAt(indexes[i]);
       _fileProjects.removeAt(indexes[i]);
     }
     _outliersRemoved += indexes.length;
-    _outliers = Outliers(_projects);
+    await refitOutliers(_projects);
     notifyListeners();
     refitModel();
   }
 
-  void removeProject(int index) {
+  Future<void> removeProject(int index) async {
     _projects.removeAt(index);
     _fileProjects.removeAt(index);
     _outliersRemoved++;
-    _outliers = Outliers(_projects);
+    await refitOutliers(_projects);
     notifyListeners();
     refitModel();
   }
 
   void refitModel() {
-    _regressionModelProvider.setModel(RegressionModel(_projects));
+    _regressionModelProvider
+        .setModel(RegressionModel(_projects, useSigma: _useSigma));
   }
 
-  Future<List<int>> get outliers => _outliers.determineOutliers();
+  Future<void> refitOutliers(List<Project> projects) async {
+    _outliers = Outliers(projects);
+    await _outliers.determineOutliers();
+  }
+
+  List<int> get outliers => _outliers.outliers;
+
+  bool _useSigma = false;
+
+  bool get useSigma => _useSigma;
+
+  set useSigma(bool value) {
+    _useSigma = value;
+    notifyListeners();
+    refitModel();
+  }
 }

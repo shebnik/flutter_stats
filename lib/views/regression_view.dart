@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
-import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
@@ -16,6 +16,8 @@ class RegressionView extends StatefulWidget {
 }
 
 class _RegressionViewState extends State<RegressionView> {
+  bool useSigma = false;
+
   String getLinearEquation(Coefficients coefficients) {
     final b0 = Utils.formatNumber(coefficients.b[0]);
     dynamic b1 = coefficients.b[1];
@@ -44,16 +46,24 @@ class _RegressionViewState extends State<RegressionView> {
     var str = r'\hat{Z_Y} = ';
     if (ResponsiveBreakpoints.of(context).isDesktop) {
       str +=
-          r'\beta_0 + \beta_1 \cdot Z_{X_1} + \beta_2 \cdot Z_{X_2} + \beta_3 \cdot Z_{X_3}=';
+          r'\beta_0 + \beta_1 \cdot Z_{X_1} + \beta_2 \cdot Z_{X_2} + \beta_3 \cdot Z_{X_3}';
+      if (useSigma) {
+        str += r' + \sigma =';
+      } else {
+        str += '=';
+      }
     }
-    return str +
-        b0 +
+    str += b0 +
         (b1 as String) +
         r' \cdot Z_{X_1}' +
         (b2 as String) +
         r' \cdot Z_{X_2}' +
         (b3 as String) +
         r' \cdot Z_{X_3}';
+    if (useSigma) {
+      str += ' + ${Utils.formatNumber(coefficients.sigma)}';
+    }
+    return str;
   }
 
   String getNonlinearEquation(Coefficients coefficients) {
@@ -64,11 +74,15 @@ class _RegressionViewState extends State<RegressionView> {
     var str = r'\hat{Y} = ';
     if (ResponsiveBreakpoints.of(context).isDesktop) {
       str +=
-          r'10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}=';
+          r'10^{\beta_0} \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3}';
+      if (useSigma) {
+        str += r' + \sigma =';
+      } else {
+        str += '=';
+      }
     }
     // ignore: prefer_interpolation_to_compose_strings
-    return str +
-        '10^{' +
+    str += '10^{' +
         b0 +
         r'} \cdot X_1^{' +
         b1 +
@@ -77,13 +91,22 @@ class _RegressionViewState extends State<RegressionView> {
         r'} \cdot X_3^{' +
         b3 +
         '}';
+    if (useSigma) {
+      str += ' + ${Utils.formatNumber(coefficients.sigma)}';
+    }
+    return str;
   }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final model = context.watch<RegressionModelProvider>().model;
-    final outliersProvider = context.watch<OutliersProvider>();
+    final provider = context.watch<ProjectsProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        useSigma = provider.useSigma;
+      });
+    });
 
     final regressionInfoWidgets = [
       Flexible(
@@ -103,28 +126,14 @@ class _RegressionViewState extends State<RegressionView> {
       Flexible(
         child: MetricsCard(
           title: 'Outliers removed',
-          value: outliersProvider.outliersRemoved.toString(),
+          value: provider.outliersRemoved.toString(),
         ),
       ),
       const SizedBox(width: 16),
       Flexible(
-        child: FutureBuilder(
-          future: outliersProvider.outliers,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const SizedBox.shrink();
-            }
-            final outliers = snapshot.data;
-            if (outliers == null) {
-              return const Center(
-                child: Text('Error loading outliers'),
-              );
-            }
-            return MetricsCard(
-              title: 'Outliers left',
-              value: outliers.length.toString(),
-            );
-          },
+        child: MetricsCard(
+          title: 'Outliers left',
+          value: provider.outliers.length.toString(),
         ),
       ),
     ];

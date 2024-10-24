@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
-import 'package:flutter_stats/providers/outliers_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_stats/services/normalization.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +23,7 @@ class DataHandler {
     BuildContext context, {
     bool useAssetDataset = false,
   }) async {
-    final model = context.read<OutliersProvider>();
+    final model = context.read<ProjectsProvider>();
     try {
       final projects = await retrieveData(useAssetDataset: useAssetDataset);
       if (projects == null) {
@@ -36,7 +36,7 @@ class DataHandler {
           ),
         );
       }
-      model.setProjects(projects);
+      await model.setProjects(projects);
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);
       ScaffoldMessenger.of(context).showSnackBar(

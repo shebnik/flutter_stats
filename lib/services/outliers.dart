@@ -22,6 +22,9 @@ class Outliers {
   int get n => projects.length;
   int get p => _factors.first.x.length + 1;
 
+  List<int> _outliers = [];
+  List<int> get outliers => _outliers;
+
   void _normalizeData() {
     final normalizedTestProjects = _normalization.normalizeProjects(projects);
     _factors =
@@ -55,17 +58,15 @@ class Outliers {
   Future<double?> calculateFisherFDistribution() =>
       Fisher.inv(alpha: alpha, df1: p, df2: n - p);
 
-  Future<List<int>> determineOutliers() async {
+  Future<void> determineOutliers() async {
     final testStatistics = calculateTestStatistics();
     final f = await calculateFisherFDistribution();
     if (f == null) {
       debugPrint('Failed to calculate Fisher F distribution');
-      return [];
+      return;
     }
 
-    final mahalanobisOutliers =
+    _outliers =
         List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
-
-    return mahalanobisOutliers;
   }
 }

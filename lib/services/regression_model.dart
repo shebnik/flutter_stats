@@ -11,7 +11,10 @@ import 'package:ml_linalg/matrix.dart';
 import 'package:ml_linalg/vector.dart';
 
 class RegressionModel {
-  RegressionModel(this._projects) {
+  RegressionModel(
+    this._projects, {
+    this.useSigma = false,
+  }) {
     _splitData(_projects);
     _evaluateModel();
     _testModel();
@@ -44,6 +47,8 @@ class RegressionModel {
   ModelQuality get testModelQuality => _testModelQuality;
 
   int get p => _factors.firstOrNull?.x.length ?? 0;
+
+  bool useSigma;
 
   void _splitData(List<Project> projects, [double trainRatio = 0.6]) {
     // Sort projects by each metric
@@ -124,6 +129,9 @@ class RegressionModel {
     return List.generate(factors.length, (i) {
       final factor = factors![i];
       var prediction = coefficients!.b[0];
+      if (useSigma) {
+        prediction += coefficients.sigma;
+      }
       for (var j = 1; j < _coefficients.b.length; j++) {
         prediction += _coefficients.b[j] * factor.x[j - 1];
       }
@@ -132,7 +140,8 @@ class RegressionModel {
   }
 
   double predictY(List<double> x) {
-    var prediction = pow(10, _coefficients.b[0]);
+    var prediction =
+        pow(10, _coefficients.b[0] + (useSigma ? _coefficients.sigma : 0));
     for (var i = 1; i < _coefficients.b.length; i++) {
       prediction += pow(x[i - 1], _coefficients.b[i]);
     }
