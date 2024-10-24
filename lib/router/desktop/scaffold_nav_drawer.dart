@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
+import 'package:flutter_stats/views/settings/settings.dart';
 import 'package:flutter_stats/widgets/load_file_button.dart';
 
 class ScaffoldWithNavigationDrawer extends StatefulWidget {
@@ -35,22 +36,58 @@ class _ScaffoldWithNavigationDrawerState
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: widget.selectedIndex,
-            onDestinationSelected: widget.onDestinationSelected,
-            labelType: NavigationRailLabelType.all,
-            groupAlignment: 0,
-            useIndicator: true,
-            leading: const LoadFileButton(),
-            destinations: appRoutes
-                .map(
-                  (route) => NavigationRailDestination(
-                    icon: Icon(route.icon),
-                    selectedIcon: Icon(route.selectedIcon),
-                    label: Text(route.label),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: NavigationRail(
+                    selectedIndex: widget.selectedIndex,
+                    onDestinationSelected: widget.onDestinationSelected,
+                    labelType: NavigationRailLabelType.all,
+                    groupAlignment: 0,
+                    useIndicator: true,
+                    leading: const LoadFileButton(),
+                    destinations: appRoutes
+                        .map(
+                          (route) => NavigationRailDestination(
+                            icon: Icon(route.icon),
+                            selectedIcon: Icon(route.selectedIcon),
+                            label: Text(route.label),
+                          ),
+                        )
+                        .toList(),
                   ),
-                )
-                .toList(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      showDialog<AlertDialog>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Settings'),
+                            content: const Settings(),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(

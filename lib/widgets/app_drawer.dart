@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
-import 'package:flutter_stats/widgets/check_tile.dart';
+import 'package:flutter_stats/views/settings/settings_checks.dart';
 import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -53,22 +53,7 @@ class AppDrawer extends StatelessWidget {
               }),
               const Spacer(),
               const SizedBox(height: 16),
-              CheckTile(
-                caption: 'Use relative NOC\n(Divide all metrics by NOC)',
-                value: projectsProvider.useRelativeNOC,
-                onChanged: () {
-                  projectsProvider
-                      .setUseRelativeNOC(!projectsProvider.useRelativeNOC);
-                },
-              ),
-              const SizedBox(height: 16),
-              CheckTile(
-                caption: 'Use sigma',
-                value: projectsProvider.useSigma,
-                onChanged: () {
-                  projectsProvider.useSigma = !projectsProvider.useSigma;
-                },
-              ),
+              const SettingsChecks(),
               const SizedBox(height: 16),
             ],
           ),

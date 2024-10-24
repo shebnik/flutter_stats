@@ -11,16 +11,9 @@ final _log = AppLogger().logger;
 Future<void> main() async {
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-
     usePathUrlStrategy();
-
     registerErrorHandlers();
 
-    // ignore: unused_local_variable
-    // final firebaseApp = await Firebase.initializeApp(
-    //   options: DefaultFirebaseOptions.currentPlatform,
-    // );
-    // final auth = FirebaseAuth.instanceFor(app: firebaseApp);
     runApp(const App());
   }, (error, stackTrace) {
     _log.e(
