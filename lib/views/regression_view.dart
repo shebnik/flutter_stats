@@ -250,7 +250,7 @@ class _ModelQualityWidget extends StatelessWidget {
                     Utils.formatNumber(modelQuality.rSquared),
                     style: TextStyle(
                       fontSize: isMobile ? 14 : 18,
-                      color: Utils.getColor(
+                      color: Utils.getQualityColor(
                         ModelQualityTypes.rSquared,
                         modelQuality.rSquared,
                       ),
@@ -271,7 +271,7 @@ class _ModelQualityWidget extends StatelessWidget {
                     Utils.formatNumber(modelQuality.mmre),
                     style: TextStyle(
                       fontSize: isMobile ? 14 : 18,
-                      color: Utils.getColor(
+                      color: Utils.getQualityColor(
                         ModelQualityTypes.mmre,
                         modelQuality.mmre,
                       ),
@@ -292,7 +292,7 @@ class _ModelQualityWidget extends StatelessWidget {
                     Utils.formatNumber(modelQuality.pred),
                     style: TextStyle(
                       fontSize: isMobile ? 14 : 18,
-                      color: Utils.getColor(
+                      color: Utils.getQualityColor(
                         ModelQualityTypes.pred,
                         modelQuality.pred,
                       ),

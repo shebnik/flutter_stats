@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
+import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
@@ -73,9 +75,44 @@ class _PredictionViewState extends State<PredictionView> {
         _prediction! > 0) {
       final formatter = NumberFormat('#,###');
       final formatted = formatter.format(_prediction?.round());
-      return MetricsCard(
-        title: 'Y Prediction (RFC)',
-        value: formatted.replaceAll(',', ' '),
+      return Row(
+        children: [
+          Expanded(
+            child: MetricsCard(
+              title: 'Y Prediction (RFC)',
+              value: formatted.replaceAll(',', ' '),
+            ),
+          ),
+          const SizedBox(
+            width: 16,
+          ),
+          Expanded(
+            child: FutureBuilder(
+              future: model.calculateProjectQuality(
+                Algebra().logBase10(
+                  _prediction!.toDouble(),
+                ),
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox();
+                }
+                if (snapshot.hasData && snapshot.data != null) {
+                  final quality = Utils.formatNumber(snapshot.data! * 100);
+                  return MetricsCard(
+                    title: 'Project Quality',
+                    value: '$quality%',
+                    valueColor: Utils.getQualityColor(
+                      ModelQualityTypes.project,
+                      snapshot.data!,
+                    ),
+                  );
+                }
+                return const Text('Error calculating project quality');
+              },
+            ),
+          ),
+        ],
       );
     }
 

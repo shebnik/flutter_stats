@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'model_quality.freezed.dart';
 part 'model_quality.g.dart';
 
-enum ModelQualityTypes { rSquared, mmre, pred }
+enum ModelQualityTypes { rSquared, mmre, pred, project }
 
 @freezed
 class ModelQuality with _$ModelQuality {

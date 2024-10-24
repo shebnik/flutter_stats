@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/models/project/project.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_stats/models/regression_factors/regression_factors.dart'
 import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_stats/services/normalization.dart';
+import 'package:flutter_stats/services/student.dart';
 import 'package:ml_linalg/matrix.dart';
 import 'package:ml_linalg/vector.dart';
 
@@ -161,15 +163,6 @@ class RegressionModel {
     });
   }
 
-  double predictY(List<double> x) {
-    var prediction =
-        pow(10, _coefficients.b[0] + (useSigma ? _coefficients.sigma : 0));
-    for (var i = 1; i < _coefficients.b.length; i++) {
-      prediction *= pow(x[i - 1], _coefficients.b[i]);
-    }
-    return prediction.toDouble();
-  }
-
   ModelQuality _calculateModelQuality({
     required List<double> y,
     required List<double> yHat,
@@ -233,6 +226,129 @@ class RegressionModel {
       yHat: _calculatePredictedValues(factors: testFactors),
     );
     _logger.i('Test model quality: $_testModelQuality');
+  }
+
+  double predictY(List<double> x) {
+    var prediction =
+        pow(10, _coefficients.b[0] + (useSigma ? _coefficients.sigma : 0));
+    for (var i = 1; i < _coefficients.b.length; i++) {
+      prediction *= pow(x[i - 1], _coefficients.b[i]);
+    }
+    return prediction.toDouble();
+  }
+
+  Future<(List<double>, List<double>)> calculatePredictionInterval() async {
+    final n = _predictedValues.length;
+
+    final X = Matrix.fromColumns([
+      Vector.fromList(List.filled(n, 1.0)),
+      ...List.generate(
+        p,
+        (i) => Vector.fromList(_factors.map((f) => f.x[i]).toList()),
+      ),
+    ]);
+    final y = Vector.fromList(_factors.map((f) => f.y).toList());
+
+    final residuals = Vector.fromList(
+      List.generate(n, (i) => y[i] - _predictedValues[i]),
+    );
+    final mse = residuals.dot(residuals) / (n - p - 1);
+
+    final leverage = X * (X.transpose() * X).inverse() * X.transpose();
+    final leverageDiagonal = List.generate(n, (i) => leverage[i][i]);
+    final se = List.generate(n, (i) => sqrt(mse * (1 + leverageDiagonal[i])));
+
+    final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - p - 1);
+    final margin = List.generate(n, (i) => tValue! * se[i]);
+
+    final lowerBound = List.generate(n, (i) => _predictedValues[i] - margin[i]);
+    final upperBound = List.generate(n, (i) => _predictedValues[i] + margin[i]);
+
+    return (lowerBound, upperBound);
+  }
+
+  Future<(List<double>, List<double>)> calculateConfidenceInterval() async {
+    final n = _predictedValues.length;
+    final X = Matrix.fromColumns([
+      Vector.fromList(List.filled(n, 1.0)),
+      ...List.generate(
+        p,
+        (i) => Vector.fromList(_factors.map((f) => f.x[i]).toList()),
+      ),
+    ]);
+
+    final xt = X.transpose();
+    final xtX = xt * X;
+    final xtXInverse = xtX.inverse();
+
+    // Calculate standard error for confidence interval
+    final residuals = Vector.fromList(
+      List.generate(n, (i) => _factors[i].y - _predictedValues[i]),
+    );
+    final mse = residuals.dot(residuals) / (n - p - 1);
+
+    final hatMatrix = X * xtXInverse * xt;
+    final leverageDiagonal = List.generate(n, (i) => hatMatrix[i][i]);
+
+    final seConf = List.generate(
+      n,
+      (i) => sqrt(mse * leverageDiagonal[i]),
+    );
+
+    final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - p - 1);
+    final confMargin = List.generate(n, (i) => tValue! * seConf[i]);
+
+    final confLower =
+        List.generate(n, (i) => _predictedValues[i] - confMargin[i]);
+    final confUpper =
+        List.generate(n, (i) => _predictedValues[i] + confMargin[i]);
+
+    return (confLower, confUpper);
+  }
+
+  Future<double> calculateProjectQuality(double y) async {
+    final (predLower, predUpper) = await calculatePredictionInterval();
+    final (confLower, confUpper) = await calculateConfidenceInterval();
+
+    final avgConfLower = _algebra.average(confLower);
+    final avgConfUpper = _algebra.average(confUpper);
+    final avgPredLower = _algebra.average(predLower);
+    final avgPredUpper = _algebra.average(predUpper);
+
+    // Calculate distances between intervals for scaling
+    final confInterval = avgConfUpper - avgConfLower;
+    final lowerPredInterval = avgConfLower - avgPredLower;
+    final upperPredInterval = avgPredUpper - avgConfUpper;
+
+    // Calculate quality percentage based on where y falls
+    if (y >= avgConfLower && y <= avgConfUpper) {
+      // Within confidence interval - scale from 40% to 60%
+      final center = (avgConfUpper + avgConfLower) / 2;
+      final distanceFromCenter = (y - center).abs();
+      final maxDistance = confInterval / 2;
+      final positionInInterval = 1 - (distanceFromCenter / maxDistance);
+      return 0.4 + (positionInInterval * 0.2);
+    } else if (y < avgPredLower) {
+      // Below prediction interval - scale from 80% to 100%
+      final distanceBelowPred = avgPredLower - y;
+      final scaleFactor = min(distanceBelowPred / lowerPredInterval, 1);
+      return 0.8 + (scaleFactor * 0.2);
+    } else if (y > avgPredUpper) {
+      // Above prediction interval - scale from 0% to 20%
+      final distanceAbovePred = y - avgPredUpper;
+      final scaleFactor = min(distanceAbovePred / upperPredInterval, 1);
+      return 0.2 * (1 - scaleFactor);
+    } else if (y > avgConfUpper) {
+      // Between confidence and upper prediction interval scale from 20% to 40%
+      final distanceAboveConf = y - avgConfUpper;
+      final scaleFactor = distanceAboveConf / upperPredInterval;
+      return 0.4 * (1 - scaleFactor);
+    } else {
+      // Between lower prediction and confidence interval scale from 60% to 80%
+      final distanceBelowConf = avgConfLower - y;
+      final scaleFactor = distanceBelowConf / lowerPredInterval;
+      return 0.6 + (scaleFactor * 0.2);
+    }
   }
 }
 

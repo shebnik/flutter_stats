@@ -34,7 +34,7 @@ class Utils {
     }
   }
 
-  static Color getColor(ModelQualityTypes qualityType, double val) {
+  static Color getQualityColor(ModelQualityTypes qualityType, double val) {
     // Ensure value is between 0 and 1
     final value = val.clamp(0.0, 1.0);
 
@@ -68,6 +68,18 @@ class Utils {
         } else {
           // Gradient from red (0) to orange (0.75)
           return Color.lerp(Colors.red, Colors.orange, value / 0.75)!;
+        }
+      case ModelQualityTypes.project:
+        if (value >= 0.5) {
+          // Gradient from light green (0.75) to green (1.0)
+          return Color.lerp(
+            Colors.lightGreen,
+            Colors.green,
+            (value - 0.5) / 0.5,
+          )!;
+        } else {
+          // Gradient from red (0) to orange (0.75)
+          return Color.lerp(Colors.red, Colors.orange, value / 0.5)!;
         }
     }
   }
