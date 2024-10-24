@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
-import 'package:flutter_stats/services/data_handler.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_stats/widgets/load_file_button.dart';
 
 class ScaffoldWithNavigationDrawer extends StatefulWidget {
   const ScaffoldWithNavigationDrawer({
@@ -42,13 +41,7 @@ class _ScaffoldWithNavigationDrawerState
             labelType: NavigationRailLabelType.all,
             groupAlignment: 0,
             useIndicator: true,
-            leading: FloatingActionButton(
-              elevation: 0,
-              onPressed: () =>
-                  context.read<DataHandler>().loadDataFile(context),
-              tooltip: 'Load CSV file',
-              child: const Icon(Icons.add),
-            ),
+            leading: const LoadFileButton(),
             destinations: appRoutes
                 .map(
                   (route) => NavigationRailDestination(

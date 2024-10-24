@@ -4,6 +4,7 @@ import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/widgets/app_drawer.dart';
 import 'package:flutter_stats/widgets/app_header.dart';
+import 'package:flutter_stats/widgets/load_file_button.dart';
 import 'package:provider/provider.dart';
 
 class ScaffoldWithNavigationBar extends StatefulWidget {
@@ -48,12 +49,8 @@ class _ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
             )
             .toList(),
       ),
-      // floatingActionButtonLocation: 
-      // FloatingActionButtonLocation.centerDocked,
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () => context.read<DataHandler>().loadDataFile(context),
-      //   child: const Icon(Icons.add),
-      // ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: const LoadFileButton(),
     );
   }
 }

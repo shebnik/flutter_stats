@@ -27,7 +27,16 @@ class _PredictionViewState extends State<PredictionView> {
   double? x2;
   double? x3;
 
-  Widget _buildTextField(TextEditingController controller, String label) {
+  MinMaxFactors? minMaxFactors;
+  String? x1Error;
+  String? x2Error;
+  String? x3Error;
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    String? errorText,
+  ) {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -37,6 +46,8 @@ class _PredictionViewState extends State<PredictionView> {
       ],
       decoration: InputDecoration(
         labelText: label,
+        errorText: errorText,
+        counterText: ' ',
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
         ),
@@ -77,15 +88,44 @@ class _PredictionViewState extends State<PredictionView> {
     x3 = double.tryParse(x3Controller.text);
     if (x1 == null || x2 == null || x3 == null) {
       _prediction = null;
+      x1Error = null;
+      x2Error = null;
+      x3Error = null;
       setState(() {});
       return;
     }
     _prediction = model.predictY([x1!, x2!, x3!]);
+
+    if (minMaxFactors != null) {
+      if (x1! > minMaxFactors!.dit.max || x1! < minMaxFactors!.dit.min) {
+        x1Error = 'DIT should be between '
+            '${Utils.formatNumber(minMaxFactors!.dit.min)}'
+            ' and ${Utils.formatNumber(minMaxFactors!.dit.max)}';
+      } else {
+        x1Error = null;
+      }
+
+      if (x2! > minMaxFactors!.cbo.max || x2! < minMaxFactors!.cbo.min) {
+        x2Error = 'CBO should be between '
+            '${Utils.formatNumber(minMaxFactors!.cbo.min)}'
+            ' and ${Utils.formatNumber(minMaxFactors!.cbo.max)}';
+      } else {
+        x2Error = null;
+      }
+
+      if (x3! > minMaxFactors!.wmc.max || x3! < minMaxFactors!.wmc.min) {
+        x3Error = 'WMC should be between '
+            '${Utils.formatNumber(minMaxFactors!.wmc.min)}'
+            ' and ${Utils.formatNumber(minMaxFactors!.wmc.max)}';
+      } else {
+        x3Error = null;
+      }
+    }
+
     setState(() {});
   }
 
   String getPredictionEquation(Coefficients coefficients) {
-    // ignore: prefer_interpolation_to_compose_strings
     var x1Str = 'X_1';
     var x2Str = 'X_2';
     var x3Str = 'X_3';
@@ -106,89 +146,138 @@ class _PredictionViewState extends State<PredictionView> {
       str +=
           r'10^{\beta_0} \cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3}=';
     }
-    // ignore: prefer_interpolation_to_compose_strings
-    return str +
-        '10^{' +
-        Utils.formatNumber(coefficients.b[0]) +
-        '} \\cdot $x1Str^{' +
-        Utils.formatNumber(coefficients.b[1]) +
-        '} \\cdot $x2Str^{' +
-        Utils.formatNumber(coefficients.b[2]) +
-        '} \\cdot $x3Str^{' +
-        Utils.formatNumber(coefficients.b[3]) +
-        '}';
+    return '${str}10^{${Utils.formatNumber(coefficients.b[0])}} \\cdot $x1Str^{${Utils.formatNumber(coefficients.b[1])}} \\cdot $x2Str^{${Utils.formatNumber(coefficients.b[2])}} \\cdot $x3Str^{${Utils.formatNumber(coefficients.b[3])}}';
   }
 
+  Widget get x1Field => _buildTextField(
+        x1Controller,
+        'Enter X1 (DIT)',
+        x1Error,
+      );
+
+  Widget get x2Field => _buildTextField(
+        x2Controller,
+        'Enter X2 (CBO)',
+        x2Error,
+      );
+
+  Widget get x3Field => _buildTextField(
+        x3Controller,
+        'Enter X3 (WMC)',
+        x3Error,
+      );
+
   Widget predictionWidget() {
-    model = context.watch<RegressionModelProvider>().model;
-    return ListView(
-      shrinkWrap: true,
+    return Consumer<RegressionModelProvider>(
+      builder: (context, provider, child) {
+        if (provider.model == null) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        model = provider.model!;
+        return ListView(
+          shrinkWrap: true,
+          children: [
+            MetricsCard(
+              value: getPredictionEquation(model.coefficients),
+              isEquation: true,
+            ),
+            const SizedBox(height: 32),
+            if (ResponsiveBreakpoints.of(context).isDesktop)
+              Row(
+                children: [
+                  Expanded(child: x1Field),
+                  const SizedBox(width: 16),
+                  Expanded(child: x2Field),
+                  const SizedBox(width: 16),
+                  Expanded(child: x3Field),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  x1Field,
+                  const SizedBox(height: 16),
+                  x2Field,
+                  const SizedBox(height: 16),
+                  x3Field,
+                ],
+              ),
+            const SizedBox(height: 16),
+            _buildPredictionOutput(),
+            SizedBox(
+              height: ResponsiveBreakpoints.of(context).isDesktop ? 64 : 32,
+            ),
+            _availableFactorsRange(),
+            const SizedBox(height: 32),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _availableFactorsRange() {
+    minMaxFactors = model.minMaxFactors;
+    if (minMaxFactors == null) {
+      return const SizedBox.shrink();
+    }
+    final minDit = Utils.formatNumber(minMaxFactors!.dit.min);
+    final maxDit = Utils.formatNumber(minMaxFactors!.dit.max);
+    final minCbo = Utils.formatNumber(minMaxFactors!.cbo.min);
+    final maxCbo = Utils.formatNumber(minMaxFactors!.cbo.max);
+    final minWmc = Utils.formatNumber(minMaxFactors!.wmc.min);
+    final maxWmc = Utils.formatNumber(minMaxFactors!.wmc.max);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        MetricsCard(
-          value: getPredictionEquation(model.coefficients),
-          isEquation: true,
+        const Text(
+          'Available factors range:',
+          style: TextStyle(fontSize: 16),
         ),
-        const SizedBox(height: 32),
-        if (ResponsiveBreakpoints.of(context).isDesktop)
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  x1Controller,
-                  'Enter X1 (DIT)',
-                ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: MetricsCard(
+                title: 'DIT',
+                value: '[$minDit - $maxDit]',
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(
-                  x2Controller,
-                  'Enter X2 (CBO)',
-                ),
+            ),
+            const SizedBox(width: 16),
+            Flexible(
+              child: MetricsCard(
+                title: 'CBO',
+                value: '[$minCbo - $maxCbo]',
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(
-                  x3Controller,
-                  'Enter X3 (WMC)',
-                ),
+            ),
+            const SizedBox(width: 16),
+            Flexible(
+              child: MetricsCard(
+                title: 'WMC',
+                value: '[$minWmc - $maxWmc]',
               ),
-            ],
-          )
-        else
-          Column(
-            children: [
-              _buildTextField(
-                x1Controller,
-                'Enter X1 (DIT)',
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                x2Controller,
-                'Enter X2 (CBO)',
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                x3Controller,
-                'Enter X3 (WMC)',
-              ),
-            ],
-          ),
-        const SizedBox(height: 32),
-        _buildPredictionOutput(),
+            ),
+          ],
+        ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          predictionWidget(),
-          const SizedBox(height: 20),
-        ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            predictionWidget(),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

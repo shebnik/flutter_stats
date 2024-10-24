@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/router/scaffold_nav.dart';
+import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/views/metrics_view.dart';
 import 'package:flutter_stats/views/outliers_view.dart';
 import 'package:flutter_stats/views/prediction_view.dart';
@@ -9,7 +10,7 @@ import 'package:go_router/go_router.dart';
 GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 enum AppRouteType {
-  metrics(icon: Icons.dataset_outlined, selectedIcon: Icons.dataset),
+  projects(icon: Icons.dataset_outlined, selectedIcon: Icons.dataset),
   outliers(icon: Icons.circle_outlined, selectedIcon: Icons.circle),
   regression(icon: Icons.show_chart, selectedIcon: Icons.trending_up),
   prediction(icon: Icons.analytics_outlined, selectedIcon: Icons.analytics),
@@ -33,13 +34,13 @@ class AppRoute {
   String get path => '/$name';
   Page<dynamic> get page => NoTransitionPage(child: view);
 
-  String get label => type.name.toUpperCase();
+  String get label => type.name.capitalize();
   IconData get icon => type.icon;
   IconData get selectedIcon => type.selectedIcon;
 }
 
 final List<AppRoute> appRoutes = [
-  AppRoute(AppRouteType.metrics, const MetricsView()),
+  AppRoute(AppRouteType.projects, const MetricsView()),
   AppRoute(AppRouteType.outliers, const OutliersView()),
   AppRoute(AppRouteType.regression, const RegressionView()),
   AppRoute(AppRouteType.prediction, const PredictionView()),

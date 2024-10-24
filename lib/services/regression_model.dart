@@ -48,6 +48,28 @@ class RegressionModel {
 
   int get p => _factors.firstOrNull?.x.length ?? 0;
 
+  MinMaxFactors get minMaxFactors {
+    final values = _trainProjects.map((p) => p.metrics!).toList();
+    return MinMaxFactors(
+      dit: MinMax(
+        values.map((f) => f.dit!).reduce(min),
+        values.map((f) => f.dit!).reduce(max),
+      ),
+      cbo: MinMax(
+        values.map((f) => f.cbo!).reduce(min),
+        values.map((f) => f.cbo!).reduce(max),
+      ),
+      wmc: MinMax(
+        values.map((f) => f.wmc!).reduce(min),
+        values.map((f) => f.wmc!).reduce(max),
+      ),
+      rfc: MinMax(
+        values.map((f) => f.rfc!).reduce(min),
+        values.map((f) => f.rfc!).reduce(max),
+      ),
+    );
+  }
+
   bool useSigma;
 
   void _splitData(List<Project> projects, [double trainRatio = 0.6]) {
@@ -143,7 +165,7 @@ class RegressionModel {
     var prediction =
         pow(10, _coefficients.b[0] + (useSigma ? _coefficients.sigma : 0));
     for (var i = 1; i < _coefficients.b.length; i++) {
-      prediction += pow(x[i - 1], _coefficients.b[i]);
+      prediction *= pow(x[i - 1], _coefficients.b[i]);
     }
     return prediction.toDouble();
   }
@@ -212,4 +234,25 @@ class RegressionModel {
     );
     _logger.i('Test model quality: $_testModelQuality');
   }
+}
+
+class MinMax {
+  MinMax(this.min, this.max);
+
+  final double min;
+  final double max;
+}
+
+class MinMaxFactors {
+  MinMaxFactors({
+    required this.dit,
+    required this.cbo,
+    required this.wmc,
+    required this.rfc,
+  });
+
+  final MinMax dit;
+  final MinMax cbo;
+  final MinMax wmc;
+  final MinMax rfc;
 }

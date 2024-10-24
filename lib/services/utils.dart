@@ -3,8 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+extension StringExtension on String {
+  String capitalize() {
+    return '${this[0].toUpperCase()}${substring(1)}';
+  }
+}
+
 class Utils {
   static String formatNumber(double number) {
+    if (number % 1 == 0) {
+      return number.toStringAsFixed(0);
+    }
     return number.toStringAsFixed(4);
   }
 

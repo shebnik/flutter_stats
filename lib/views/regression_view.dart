@@ -101,6 +101,11 @@ class _RegressionViewState extends State<RegressionView> {
   Widget build(BuildContext context) {
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final model = context.watch<RegressionModelProvider>().model;
+    if (model == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     final provider = context.watch<ProjectsProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {

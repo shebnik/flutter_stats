@@ -20,13 +20,24 @@ class DownloadProjectsButton extends StatelessWidget {
     return IconButton(
       tooltip: 'Download as .csv',
       icon: const Icon(Icons.download),
-      onPressed: () => context.read<DataHandler>().downloadFile(
-            fileName: filename,
-            projects: projects ??
-                context.read<MetricsNavigationProvider>().getProjects(
-                      model: context.read<RegressionModelProvider>().model,
-                    ),
-          ),
+      onPressed: () {
+        final model = context.read<RegressionModelProvider>().model;
+        if (model == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No model selected'),
+            ),
+          );
+          return;
+        }
+        context.read<DataHandler>().downloadFile(
+              fileName: filename,
+              projects: projects ??
+                  context.read<MetricsNavigationProvider>().getProjects(
+                        model: model,
+                      ),
+            );
+      },
     );
   }
 }
