@@ -25,6 +25,8 @@ dependencies:
   json_annotation: ^4.9.0
   logger: ^2.3.0
   ml_linalg: ^13.12.6
+  path: ^1.9.0
+  path_provider: ^2.1.4
   provider: ^6.1.1
   responsive_framework: ^1.4.0
   shared_preferences: ^2.3.2

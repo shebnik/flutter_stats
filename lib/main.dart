@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 final _log = AppLogger().logger;
 
 Future<void> main() async {
+  _log.i('App started');
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     usePathUrlStrategy();
