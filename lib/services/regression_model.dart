@@ -15,9 +15,16 @@ import 'package:ml_linalg/vector.dart';
 class RegressionModel {
   RegressionModel(
     this._projects, {
+    List<Project>? trainProjects,
+    List<Project>? testProjects,
     this.useSigma = false,
   }) {
-    _splitData(_projects);
+    if (trainProjects != null && testProjects != null) {
+      _trainProjects = trainProjects;
+      _testProjects = testProjects;
+    } else {
+      _splitData();
+    }
     _evaluateModel();
     _testModel();
   }
@@ -26,9 +33,11 @@ class RegressionModel {
   final Algebra _algebra = Algebra();
   final Normalization _normalization = Normalization();
 
-  final List<Project> _projects;
+  late final List<Project> _projects;
   late final List<Project> _trainProjects;
   late final List<Project> _testProjects;
+
+  bool useSigma;
 
   List<Project> get projects => _projects;
   List<Project> get trainProjects => _trainProjects;
@@ -76,9 +85,7 @@ class RegressionModel {
     );
   }
 
-  bool useSigma;
-
-  void _splitData(List<Project> projects, [double trainRatio = 0.6]) {
+  void _splitData([double trainRatio = 0.6]) {
     // Sort projects by each metric
     projects.sort((a, b) => a.metrics.y.compareTo(b.metrics.y));
     final sortedByY = List<Project>.from(projects);

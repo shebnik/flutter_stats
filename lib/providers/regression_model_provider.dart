@@ -7,7 +7,7 @@ class RegressionModelProvider extends ChangeNotifier {
 
   RegressionModel? get model => _model;
 
-  void setModel(RegressionModel model) {
+  set model(RegressionModel? model) {
     _model = model;
     notifyListeners();
   }

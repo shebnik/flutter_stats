@@ -27,7 +27,7 @@ class DataHandler {
     BuildContext context, {
     bool useAssetDataset = false,
   }) async {
-    final model = context.read<ProjectsProvider>();
+    final projectsProvider = context.read<ProjectsProvider>();
     final settings = context.read<SettingsProvider>().settings;
     try {
       final projects = await retrieveData(
@@ -44,7 +44,10 @@ class DataHandler {
           ),
         );
       }
-      await model.setProjects(projects);
+      await projectsProvider.setProjects(
+        projects,
+        useRelativeNOC: context.read<SettingsProvider>().useRelativeNOC,
+      );
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);
       ScaffoldMessenger.of(context).showSnackBar(

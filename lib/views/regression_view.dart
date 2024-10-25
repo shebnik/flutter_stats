@@ -3,6 +3,7 @@ import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
 import 'package:provider/provider.dart';
@@ -16,9 +17,7 @@ class RegressionView extends StatefulWidget {
 }
 
 class _RegressionViewState extends State<RegressionView> {
-  bool useSigma = false;
-
-  String getLinearEquation(Coefficients coefficients) {
+  String getLinearEquation(Coefficients coefficients, {bool useSigma = false}) {
     final b0 = Utils.formatNumber(coefficients.b[0]);
     dynamic b1 = coefficients.b[1];
     dynamic b2 = coefficients.b[2];
@@ -66,7 +65,10 @@ class _RegressionViewState extends State<RegressionView> {
     return str;
   }
 
-  String getNonlinearEquation(Coefficients coefficients) {
+  String getNonlinearEquation(
+    Coefficients coefficients, {
+    bool useSigma = false,
+  }) {
     final b0 = Utils.formatNumber(coefficients.b[0]);
     final b1 = Utils.formatNumber(coefficients.b[1]);
     final b2 = Utils.formatNumber(coefficients.b[2]);
@@ -106,11 +108,6 @@ class _RegressionViewState extends State<RegressionView> {
       );
     }
     final provider = context.watch<ProjectsProvider>();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        useSigma = provider.useSigma;
-      });
-    });
 
     final regressionInfoWidgets = [
       Flexible(
@@ -157,16 +154,26 @@ class _RegressionViewState extends State<RegressionView> {
               ),
               const SizedBox(height: 20),
             ],
-            MetricsCard(
-              title: 'Linear Regression',
-              value: getLinearEquation(model.coefficients),
-              isEquation: true,
+            Consumer<SettingsProvider>(
+              builder: (context, settingsProvider, child) => MetricsCard(
+                title: 'Linear Regression Equation',
+                value: getLinearEquation(
+                  model.coefficients,
+                  useSigma: settingsProvider.useSigma,
+                ),
+                isEquation: true,
+              ),
             ),
             const SizedBox(height: 20),
-            MetricsCard(
-              title: 'Nonlinear Regression Equation',
-              value: getNonlinearEquation(model.coefficients),
-              isEquation: true,
+            Consumer<SettingsProvider>(
+              builder: (context, settingsProvider, child) => MetricsCard(
+                title: 'Nonlinear Regression Equation',
+                value: getNonlinearEquation(
+                  model.coefficients,
+                  useSigma: settingsProvider.useSigma,
+                ),
+                isEquation: true,
+              ),
             ),
             const SizedBox(height: 16),
             Row(

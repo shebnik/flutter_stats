@@ -31,7 +31,7 @@ class App extends StatelessWidget {
       providers: [
         Provider.value(value: db),
         ChangeNotifierProvider(
-          create: (_) => SettingsProvider(db.getSettings()),
+          create: (_) => SettingsProvider(db: db),
         ),
         Provider(create: (_) => DataHandler()),
         Provider(create: (_) => Utils()),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/settings/settings.dart';
+import 'package:flutter_stats/services/database.dart';
 
 class SettingsProvider extends ChangeNotifier {
-  SettingsProvider(this._settings);
+  SettingsProvider({required this.db}) : _settings = db.getSettings();
 
+  Database db;
   Settings _settings;
   Settings get settings => _settings;
 
@@ -78,5 +80,11 @@ class SettingsProvider extends ChangeNotifier {
       csvAlias: _settings.csvAlias.copyWith(url: value),
     );
     notifyListeners();
+  }
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    db.setSettings(settings);
   }
 }

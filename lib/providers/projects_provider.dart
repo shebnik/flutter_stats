@@ -10,7 +10,7 @@ class ProjectsProvider with ChangeNotifier {
 
   final RegressionModelProvider _regressionModelProvider;
 
-  late List<Project> _fileProjects;
+  List<Project> _fileProjects = [];
   List<Project> _projects = [];
 
   int _outliersRemoved = 0;
@@ -24,38 +24,16 @@ class ProjectsProvider with ChangeNotifier {
   List<Project> get projects => _projects;
   late Outliers _outliers;
 
-  bool _useRelativeNOC = false;
-  bool get useRelativeNOC => _useRelativeNOC;
-
-  // ignore: avoid_positional_boolean_parameters
-  void setUseRelativeNOC(bool value) {
-    _useRelativeNOC = value;
-    if (_useRelativeNOC) {
-      _projects = _fileProjects.map((e) {
-        final metrics = e.metrics;
-        final denominator =
-            metrics.noc != null && metrics.noc! > 0 ? metrics.noc! : 1.0;
-        return e.copyWith(
-          metrics: metrics.copyWith(
-            y: metrics.y / denominator,
-            x1: metrics.x1 / denominator,
-            x2: metrics.x2 != null ? metrics.x2! / denominator : null,
-            x3: metrics.x3 != null ? metrics.x3! / denominator : null,
-          ),
-        );
-      }).toList();
-    } else {
-      _projects = List.from(_fileProjects);
-    }
-    notifyListeners();
-    refitModel();
-  }
-
-  Future<void> setProjects(List<Project>? projects) async {
+  Future<void> setProjects(
+    List<Project>? projects, {
+    required bool useRelativeNOC,
+  }) async {
     if (projects == null) return;
-    _projects = projects;
     _fileProjects = List.from(projects);
+    _projects = List.from(projects);
     _outliersRemoved = 0;
+
+    divideByNOC(useRelativeNOC: useRelativeNOC);
     await refitOutliers(projects);
     notifyListeners();
     refitModel();
@@ -83,8 +61,7 @@ class ProjectsProvider with ChangeNotifier {
   }
 
   void refitModel() {
-    _regressionModelProvider
-        .setModel(RegressionModel(_projects, useSigma: _useSigma));
+    _regressionModelProvider.model = RegressionModel(_projects);
   }
 
   Future<void> refitOutliers(List<Project> projects) async {
@@ -94,13 +71,43 @@ class ProjectsProvider with ChangeNotifier {
 
   List<int> get outliers => _outliers.outliers;
 
-  bool _useSigma = false;
-
-  bool get useSigma => _useSigma;
-
-  set useSigma(bool value) {
-    _useSigma = value;
+  void useRelativeNOC({
+    required bool useRelativeNOC,
+  }) {
+    if (_fileProjects.isEmpty) return;
+    divideByNOC(useRelativeNOC: useRelativeNOC);
     notifyListeners();
     refitModel();
+  }
+
+  void divideByNOC({required bool useRelativeNOC}) {
+    if (useRelativeNOC) {
+      _projects = _fileProjects.map((e) {
+        final metrics = e.metrics;
+        final denominator =
+            metrics.noc != null && metrics.noc! > 0 ? metrics.noc! : 1.0;
+        return e.copyWith(
+          metrics: metrics.copyWith(
+            y: metrics.y / denominator,
+            x1: metrics.x1 / denominator,
+            x2: metrics.x2 != null ? metrics.x2! / denominator : null,
+            x3: metrics.x3 != null ? metrics.x3! / denominator : null,
+          ),
+        );
+      }).toList();
+    } else {
+      _projects = List.from(_fileProjects);
+    }
+  }
+
+  void refitModelWithSigma({required bool useSigma}) {
+    if (_regressionModelProvider.model == null) return;
+    final model = _regressionModelProvider.model;
+    _regressionModelProvider.model = RegressionModel(
+      model!.projects,
+      useSigma: useSigma,
+      trainProjects: model.trainProjects,
+      testProjects: model.testProjects,
+    );
   }
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
-import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
@@ -233,7 +233,7 @@ class _PredictionViewState extends State<PredictionView> {
         return ListView(
           shrinkWrap: true,
           children: [
-            Consumer<ProjectsProvider>(
+            Consumer<SettingsProvider>(
               builder: (context, provider, _) => MetricsCard(
                 value: getPredictionEquation(
                   model.coefficients,
