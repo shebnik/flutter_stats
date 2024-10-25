@@ -91,6 +91,11 @@ class AliasSelector extends StatelessWidget {
                       onFieldSubmitted: (_) => onFieldSubmitted(),
                       onChanged: (value) => onSelected?.call(value),
                       decoration: InputDecoration(
+                        label: Text(
+                          isEnabled ?? true
+                              ? 'CSV Column Alias for $label'
+                              : 'Disabled',
+                        ),
                         disabledBorder: InputBorder.none,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
