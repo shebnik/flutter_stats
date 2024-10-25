@@ -10,3 +10,13 @@ const alpha = 0.05;
 const assetsPath = 'assets';
 const iconsPath = '$assetsPath/icons';
 const excelSVG = '$iconsPath/excel.svg';
+
+const aliases = [
+  'SLOC',
+  'NOC',
+  'NOM',
+  'DIT',
+  'RFC',
+  'CBO',
+  'WMC',
+];

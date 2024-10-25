@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
-import 'package:flutter_stats/views/settings/settings_view.dart';
 import 'package:flutter_stats/widgets/load_file_button.dart';
+import 'package:go_router/go_router.dart';
 
 class ScaffoldWithNavigationDrawer extends StatefulWidget {
   const ScaffoldWithNavigationDrawer({
@@ -66,23 +66,7 @@ class _ScaffoldWithNavigationDrawerState
                   child: IconButton(
                     icon: const Icon(Icons.settings),
                     onPressed: () {
-                      showDialog<AlertDialog>(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Settings'),
-                            content: const SettingsView(),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text('Close'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                      GoRouter.of(context).push('/settings');
                     },
                   ),
                 ),

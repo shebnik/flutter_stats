@@ -47,11 +47,11 @@ class _ProjectsListState extends State<ProjectsList> {
     addMetricLine('(Y)', alias.y, metrics.y);
     addMetricLine('(X1)', alias.x1, metrics.x1);
 
-    if (settings.useX2) {
+    if (settings.hasX2) {
       addMetricLine('(X2)', alias.x2, metrics.x2);
     }
 
-    if (settings.useX3) {
+    if (settings.hasX3) {
       addMetricLine('(X3)', alias.x3, metrics.x3);
     }
 

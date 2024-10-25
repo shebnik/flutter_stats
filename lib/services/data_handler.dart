@@ -14,6 +14,7 @@ import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_stats/services/normalization.dart';
+import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -36,13 +37,15 @@ class DataHandler {
       );
       if (projects == null) {
         _logger.i('No file selected');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('No file selected'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 1),
-          ),
+        return;
+      }
+      if (projects.isEmpty) {
+        Utils.showNotification(
+          context,
+          message: 'No data found in the file. Consider visiting app settings',
+          isError: true,
         );
+        return;
       }
       await projectsProvider.setProjects(
         projects,
@@ -50,12 +53,10 @@ class DataHandler {
       );
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Invalid file format'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          duration: const Duration(seconds: 1),
-        ),
+      Utils.showNotification(
+        context,
+        message: e.toString(),
+        isError: true,
       );
     }
   }
@@ -92,55 +93,66 @@ class DataHandler {
     required Settings settings,
     bool useAssetDataset = false,
   }) async {
-    final bytes = await _pickFile(useAssetDataset: useAssetDataset);
-    if (bytes == null) {
-      throw Exception('No file selected');
+    Uint8List? bytes;
+    try {
+      bytes = await _pickFile(useAssetDataset: useAssetDataset);
+    } catch (e, s) {
+      _logger.e('Error picking file', error: e, stackTrace: s);
+      throw Exception('Error picking file');
     }
-    final rows = const CsvToListConverter().convert(
-      String.fromCharCodes(bytes),
-    );
-
-    final headers = rows[0].map((h) => h.toString().toLowerCase()).toList();
-    final csvAlias = settings.csvAlias;
-
-    final nameIndex = headers.indexOf('name');
-    final urlIndex = headers.indexOf(csvAlias.url.toLowerCase());
-    final x1Index = getMetricIndex(headers, [csvAlias.x1, 'x', 'x1']);
-    final x2Index = getMetricIndex(headers, [csvAlias.x2, 'x2']);
-    final x3Index = getMetricIndex(headers, [csvAlias.x3, 'x3']);
-    final yIndex = getMetricIndex(headers, [csvAlias.y, 'y']);
-    final nocIndex = getMetricIndex(headers, [csvAlias.noc, 'noc']);
-
-    final projects = <Project>[];
-
-    for (var i = 1; i < rows.length; i++) {
-      final row = rows[i];
-
-      final name = getValue(row, nameIndex, '');
-      final url = getValue(row, urlIndex, '');
-
-      final x1 = getDoubleValue(row, x1Index);
-      final x2 = getDoubleValue(row, x2Index);
-      final x3 = getDoubleValue(row, x3Index);
-      final rfc = getDoubleValue(row, yIndex);
-      final noc = getDoubleValue(row, nocIndex);
-
-      final project = Project(
-        name: name,
-        url: url,
-        metrics: Metrics(
-          y: rfc ?? 0,
-          x1: x1 ?? 0,
-          x2: settings.useX2 ? x2 : null,
-          x3: settings.useX3 ? x3 : null,
-          noc: noc,
-        ),
+    if (bytes == null) {
+      return null;
+    }
+    try {
+      final rows = const CsvToListConverter().convert(
+        String.fromCharCodes(bytes),
       );
 
-      projects.add(project);
-    }
+      final headers = rows[0].map((h) => h.toString().toLowerCase()).toList();
+      final csvAlias = settings.csvAlias;
 
-    return projects;
+      final nameIndex = headers.indexOf('name');
+      final urlIndex = headers.indexOf(csvAlias.url.toLowerCase());
+      final x1Index = getMetricIndex(headers, [csvAlias.x1, 'x', 'x1']);
+      final x2Index = getMetricIndex(headers, [csvAlias.x2, 'x2']);
+      final x3Index = getMetricIndex(headers, [csvAlias.x3, 'x3']);
+      final yIndex = getMetricIndex(headers, [csvAlias.y, 'y']);
+      final nocIndex = getMetricIndex(headers, [csvAlias.noc, 'noc']);
+
+      final projects = <Project>[];
+
+      for (var i = 1; i < rows.length; i++) {
+        final row = rows[i];
+
+        final name = getValue(row, nameIndex, '');
+        final url = getValue(row, urlIndex, '');
+
+        final x1 = getDoubleValue(row, x1Index);
+        final x2 = getDoubleValue(row, x2Index);
+        final x3 = getDoubleValue(row, x3Index);
+        final rfc = getDoubleValue(row, yIndex);
+        final noc = getDoubleValue(row, nocIndex);
+
+        final project = Project(
+          name: name,
+          url: url,
+          metrics: Metrics(
+            y: rfc ?? 0,
+            x1: x1 ?? 0,
+            x2: settings.hasX2 ? x2 : null,
+            x3: settings.hasX3 ? x3 : null,
+            noc: settings.hasNOC ? noc : null,
+          ),
+        );
+
+        projects.add(project);
+      }
+
+      return projects;
+    } catch (e, s) {
+      _logger.e('Error parsing data file', error: e, stackTrace: s);
+      throw Exception('Error parsing data file');
+    }
   }
 
   int getMetricIndex(List<dynamic> headers, List<String> aliases) {
@@ -177,16 +189,16 @@ class DataHandler {
       [
         'No.',
         csvAlias.url,
-        csvAlias.noc,
+        if (settings.hasNOC) csvAlias.noc,
         csvAlias.y,
         csvAlias.x1,
-        if (settings.useX2) csvAlias.x2,
-        if (settings.useX3) csvAlias.x3,
+        if (settings.hasX2) csvAlias.x2,
+        if (settings.hasX3) csvAlias.x3,
         '',
         'Zy',
         'Zx1',
-        if (settings.useX2) 'Zx2',
-        if (settings.useX2) 'Zx3',
+        if (settings.hasX2) 'Zx2',
+        if (settings.hasX3) 'Zx3',
       ],
       ...List.generate(projects.length, (i) {
         final project = projects[i];
@@ -195,16 +207,16 @@ class DataHandler {
         return [
           i + 1,
           project.url,
-          metrics.noc,
+          if (settings.hasNOC) metrics.noc,
           metrics.y,
           metrics.x1,
-          if (settings.useX2) metrics.x2,
-          if (settings.useX3) metrics.x3,
+          if (settings.hasX2) metrics.x2,
+          if (settings.hasX3) metrics.x3,
           '',
           normalized.y,
           normalized.x1,
-          if (settings.useX2) normalized.x2,
-          if (settings.useX3) normalized.x3,
+          if (settings.hasX2) normalized.x2,
+          if (settings.hasX3) normalized.x3,
         ];
       }),
     ]);

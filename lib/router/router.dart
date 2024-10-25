@@ -5,6 +5,7 @@ import 'package:flutter_stats/views/metrics_view.dart';
 import 'package:flutter_stats/views/outliers_view.dart';
 import 'package:flutter_stats/views/prediction_view.dart';
 import 'package:flutter_stats/views/regression_view.dart';
+import 'package:flutter_stats/views/settings_view.dart';
 import 'package:go_router/go_router.dart';
 
 GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -13,8 +14,7 @@ enum AppRouteType {
   projects(icon: Icons.dataset_outlined, selectedIcon: Icons.dataset),
   outliers(icon: Icons.circle_outlined, selectedIcon: Icons.circle),
   regression(icon: Icons.show_chart, selectedIcon: Icons.trending_up),
-  prediction(icon: Icons.analytics_outlined, selectedIcon: Icons.analytics),
-  settings(icon: Icons.settings_outlined, selectedIcon: Icons.settings);
+  prediction(icon: Icons.analytics_outlined, selectedIcon: Icons.analytics);
 
   const AppRouteType({
     required this.icon,
@@ -56,6 +56,12 @@ GoRouter router = GoRouter(
         return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
       },
       branches: _buildBranches(),
+    ),
+    GoRoute(
+      path: '/settings',
+      pageBuilder: (context, state) => const NoTransitionPage(
+        child: SettingsView(),
+      ),
     ),
   ],
   errorBuilder: (context, state) => const _ErrorView(),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/algebra.dart';
+import 'package:flutter_stats/services/equation_formatter.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
@@ -166,60 +166,27 @@ class _PredictionViewState extends State<PredictionView> {
     setState(() {});
   }
 
-  String getPredictionEquation(
-    Coefficients coefficients, {
-    bool useSigma = false,
-  }) {
-    var x1Str = 'X_1';
-    var x2Str = 'X_2';
-    var x3Str = 'X_3';
-
-    if (x1 != null) {
-      x1Str = x1!.toInt().toString();
-    }
-
-    if (x2 != null) {
-      x2Str = x2!.toInt().toString();
-    }
-
-    if (x3 != null) {
-      x3Str = x3!.toInt().toString();
-    }
-    var str = 'RFC = ';
-    if (ResponsiveBreakpoints.of(context).isDesktop) {
-      if (useSigma) {
-        str += r'10^{\beta_0 + \sigma}';
-      } else {
-        str += r'10^{\beta_0}';
-      }
-      str += r'\cdot DIT^{\beta_1} \cdot CBO^{\beta_2} \cdot WMC^{\beta_3} =';
-    }
-    if (useSigma) {
-      str += '10^{${Utils.formatNumber(coefficients.b[1])} '
-          '+ ${Utils.formatNumber(coefficients.sigma)}}';
-    } else {
-      str += '10^{${Utils.formatNumber(coefficients.b[1])}}';
-    }
-    return '$str \\cdot $x1Str^{${Utils.formatNumber(coefficients.b[1])}} \\cdot $x2Str^{${Utils.formatNumber(coefficients.b[2])}} \\cdot $x3Str^{${Utils.formatNumber(coefficients.b[3])}}';
-  }
-
-  Widget get x1Field => _buildTextField(
+  Widget x1Field(SettingsProvider provider) => _buildTextField(
         x1Controller,
-        'Enter X1 (DIT)',
+        'Enter X1 ${provider.settings.csvAlias.x1}',
         x1Error,
       );
 
-  Widget get x2Field => _buildTextField(
-        x2Controller,
-        'Enter X2 (CBO)',
-        x2Error,
-      );
+  Widget? x2Field(SettingsProvider provider) => provider.hasX2
+      ? _buildTextField(
+          x2Controller,
+          'Enter X2 ${provider.settings.csvAlias.x2}',
+          x2Error,
+        )
+      : null;
 
-  Widget get x3Field => _buildTextField(
-        x3Controller,
-        'Enter X3 (WMC)',
-        x3Error,
-      );
+  Widget? x3Field(SettingsProvider provider) => provider.hasX3
+      ? _buildTextField(
+          x3Controller,
+          'Enter X3 ${provider.settings.csvAlias.x3}',
+          x3Error,
+        )
+      : null;
 
   Widget predictionWidget() {
     return Consumer<RegressionModelProvider>(
@@ -230,47 +197,61 @@ class _PredictionViewState extends State<PredictionView> {
           );
         }
         model = provider.model!;
-        return ListView(
-          shrinkWrap: true,
-          children: [
-            Consumer<SettingsProvider>(
-              builder: (context, provider, _) => MetricsCard(
-                value: getPredictionEquation(
-                  model.coefficients,
-                  useSigma: provider.useSigma,
+        return Consumer<SettingsProvider>(
+          builder: (context, provider, _) {
+            final x1Field = this.x1Field(provider);
+            final x2Field = this.x2Field(provider);
+            final x3Field = this.x3Field(provider);
+            return ListView(
+              shrinkWrap: true,
+              children: [
+                MetricsCard(
+                  value: EquationFormatter.getPredictionEquation(
+                    model.coefficients,
+                    useSigma: provider.useSigma,
+                    isMobile: ResponsiveBreakpoints.of(context).isMobile,
+                    xValues: [x1, x2, x3],
+                    alias: provider.settings.csvAlias,
+                  ),
+                  isEquation: true,
                 ),
-                isEquation: true,
-              ),
-            ),
-            const SizedBox(height: 32),
-            if (ResponsiveBreakpoints.of(context).isDesktop)
-              Row(
-                children: [
-                  Expanded(child: x1Field),
-                  const SizedBox(width: 16),
-                  Expanded(child: x2Field),
-                  const SizedBox(width: 16),
-                  Expanded(child: x3Field),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  x1Field,
-                  const SizedBox(height: 16),
-                  x2Field,
-                  const SizedBox(height: 16),
-                  x3Field,
-                ],
-              ),
-            const SizedBox(height: 16),
-            _buildPredictionOutput(),
-            SizedBox(
-              height: ResponsiveBreakpoints.of(context).isDesktop ? 64 : 32,
-            ),
-            _availableFactorsRange(),
-            const SizedBox(height: 32),
-          ],
+                const SizedBox(height: 32),
+                if (ResponsiveBreakpoints.of(context).isDesktop)
+                  Row(
+                    children: [
+                      Expanded(child: x1Field),
+                      if (x2Field != null) ...[
+                        const SizedBox(width: 16),
+                        Expanded(child: x2Field),
+                      ],
+                      if (x3Field != null) ...[
+                        const SizedBox(width: 16),
+                        Expanded(child: x3Field),
+                      ],
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      x1Field,
+                      if (x2Field != null) ...[
+                        const SizedBox(height: 16),
+                        x2Field,
+                      ],
+                      if (x3Field != null) ...[
+                        const SizedBox(height: 16),
+                        x3Field,
+                      ],
+                    ],
+                  ),
+                const SizedBox(height: 16),
+                _buildPredictionOutput(),
+                const SizedBox(height: 32),
+                _availableFactorsRange(),
+                const SizedBox(height: 32),
+              ],
+            );
+          },
         );
       },
     );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/models/coefficients/coefficients.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
+import 'package:flutter_stats/services/equation_formatter.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
 import 'package:provider/provider.dart';
@@ -17,87 +17,6 @@ class RegressionView extends StatefulWidget {
 }
 
 class _RegressionViewState extends State<RegressionView> {
-  String getLinearEquation(Coefficients coefficients, {bool useSigma = false}) {
-    final b0 = Utils.formatNumber(coefficients.b[0]);
-    dynamic b1 = coefficients.b[1];
-    dynamic b2 = coefficients.b[2];
-    dynamic b3 = coefficients.b[3];
-
-    if ((b1 as double) < 0) {
-      b1 = ' - ${Utils.formatNumber(b1.abs())}';
-    } else {
-      b1 = ' + ${Utils.formatNumber(b1)}';
-    }
-
-    if ((b2 as double) < 0) {
-      b2 = ' - ${Utils.formatNumber(b2.abs())}';
-    } else {
-      b2 = ' + ${Utils.formatNumber(b2)}';
-    }
-
-    if ((b3 as double) < 0) {
-      b3 = ' - ${Utils.formatNumber(b3.abs())}';
-    } else {
-      b3 = ' + ${Utils.formatNumber(b3)}';
-    }
-
-    // ignore: prefer_interpolation_to_compose_strings
-    var str = r'\hat{Z_Y} = ';
-    if (ResponsiveBreakpoints.of(context).isDesktop) {
-      str +=
-          r'\beta_0 + \beta_1 \cdot Z_{X_1} + \beta_2 \cdot Z_{X_2} + \beta_3 \cdot Z_{X_3}';
-      if (useSigma) {
-        str += r' + \sigma =';
-      } else {
-        str += '=';
-      }
-    }
-    str += b0 +
-        (b1 as String) +
-        r' \cdot Z_{X_1}' +
-        (b2 as String) +
-        r' \cdot Z_{X_2}' +
-        (b3 as String) +
-        r' \cdot Z_{X_3}';
-    if (useSigma) {
-      str += ' + ${Utils.formatNumber(coefficients.sigma)}';
-    }
-    return str;
-  }
-
-  String getNonlinearEquation(
-    Coefficients coefficients, {
-    bool useSigma = false,
-  }) {
-    final b0 = Utils.formatNumber(coefficients.b[0]);
-    final b1 = Utils.formatNumber(coefficients.b[1]);
-    final b2 = Utils.formatNumber(coefficients.b[2]);
-    final b3 = Utils.formatNumber(coefficients.b[3]);
-    var str = r'\hat{Y} = ';
-    if (ResponsiveBreakpoints.of(context).isDesktop) {
-      if (useSigma) {
-        str += r'10^{\beta_0 + \sigma}';
-      } else {
-        str += r'10^{\beta_0}';
-      }
-      str += r' \cdot X_1^{\beta_1} \cdot X_2^{\beta_2} \cdot X_3^{\beta_3} = ';
-    }
-    if (useSigma) {
-      str += '10^{$b0 + ${Utils.formatNumber(coefficients.sigma)}}';
-    } else {
-      str += '10^{$b0}';
-    }
-    // ignore: prefer_interpolation_to_compose_strings
-    return str +
-        r'\cdot X_1^{' +
-        b1 +
-        r'} \cdot X_2^{' +
-        b2 +
-        r'} \cdot X_3^{' +
-        b3 +
-        '}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
@@ -157,9 +76,10 @@ class _RegressionViewState extends State<RegressionView> {
             Consumer<SettingsProvider>(
               builder: (context, settingsProvider, child) => MetricsCard(
                 title: 'Linear Regression Equation',
-                value: getLinearEquation(
+                value: EquationFormatter.getLinearEquation(
                   model.coefficients,
                   useSigma: settingsProvider.useSigma,
+                  isMobile: isMobile,
                 ),
                 isEquation: true,
               ),
@@ -168,9 +88,10 @@ class _RegressionViewState extends State<RegressionView> {
             Consumer<SettingsProvider>(
               builder: (context, settingsProvider, child) => MetricsCard(
                 title: 'Nonlinear Regression Equation',
-                value: getNonlinearEquation(
+                value: EquationFormatter.getNonlinearEquation(
                   model.coefficients,
                   useSigma: settingsProvider.useSigma,
+                  isMobile: isMobile,
                 ),
                 isEquation: true,
               ),

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
+import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/widgets/app_drawer.dart';
-import 'package:flutter_stats/widgets/app_header.dart';
+import 'package:flutter_stats/widgets/download_projects_button.dart';
 import 'package:flutter_stats/widgets/load_file_button.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class ScaffoldWithNavigationBar extends StatefulWidget {
@@ -28,11 +31,40 @@ class _ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
   @override
   Widget build(BuildContext context) {
     final outliersProvider = context.watch<ProjectsProvider>();
+    final navigationProvider = context.watch<MetricsNavigationProvider>();
+    final model = context.watch<RegressionModelProvider>().model;
+    String title;
+    if (widget.selectedIndex == 0) {
+      title = navigationProvider.type.label;
+      if (model != null) {
+        final route = navigationProvider.type;
+        final size =
+            navigationProvider.getProjects(model: model, type: route).length;
+        title = '$title ($size)';
+      }
+    } else {
+      title = appRoutes[widget.selectedIndex].label;
+    }
     return Scaffold(
-      appBar: outliersProvider.projects.isNotEmpty && widget.selectedIndex == 0
-          ? const AppHeader()
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          if (widget.selectedIndex == 0 && model != null)
+            DownloadProjectsButton(
+              filename: navigationProvider.type.label,
+            ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              GoRouter.of(context).push('/settings');
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      drawer: outliersProvider.projects.isNotEmpty && widget.selectedIndex == 0
+          ? const AppDrawer()
           : null,
-      drawer: const AppDrawer(),
       body: AppContent(
         body: widget.body,
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
-import 'package:flutter_stats/views/settings/settings_checks.dart';
 import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -51,10 +50,6 @@ class AppDrawer extends StatelessWidget {
                   },
                 );
               }),
-              const Spacer(),
-              const SizedBox(height: 16),
-              const SettingsChecks(),
-              const SizedBox(height: 16),
             ],
           ),
         ),

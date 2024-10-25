@@ -111,10 +111,10 @@ class RegressionModel {
       sortedByY.last,
       sortedByX1.first,
       sortedByX1.last,
-      sortedByX2.first,
-      sortedByX2.last,
-      sortedByX3.first,
-      sortedByX3.last,
+      if (sortedByX2.isNotEmpty) sortedByX2.first,
+      if (sortedByX2.isNotEmpty) sortedByX2.last,
+      if (sortedByX3.isNotEmpty) sortedByX3.first,
+      if (sortedByX3.isNotEmpty) sortedByX3.last,
     };
 
     // Remove min and max projects from the main list and shuffle the rest

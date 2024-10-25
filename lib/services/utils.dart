@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
@@ -10,6 +11,32 @@ extension StringExtension on String {
 }
 
 class Utils {
+  static void showNotification(
+    BuildContext context, {
+    required String message,
+    bool isError = false,
+  }) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 16,
+            color: isError
+                ? Colors.white
+                : PlatformDispatcher.instance.platformBrightness ==
+                        Brightness.dark
+                    ? Colors.black
+                    : Colors.white,
+          ),
+        ),
+        backgroundColor: isError ? Colors.red : null,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
   static String formatNumber(double number) {
     if (number % 1 == 0) {
       return number.toStringAsFixed(0);

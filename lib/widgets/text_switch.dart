@@ -24,30 +24,36 @@ class TextSwitch extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              caption,
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontSize: isMobile ? 14 : 18,
-              ),
-            ),
-            if (subtitle != null)
-              Padding(
-                padding: EdgeInsets.only(top: isMobile ? 4 : 8),
+        Flexible(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
                 child: Text(
-                  subtitle!,
+                  caption,
+                  textAlign: TextAlign.left,
                   style: TextStyle(
-                    fontSize: isMobile ? 12 : 16,
-                    color: Colors.grey,
+                    fontSize: isMobile ? 16 : 18,
                   ),
                 ),
               ),
-          ],
+              if (subtitle != null)...[
+                const SizedBox(height: 4),
+                Flexible(
+                  child: Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: isMobile ? 12 : 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-        SizedBox(width: isMobile ? 8 : 50),
+        const SizedBox(width: 16),
         Switch(
           value: value,
           onChanged: (_) => onChanged(),

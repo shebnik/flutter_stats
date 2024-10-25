@@ -12,8 +12,9 @@ class SettingsProvider extends ChangeNotifier {
   bool get useRelativeNOC => _settings.useRelativeNOC;
   String get nocAlias => _settings.csvAlias.noc;
   bool get useSigma => _settings.useSigma;
-  bool get useX2 => _settings.useX2;
-  bool get useX3 => _settings.useX3;
+  bool get hasX2 => _settings.hasX2;
+  bool get hasX3 => _settings.hasX3;
+  bool get hasNOC => _settings.hasNOC;
   String get yAlias => _settings.csvAlias.y;
   String get x1Alias => _settings.csvAlias.x1;
   String get x2Alias => _settings.csvAlias.x2;
@@ -37,13 +38,18 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  set useX2(bool value) {
-    _settings = _settings.copyWith(useX2: value);
+  set hasX2(bool value) {
+    _settings = _settings.copyWith(hasX2: value);
     notifyListeners();
   }
 
-  set useX3(bool value) {
-    _settings = _settings.copyWith(useX3: value);
+  set hasX3(bool value) {
+    _settings = _settings.copyWith(hasX3: value);
+    notifyListeners();
+  }
+
+  set hasNOC(bool value) {
+    _settings = _settings.copyWith(hasNOC: value);
     notifyListeners();
   }
 

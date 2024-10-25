@@ -20,4 +20,17 @@ class CSVAlias with _$CSVAlias {
   const CSVAlias._();
 
   static const defaultAlias = CSVAlias();
+
+  String? x(int i) {
+    switch (i) {
+      case 1:
+        return x1;
+      case 2:
+        return x2;
+      case 3:
+        return x3;
+      default:
+        return null;
+    }
+  }
 }

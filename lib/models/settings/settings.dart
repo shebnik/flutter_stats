@@ -11,8 +11,9 @@ class Settings with _$Settings {
   const factory Settings({
     @Default(false) bool useRelativeNOC,
     @Default(false) bool useSigma,
-    @Default(true) bool useX2,
-    @Default(true) bool useX3,
+    @Default(true) bool hasX2,
+    @Default(true) bool hasX3,
+    @Default(true) bool hasNOC,
     @Default(CSVAlias.defaultAlias) CSVAlias csvAlias,
   }) = _Settings;
 
