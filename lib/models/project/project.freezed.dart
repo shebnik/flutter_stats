@@ -20,9 +20,9 @@ Project _$ProjectFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Project {
+  Metrics get metrics => throw _privateConstructorUsedError;
   String? get url => throw _privateConstructorUsedError;
   String? get name => throw _privateConstructorUsedError;
-  Metrics? get metrics => throw _privateConstructorUsedError;
 
   /// Serializes this Project to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -38,9 +38,9 @@ abstract class $ProjectCopyWith<$Res> {
   factory $ProjectCopyWith(Project value, $Res Function(Project) then) =
       _$ProjectCopyWithImpl<$Res, Project>;
   @useResult
-  $Res call({String? url, String? name, Metrics? metrics});
+  $Res call({Metrics metrics, String? url, String? name});
 
-  $MetricsCopyWith<$Res>? get metrics;
+  $MetricsCopyWith<$Res> get metrics;
 }
 
 /// @nodoc
@@ -58,11 +58,15 @@ class _$ProjectCopyWithImpl<$Res, $Val extends Project>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? metrics = null,
     Object? url = freezed,
     Object? name = freezed,
-    Object? metrics = freezed,
   }) {
     return _then(_value.copyWith(
+      metrics: null == metrics
+          ? _value.metrics
+          : metrics // ignore: cast_nullable_to_non_nullable
+              as Metrics,
       url: freezed == url
           ? _value.url
           : url // ignore: cast_nullable_to_non_nullable
@@ -71,10 +75,6 @@ class _$ProjectCopyWithImpl<$Res, $Val extends Project>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String?,
-      metrics: freezed == metrics
-          ? _value.metrics
-          : metrics // ignore: cast_nullable_to_non_nullable
-              as Metrics?,
     ) as $Val);
   }
 
@@ -82,12 +82,8 @@ class _$ProjectCopyWithImpl<$Res, $Val extends Project>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $MetricsCopyWith<$Res>? get metrics {
-    if (_value.metrics == null) {
-      return null;
-    }
-
-    return $MetricsCopyWith<$Res>(_value.metrics!, (value) {
+  $MetricsCopyWith<$Res> get metrics {
+    return $MetricsCopyWith<$Res>(_value.metrics, (value) {
       return _then(_value.copyWith(metrics: value) as $Val);
     });
   }
@@ -100,10 +96,10 @@ abstract class _$$ProjectImplCopyWith<$Res> implements $ProjectCopyWith<$Res> {
       __$$ProjectImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? url, String? name, Metrics? metrics});
+  $Res call({Metrics metrics, String? url, String? name});
 
   @override
-  $MetricsCopyWith<$Res>? get metrics;
+  $MetricsCopyWith<$Res> get metrics;
 }
 
 /// @nodoc
@@ -119,11 +115,15 @@ class __$$ProjectImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? metrics = null,
     Object? url = freezed,
     Object? name = freezed,
-    Object? metrics = freezed,
   }) {
     return _then(_$ProjectImpl(
+      metrics: null == metrics
+          ? _value.metrics
+          : metrics // ignore: cast_nullable_to_non_nullable
+              as Metrics,
       url: freezed == url
           ? _value.url
           : url // ignore: cast_nullable_to_non_nullable
@@ -132,10 +132,6 @@ class __$$ProjectImplCopyWithImpl<$Res>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String?,
-      metrics: freezed == metrics
-          ? _value.metrics
-          : metrics // ignore: cast_nullable_to_non_nullable
-              as Metrics?,
     ));
   }
 }
@@ -143,21 +139,21 @@ class __$$ProjectImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ProjectImpl implements _Project {
-  const _$ProjectImpl({this.url, this.name, this.metrics});
+  const _$ProjectImpl({required this.metrics, this.url, this.name});
 
   factory _$ProjectImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProjectImplFromJson(json);
 
   @override
+  final Metrics metrics;
+  @override
   final String? url;
   @override
   final String? name;
-  @override
-  final Metrics? metrics;
 
   @override
   String toString() {
-    return 'Project(url: $url, name: $name, metrics: $metrics)';
+    return 'Project(metrics: $metrics, url: $url, name: $name)';
   }
 
   @override
@@ -165,14 +161,14 @@ class _$ProjectImpl implements _Project {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ProjectImpl &&
+            (identical(other.metrics, metrics) || other.metrics == metrics) &&
             (identical(other.url, url) || other.url == url) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.metrics, metrics) || other.metrics == metrics));
+            (identical(other.name, name) || other.name == name));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, url, name, metrics);
+  int get hashCode => Object.hash(runtimeType, metrics, url, name);
 
   /// Create a copy of Project
   /// with the given fields replaced by the non-null parameter values.
@@ -192,18 +188,18 @@ class _$ProjectImpl implements _Project {
 
 abstract class _Project implements Project {
   const factory _Project(
-      {final String? url,
-      final String? name,
-      final Metrics? metrics}) = _$ProjectImpl;
+      {required final Metrics metrics,
+      final String? url,
+      final String? name}) = _$ProjectImpl;
 
   factory _Project.fromJson(Map<String, dynamic> json) = _$ProjectImpl.fromJson;
 
   @override
+  Metrics get metrics;
+  @override
   String? get url;
   @override
   String? get name;
-  @override
-  Metrics? get metrics;
 
   /// Create a copy of Project
   /// with the given fields replaced by the non-null parameter values.

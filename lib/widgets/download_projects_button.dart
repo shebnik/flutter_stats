@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
+import 'package:flutter_stats/models/settings/settings.dart';
 import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
@@ -31,6 +32,7 @@ class DownloadProjectsButton extends StatelessWidget {
           return;
         }
         context.read<DataHandler>().downloadFile(
+              settings: context.read<Settings>(),
               fileName: filename,
               projects: projects ??
                   context.read<MetricsNavigationProvider>().getProjects(

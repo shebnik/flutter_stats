@@ -32,15 +32,15 @@ class ProjectsProvider with ChangeNotifier {
     _useRelativeNOC = value;
     if (_useRelativeNOC) {
       _projects = _fileProjects.map((e) {
-        final metrics = e.metrics!;
-        final relativeNOC =
-            metrics.noc != null && metrics.noc! > 0 ? metrics.noc : 1;
+        final metrics = e.metrics;
+        final denominator =
+            metrics.noc != null && metrics.noc! > 0 ? metrics.noc! : 1.0;
         return e.copyWith(
           metrics: metrics.copyWith(
-            dit: metrics.dit! / relativeNOC!,
-            rfc: metrics.rfc! / relativeNOC,
-            cbo: metrics.cbo! / relativeNOC,
-            wmc: metrics.wmc! / relativeNOC,
+            y: metrics.y / denominator,
+            x1: metrics.x1 / denominator,
+            x2: metrics.x2 != null ? metrics.x2! / denominator : null,
+            x3: metrics.x3 != null ? metrics.x3! / denominator : null,
           ),
         );
       }).toList();

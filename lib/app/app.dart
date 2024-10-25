@@ -6,20 +6,33 @@ import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/services/data_handler.dart';
+import 'package:flutter_stats/services/database.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class App extends StatelessWidget {
-  const App({super.key});
+  const App({
+    required this.sp,
+    super.key,
+  });
+
+  final SharedPreferencesWithCache sp;
 
   @override
   Widget build(BuildContext context) {
     final regressionModelProvider = RegressionModelProvider();
+    final db = Database(sp);
     return MultiProvider(
       providers: [
+        Provider.value(value: db),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider(db.getSettings()),
+        ),
         Provider(create: (_) => DataHandler()),
         Provider(create: (_) => Utils()),
         ChangeNotifierProvider(

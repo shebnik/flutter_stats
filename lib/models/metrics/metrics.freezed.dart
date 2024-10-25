@@ -20,10 +20,10 @@ Metrics _$MetricsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Metrics {
-  double? get dit => throw _privateConstructorUsedError;
-  double? get rfc => throw _privateConstructorUsedError;
-  double? get cbo => throw _privateConstructorUsedError;
-  double? get wmc => throw _privateConstructorUsedError;
+  double get y => throw _privateConstructorUsedError;
+  double get x1 => throw _privateConstructorUsedError;
+  double? get x2 => throw _privateConstructorUsedError;
+  double? get x3 => throw _privateConstructorUsedError;
   double? get noc => throw _privateConstructorUsedError;
 
   /// Serializes this Metrics to a JSON map.
@@ -40,7 +40,7 @@ abstract class $MetricsCopyWith<$Res> {
   factory $MetricsCopyWith(Metrics value, $Res Function(Metrics) then) =
       _$MetricsCopyWithImpl<$Res, Metrics>;
   @useResult
-  $Res call({double? dit, double? rfc, double? cbo, double? wmc, double? noc});
+  $Res call({double y, double x1, double? x2, double? x3, double? noc});
 }
 
 /// @nodoc
@@ -58,28 +58,28 @@ class _$MetricsCopyWithImpl<$Res, $Val extends Metrics>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? dit = freezed,
-    Object? rfc = freezed,
-    Object? cbo = freezed,
-    Object? wmc = freezed,
+    Object? y = null,
+    Object? x1 = null,
+    Object? x2 = freezed,
+    Object? x3 = freezed,
     Object? noc = freezed,
   }) {
     return _then(_value.copyWith(
-      dit: freezed == dit
-          ? _value.dit
-          : dit // ignore: cast_nullable_to_non_nullable
+      y: null == y
+          ? _value.y
+          : y // ignore: cast_nullable_to_non_nullable
+              as double,
+      x1: null == x1
+          ? _value.x1
+          : x1 // ignore: cast_nullable_to_non_nullable
+              as double,
+      x2: freezed == x2
+          ? _value.x2
+          : x2 // ignore: cast_nullable_to_non_nullable
               as double?,
-      rfc: freezed == rfc
-          ? _value.rfc
-          : rfc // ignore: cast_nullable_to_non_nullable
-              as double?,
-      cbo: freezed == cbo
-          ? _value.cbo
-          : cbo // ignore: cast_nullable_to_non_nullable
-              as double?,
-      wmc: freezed == wmc
-          ? _value.wmc
-          : wmc // ignore: cast_nullable_to_non_nullable
+      x3: freezed == x3
+          ? _value.x3
+          : x3 // ignore: cast_nullable_to_non_nullable
               as double?,
       noc: freezed == noc
           ? _value.noc
@@ -96,7 +96,7 @@ abstract class _$$MetricsImplCopyWith<$Res> implements $MetricsCopyWith<$Res> {
       __$$MetricsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({double? dit, double? rfc, double? cbo, double? wmc, double? noc});
+  $Res call({double y, double x1, double? x2, double? x3, double? noc});
 }
 
 /// @nodoc
@@ -112,28 +112,28 @@ class __$$MetricsImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? dit = freezed,
-    Object? rfc = freezed,
-    Object? cbo = freezed,
-    Object? wmc = freezed,
+    Object? y = null,
+    Object? x1 = null,
+    Object? x2 = freezed,
+    Object? x3 = freezed,
     Object? noc = freezed,
   }) {
     return _then(_$MetricsImpl(
-      dit: freezed == dit
-          ? _value.dit
-          : dit // ignore: cast_nullable_to_non_nullable
+      y: null == y
+          ? _value.y
+          : y // ignore: cast_nullable_to_non_nullable
+              as double,
+      x1: null == x1
+          ? _value.x1
+          : x1 // ignore: cast_nullable_to_non_nullable
+              as double,
+      x2: freezed == x2
+          ? _value.x2
+          : x2 // ignore: cast_nullable_to_non_nullable
               as double?,
-      rfc: freezed == rfc
-          ? _value.rfc
-          : rfc // ignore: cast_nullable_to_non_nullable
-              as double?,
-      cbo: freezed == cbo
-          ? _value.cbo
-          : cbo // ignore: cast_nullable_to_non_nullable
-              as double?,
-      wmc: freezed == wmc
-          ? _value.wmc
-          : wmc // ignore: cast_nullable_to_non_nullable
+      x3: freezed == x3
+          ? _value.x3
+          : x3 // ignore: cast_nullable_to_non_nullable
               as double?,
       noc: freezed == noc
           ? _value.noc
@@ -146,25 +146,26 @@ class __$$MetricsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$MetricsImpl implements _Metrics {
-  const _$MetricsImpl({this.dit, this.rfc, this.cbo, this.wmc, this.noc});
+  const _$MetricsImpl(
+      {required this.y, required this.x1, this.x2, this.x3, this.noc});
 
   factory _$MetricsImpl.fromJson(Map<String, dynamic> json) =>
       _$$MetricsImplFromJson(json);
 
   @override
-  final double? dit;
+  final double y;
   @override
-  final double? rfc;
+  final double x1;
   @override
-  final double? cbo;
+  final double? x2;
   @override
-  final double? wmc;
+  final double? x3;
   @override
   final double? noc;
 
   @override
   String toString() {
-    return 'Metrics(dit: $dit, rfc: $rfc, cbo: $cbo, wmc: $wmc, noc: $noc)';
+    return 'Metrics(y: $y, x1: $x1, x2: $x2, x3: $x3, noc: $noc)';
   }
 
   @override
@@ -172,16 +173,16 @@ class _$MetricsImpl implements _Metrics {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MetricsImpl &&
-            (identical(other.dit, dit) || other.dit == dit) &&
-            (identical(other.rfc, rfc) || other.rfc == rfc) &&
-            (identical(other.cbo, cbo) || other.cbo == cbo) &&
-            (identical(other.wmc, wmc) || other.wmc == wmc) &&
+            (identical(other.y, y) || other.y == y) &&
+            (identical(other.x1, x1) || other.x1 == x1) &&
+            (identical(other.x2, x2) || other.x2 == x2) &&
+            (identical(other.x3, x3) || other.x3 == x3) &&
             (identical(other.noc, noc) || other.noc == noc));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, dit, rfc, cbo, wmc, noc);
+  int get hashCode => Object.hash(runtimeType, y, x1, x2, x3, noc);
 
   /// Create a copy of Metrics
   /// with the given fields replaced by the non-null parameter values.
@@ -201,22 +202,22 @@ class _$MetricsImpl implements _Metrics {
 
 abstract class _Metrics implements Metrics {
   const factory _Metrics(
-      {final double? dit,
-      final double? rfc,
-      final double? cbo,
-      final double? wmc,
+      {required final double y,
+      required final double x1,
+      final double? x2,
+      final double? x3,
       final double? noc}) = _$MetricsImpl;
 
   factory _Metrics.fromJson(Map<String, dynamic> json) = _$MetricsImpl.fromJson;
 
   @override
-  double? get dit;
+  double get y;
   @override
-  double? get rfc;
+  double get x1;
   @override
-  double? get cbo;
+  double? get x2;
   @override
-  double? get wmc;
+  double? get x3;
   @override
   double? get noc;
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/views/settings/settings_checks.dart';
 
-class Settings extends StatelessWidget {
-  const Settings({super.key});
+class SettingsView extends StatelessWidget {
+  const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {

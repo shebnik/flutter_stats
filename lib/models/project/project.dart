@@ -7,11 +7,11 @@ part 'project.g.dart';
 @freezed
 class Project with _$Project {
   const factory Project({
+    required Metrics metrics,
     String? url,
     String? name,
-    Metrics? metrics,
   }) = _Project;
 
-  factory Project.fromJson(Map<String, Object?> json)
-      => _$ProjectFromJson(json);
+  factory Project.fromJson(Map<String, Object?> json) =>
+      _$ProjectFromJson(json);
 }

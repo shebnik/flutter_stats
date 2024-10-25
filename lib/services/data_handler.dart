@@ -9,13 +9,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
+import 'package:flutter_stats/models/settings/settings.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_stats/services/normalization.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 
 class DataHandler {
+  DataHandler();
+
   final _logger = AppLogger().logger;
   final filePicker = FilePicker.platform;
 
@@ -24,8 +28,12 @@ class DataHandler {
     bool useAssetDataset = false,
   }) async {
     final model = context.read<ProjectsProvider>();
+    final settings = context.read<SettingsProvider>().settings;
     try {
-      final projects = await retrieveData(useAssetDataset: useAssetDataset);
+      final projects = await retrieveData(
+        useAssetDataset: useAssetDataset,
+        settings: settings,
+      );
       if (projects == null) {
         _logger.i('No file selected');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,6 +86,7 @@ class DataHandler {
   }
 
   Future<List<Project>?> retrieveData({
+    required Settings settings,
     bool useAssetDataset = false,
   }) async {
     final bytes = await _pickFile(useAssetDataset: useAssetDataset);
@@ -89,14 +98,15 @@ class DataHandler {
     );
 
     final headers = rows[0].map((h) => h.toString().toLowerCase()).toList();
+    final csvAlias = settings.csvAlias;
 
     final nameIndex = headers.indexOf('name');
-    final urlIndex = headers.indexOf('url');
-    final ditIndex = getMetricIndex(headers, ['dit', 'x', 'x1']);
-    final cboIndex = getMetricIndex(headers, ['cbo', 'x2']);
-    final wmcIndex = getMetricIndex(headers, ['wmc', 'x3']);
-    final rfcIndex = getMetricIndex(headers, ['rfc', 'y']);
-    final nocIndex = getMetricIndex(headers, ['noc']);
+    final urlIndex = headers.indexOf(csvAlias.url.toLowerCase());
+    final x1Index = getMetricIndex(headers, [csvAlias.x1, 'x', 'x1']);
+    final x2Index = getMetricIndex(headers, [csvAlias.x2, 'x2']);
+    final x3Index = getMetricIndex(headers, [csvAlias.x3, 'x3']);
+    final yIndex = getMetricIndex(headers, [csvAlias.y, 'y']);
+    final nocIndex = getMetricIndex(headers, [csvAlias.noc, 'noc']);
 
     final projects = <Project>[];
 
@@ -106,20 +116,20 @@ class DataHandler {
       final name = getValue(row, nameIndex, '');
       final url = getValue(row, urlIndex, '');
 
-      final dit = getDoubleValue(row, ditIndex);
-      final cbo = getDoubleValue(row, cboIndex);
-      final wmc = getDoubleValue(row, wmcIndex);
-      final rfc = getDoubleValue(row, rfcIndex);
+      final x1 = getDoubleValue(row, x1Index);
+      final x2 = getDoubleValue(row, x2Index);
+      final x3 = getDoubleValue(row, x3Index);
+      final rfc = getDoubleValue(row, yIndex);
       final noc = getDoubleValue(row, nocIndex);
 
       final project = Project(
         name: name,
         url: url,
         metrics: Metrics(
-          dit: dit,
-          rfc: rfc,
-          cbo: cbo,
-          wmc: wmc,
+          y: rfc ?? 0,
+          x1: x1 ?? 0,
+          x2: settings.useX2 ? x2 : null,
+          x3: settings.useX3 ? x3 : null,
           noc: noc,
         ),
       );
@@ -155,23 +165,25 @@ class DataHandler {
   Future<void> downloadFile({
     required String fileName,
     required List<Project> projects,
+    required Settings settings,
   }) async {
+    final csvAlias = settings.csvAlias;
     fileName = fileName.endsWith('.csv') ? fileName : '$fileName.csv';
     final normalizedProjects = Normalization().normalizeProjects(projects);
     final csv = const ListToCsvConverter().convert([
       [
         'No.',
-        'URL',
-        'NOC',
-        'DIT',
-        'CBO',
-        'WMC',
-        'RFC',
+        csvAlias.url,
+        csvAlias.noc,
+        csvAlias.y,
+        csvAlias.x1,
+        if (settings.useX2) csvAlias.x2,
+        if (settings.useX3) csvAlias.x3,
         '',
         'Zy',
         'Zx1',
-        'Zx2',
-        'Zx3',
+        if (settings.useX2) 'Zx2',
+        if (settings.useX2) 'Zx3',
       ],
       ...List.generate(projects.length, (i) {
         final project = projects[i];
@@ -180,16 +192,16 @@ class DataHandler {
         return [
           i + 1,
           project.url,
-          if (metrics != null) metrics.noc,
-          if (metrics != null) metrics.dit,
-          if (metrics != null) metrics.cbo,
-          if (metrics != null) metrics.wmc,
-          if (metrics != null) metrics.rfc,
+          metrics.noc,
+          metrics.y,
+          metrics.x1,
+          if (settings.useX2) metrics.x2,
+          if (settings.useX3) metrics.x3,
           '',
-          if (normalized != null) normalized.rfc,
-          if (normalized != null) normalized.dit,
-          if (normalized != null) normalized.cbo,
-          if (normalized != null) normalized.wmc,
+          normalized.y,
+          normalized.x1,
+          if (settings.useX2) normalized.x2,
+          if (settings.useX3) normalized.x3,
         ];
       }),
     ]);

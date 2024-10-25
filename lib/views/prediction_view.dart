@@ -135,28 +135,31 @@ class _PredictionViewState extends State<PredictionView> {
     _prediction = model.predictY([x1!, x2!, x3!]);
 
     if (minMaxFactors != null) {
-      if (x1! > minMaxFactors!.dit.max || x1! < minMaxFactors!.dit.min) {
+      if (x1! > minMaxFactors!.x1.max || x1! < minMaxFactors!.x1.min) {
         x1Error = 'DIT should be between '
-            '${Utils.formatNumber(minMaxFactors!.dit.min)}'
-            ' and ${Utils.formatNumber(minMaxFactors!.dit.max)}';
+            '${Utils.formatNumber(minMaxFactors!.x1.min)}'
+            ' and ${Utils.formatNumber(minMaxFactors!.x1.max)}';
       } else {
         x1Error = null;
       }
-
-      if (x2! > minMaxFactors!.cbo.max || x2! < minMaxFactors!.cbo.min) {
-        x2Error = 'CBO should be between '
-            '${Utils.formatNumber(minMaxFactors!.cbo.min)}'
-            ' and ${Utils.formatNumber(minMaxFactors!.cbo.max)}';
-      } else {
-        x2Error = null;
+      if (minMaxFactors!.x2 != null) {
+        if (x2! > minMaxFactors!.x2!.max || x2! < minMaxFactors!.x2!.min) {
+          x2Error = 'CBO should be between '
+              '${Utils.formatNumber(minMaxFactors!.x2!.min)}'
+              ' and ${Utils.formatNumber(minMaxFactors!.x2!.max)}';
+        } else {
+          x2Error = null;
+        }
       }
 
-      if (x3! > minMaxFactors!.wmc.max || x3! < minMaxFactors!.wmc.min) {
-        x3Error = 'WMC should be between '
-            '${Utils.formatNumber(minMaxFactors!.wmc.min)}'
-            ' and ${Utils.formatNumber(minMaxFactors!.wmc.max)}';
-      } else {
-        x3Error = null;
+      if (minMaxFactors!.x3 != null) {
+        if (x3! > minMaxFactors!.x3!.max || x3! < minMaxFactors!.x3!.min) {
+          x3Error = 'WMC should be between '
+              '${Utils.formatNumber(minMaxFactors!.x3!.min)}'
+              ' and ${Utils.formatNumber(minMaxFactors!.x3!.max)}';
+        } else {
+          x3Error = null;
+        }
       }
     }
 
@@ -278,12 +281,22 @@ class _PredictionViewState extends State<PredictionView> {
     if (minMaxFactors == null) {
       return const SizedBox.shrink();
     }
-    final minDit = Utils.formatNumber(minMaxFactors!.dit.min);
-    final maxDit = Utils.formatNumber(minMaxFactors!.dit.max);
-    final minCbo = Utils.formatNumber(minMaxFactors!.cbo.min);
-    final maxCbo = Utils.formatNumber(minMaxFactors!.cbo.max);
-    final minWmc = Utils.formatNumber(minMaxFactors!.wmc.min);
-    final maxWmc = Utils.formatNumber(minMaxFactors!.wmc.max);
+    final minX1 = Utils.formatNumber(minMaxFactors!.x1.min);
+    final maxX1 = Utils.formatNumber(minMaxFactors!.x1.max);
+
+    String? minX2;
+    String? maxX2;
+    if (minMaxFactors!.x2 != null) {
+      minX2 = Utils.formatNumber(minMaxFactors!.x2!.min);
+      maxX2 = Utils.formatNumber(minMaxFactors!.x2!.max);
+    }
+
+    String? minX3;
+    String? maxX3;
+    if (minMaxFactors!.x3 != null) {
+      minX3 = Utils.formatNumber(minMaxFactors!.x3!.min);
+      maxX3 = Utils.formatNumber(minMaxFactors!.x3!.max);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,23 +312,27 @@ class _PredictionViewState extends State<PredictionView> {
             Flexible(
               child: MetricsCard(
                 title: 'DIT',
-                value: '[$minDit - $maxDit]',
+                value: '[$minX1 - $maxX1]',
               ),
             ),
-            const SizedBox(width: 16),
-            Flexible(
-              child: MetricsCard(
-                title: 'CBO',
-                value: '[$minCbo - $maxCbo]',
+            if (minMaxFactors!.x2 != null) ...[
+              const SizedBox(width: 16),
+              Flexible(
+                child: MetricsCard(
+                  title: 'CBO',
+                  value: '[$minX2 - $maxX2]',
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Flexible(
-              child: MetricsCard(
-                title: 'WMC',
-                value: '[$minWmc - $maxWmc]',
+            ],
+            if (minMaxFactors!.x3 != null) ...[
+              const SizedBox(width: 16),
+              Flexible(
+                child: MetricsCard(
+                  title: 'WMC',
+                  value: '[$minX3 - $maxX3]',
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ],

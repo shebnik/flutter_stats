@@ -51,24 +51,28 @@ class RegressionModel {
   int get p => _factors.firstOrNull?.x.length ?? 0;
 
   MinMaxFactors get minMaxFactors {
-    final values = _trainProjects.map((p) => p.metrics!).toList();
+    final values = _trainProjects.map((p) => p.metrics).toList();
     return MinMaxFactors(
-      dit: MinMax(
-        values.map((f) => f.dit!).reduce(min),
-        values.map((f) => f.dit!).reduce(max),
+      y: MinMax(
+        values.map((f) => f.y).reduce(min),
+        values.map((f) => f.y).reduce(max),
       ),
-      cbo: MinMax(
-        values.map((f) => f.cbo!).reduce(min),
-        values.map((f) => f.cbo!).reduce(max),
+      x1: MinMax(
+        values.map((f) => f.x1).reduce(min),
+        values.map((f) => f.x1).reduce(max),
       ),
-      wmc: MinMax(
-        values.map((f) => f.wmc!).reduce(min),
-        values.map((f) => f.wmc!).reduce(max),
-      ),
-      rfc: MinMax(
-        values.map((f) => f.rfc!).reduce(min),
-        values.map((f) => f.rfc!).reduce(max),
-      ),
+      x2: values.first.x2 != null
+          ? MinMax(
+              values.map((f) => f.x2!).reduce(min),
+              values.map((f) => f.x2!).reduce(max),
+            )
+          : null,
+      x3: values.first.x3 != null
+          ? MinMax(
+              values.map((f) => f.x3!).reduce(min),
+              values.map((f) => f.x3!).reduce(max),
+            )
+          : null,
     );
   }
 
@@ -76,28 +80,34 @@ class RegressionModel {
 
   void _splitData(List<Project> projects, [double trainRatio = 0.6]) {
     // Sort projects by each metric
-    projects.sort((a, b) => a.metrics!.cbo!.compareTo(b.metrics!.cbo!));
-    final sortedByCbo = List<Project>.from(projects);
+    projects.sort((a, b) => a.metrics.y.compareTo(b.metrics.y));
+    final sortedByY = List<Project>.from(projects);
 
-    projects.sort((a, b) => a.metrics!.wmc!.compareTo(b.metrics!.wmc!));
-    final sortedByWmc = List<Project>.from(projects);
+    projects.sort((a, b) => a.metrics.x1.compareTo(b.metrics.x1));
+    final sortedByX1 = List<Project>.from(projects);
 
-    projects.sort((a, b) => a.metrics!.rfc!.compareTo(b.metrics!.rfc!));
-    final sortedByRfc = List<Project>.from(projects);
+    var sortedByX2 = <Project>[];
+    if (projects.first.metrics.x2 != null) {
+      projects.sort((a, b) => a.metrics.x2!.compareTo(b.metrics.x2!));
+      sortedByX2 = List<Project>.from(projects);
+    }
 
-    projects.sort((a, b) => a.metrics!.dit!.compareTo(b.metrics!.dit!));
-    final sortedByDit = List<Project>.from(projects);
+    var sortedByX3 = <Project>[];
+    if (projects.first.metrics.x3 != null) {
+      projects.sort((a, b) => a.metrics.x3!.compareTo(b.metrics.x3!));
+      sortedByX3 = List<Project>.from(projects);
+    }
 
     // Get min and max projects for each metric
     final minMaxProjects = {
-      sortedByDit.first,
-      sortedByDit.last,
-      sortedByCbo.first,
-      sortedByCbo.last,
-      sortedByWmc.first,
-      sortedByWmc.last,
-      sortedByRfc.first,
-      sortedByRfc.last,
+      sortedByY.first,
+      sortedByY.last,
+      sortedByX1.first,
+      sortedByX1.last,
+      sortedByX2.first,
+      sortedByX2.last,
+      sortedByX3.first,
+      sortedByX3.last,
     };
 
     // Remove min and max projects from the main list and shuffle the rest
@@ -361,14 +371,14 @@ class MinMax {
 
 class MinMaxFactors {
   MinMaxFactors({
-    required this.dit,
-    required this.cbo,
-    required this.wmc,
-    required this.rfc,
+    required this.y,
+    required this.x1,
+    this.x2,
+    this.x3,
   });
 
-  final MinMax dit;
-  final MinMax cbo;
-  final MinMax wmc;
-  final MinMax rfc;
+  final MinMax y;
+  final MinMax x1;
+  final MinMax? x2;
+  final MinMax? x3;
 }

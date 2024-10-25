@@ -14,11 +14,17 @@ class Normalization {
         .map(
           (e) => e.copyWith(
             metrics: Metrics(
-              dit: algebra.logBase10(e.metrics!.dit!),
-              rfc: algebra.logBase10(e.metrics!.rfc!),
-              cbo: algebra.logBase10(e.metrics!.cbo!),
-              wmc: algebra.logBase10(e.metrics!.wmc!),
-              noc: algebra.logBase10(e.metrics!.noc!),
+              y: algebra.logBase10(e.metrics.y),
+              x1: algebra.logBase10(e.metrics.x1),
+              x2: e.metrics.x2 != null
+                  ? algebra.logBase10(e.metrics.x2!)
+                  : null,
+              x3: e.metrics.x3 != null
+                  ? algebra.logBase10(e.metrics.x3!)
+                  : null,
+              noc: e.metrics.noc != null
+                  ? algebra.logBase10(e.metrics.noc!)
+                  : null,
             ),
           ),
         )

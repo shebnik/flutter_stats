@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
+import 'package:flutter_stats/models/settings/settings.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 
-class ProjectsList extends StatelessWidget {
+class ProjectsList extends StatefulWidget {
   const ProjectsList({
     required this.projects,
     this.outliersIndexes,
@@ -15,58 +18,74 @@ class ProjectsList extends StatelessWidget {
   final List<int>? outliersIndexes;
 
   @override
+  State<ProjectsList> createState() => _ProjectsListState();
+}
+
+class _ProjectsListState extends State<ProjectsList> {
+  String getSubtitle(Project project, Metrics metrics, Settings settings) {
+    final alias = settings.csvAlias;
+    final subtitle = StringBuffer();
+
+    String formatMetricValue(num? value) {
+      if (value == null) return '';
+      return value % 1 == 0
+          ? value.toStringAsFixed(0)
+          : Utils.formatNumber(value.toDouble());
+    }
+
+    void addMetricLine(
+      String label,
+      String aliasValue,
+      num? value,
+    ) {
+      if (value != null) {
+        if (subtitle.isNotEmpty) subtitle.write('\n');
+        subtitle.write('$label $aliasValue: ${formatMetricValue(value)}');
+      }
+    }
+    
+    addMetricLine('(Y)', alias.y, metrics.y);
+    addMetricLine('(X1)', alias.x1, metrics.x1);
+
+    if (settings.useX2) {
+      addMetricLine('(X2)', alias.x2, metrics.x2);
+    }
+
+    if (settings.useX3) {
+      addMetricLine('(X3)', alias.x3, metrics.x3);
+    }
+
+    if (metrics.noc != null) {
+      addMetricLine('NOC', '(Number of Classes)', metrics.noc);
+    }
+
+    return subtitle.toString();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListView.separated(
       shrinkWrap: true,
-      itemCount: projects.length,
+      itemCount: widget.projects.length,
       separatorBuilder: (context, index) {
-        if (outliersIndexes != null && !outliersIndexes!.contains(index)) {
+        if (widget.outliersIndexes != null &&
+            !widget.outliersIndexes!.contains(index)) {
           return const SizedBox.shrink();
         }
         return const Divider();
       },
       itemBuilder: (context, index) {
-        if (outliersIndexes != null && !outliersIndexes!.contains(index)) {
+        if (widget.outliersIndexes != null &&
+            !widget.outliersIndexes!.contains(index)) {
           return const SizedBox.shrink();
         }
-        final project = projects[index];
-        final metric = project.metrics!;
-        var subtitle = '';
-        if (metric.rfc != null) {
-          var value = Utils.formatNumber(metric.rfc!);
-          if (metric.dit! % 1 == 0) {
-            value = metric.rfc!.toStringAsFixed(0);
-          }
-          subtitle += '(Y) RFC (Response for a Class): $value';
-        }
-        if (metric.dit != null) {
-          var value = Utils.formatNumber(metric.dit!);
-          if (metric.dit! % 1 == 0) {
-            value = metric.dit!.toStringAsFixed(0);
-          }
-          subtitle += '\n(X1) DIT (Depth of Inheritance Tree) : $value';
-        }
-        if (metric.cbo != null) {
-          var value = Utils.formatNumber(metric.cbo!);
-          if (metric.cbo! % 1 == 0) {
-            value = metric.cbo!.toStringAsFixed(0);
-          }
-          subtitle += '\n(X2) CBO (Coupling Between Object Classes): $value';
-        }
-        if (metric.wmc != null) {
-          var value = Utils.formatNumber(metric.wmc!);
-          if (metric.wmc! % 1 == 0) {
-            value = metric.wmc!.toStringAsFixed(0);
-          }
-          subtitle += '\n(X3) WMC (Weighted Methods Per Class): $value';
-        }
-        if (metric.noc != null) {
-          var value = metric.noc!.toString();
-          if (metric.noc! % 1 == 0) {
-            value = metric.noc!.toStringAsFixed(0);
-          }
-          subtitle += '\nNOC (Number of Classes): $value';
-        }
+        final project = widget.projects[index];
+        final metrics = project.metrics;
+        final subtitle = getSubtitle(
+          project,
+          metrics,
+          context.watch<SettingsProvider>().settings,
+        );
         return MouseRegion(
           cursor: SystemMouseCursors.click,
           child: ListTile(

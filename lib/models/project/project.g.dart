@@ -8,16 +8,14 @@ part of 'project.dart';
 
 _$ProjectImpl _$$ProjectImplFromJson(Map<String, dynamic> json) =>
     _$ProjectImpl(
+      metrics: Metrics.fromJson(json['metrics'] as Map<String, dynamic>),
       url: json['url'] as String?,
       name: json['name'] as String?,
-      metrics: json['metrics'] == null
-          ? null
-          : Metrics.fromJson(json['metrics'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ProjectImplToJson(_$ProjectImpl instance) =>
     <String, dynamic>{
+      'metrics': instance.metrics,
       'url': instance.url,
       'name': instance.name,
-      'metrics': instance.metrics,
     };

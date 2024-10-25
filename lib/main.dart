@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stats/app/app.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _log = AppLogger().logger;
 
@@ -14,7 +15,11 @@ Future<void> main() async {
     usePathUrlStrategy();
     registerErrorHandlers();
 
-    runApp(const App());
+    final sp = await SharedPreferencesWithCache.create(
+      cacheOptions: const SharedPreferencesWithCacheOptions(),
+    );
+    
+    runApp(App(sp: sp));
   }, (error, stackTrace) {
     _log.e(
       'Error',

@@ -16,11 +16,11 @@ class RegressionFactors with _$RegressionFactors {
 
   factory RegressionFactors.fromProject(Project project) {
     return RegressionFactors(
-      y: project.metrics!.rfc!,
+      y: project.metrics.y,
       x: [
-        project.metrics!.dit!,
-        project.metrics!.cbo!,
-        project.metrics!.wmc!,
+        project.metrics.x1,
+        if (project.metrics.x2 != null) project.metrics.x2!,
+        if (project.metrics.x3 != null) project.metrics.x3!,
       ],
     );
   }

@@ -8,18 +8,18 @@ part of 'metrics.dart';
 
 _$MetricsImpl _$$MetricsImplFromJson(Map<String, dynamic> json) =>
     _$MetricsImpl(
-      dit: (json['dit'] as num?)?.toDouble(),
-      rfc: (json['rfc'] as num?)?.toDouble(),
-      cbo: (json['cbo'] as num?)?.toDouble(),
-      wmc: (json['wmc'] as num?)?.toDouble(),
+      y: (json['y'] as num).toDouble(),
+      x1: (json['x1'] as num).toDouble(),
+      x2: (json['x2'] as num?)?.toDouble(),
+      x3: (json['x3'] as num?)?.toDouble(),
       noc: (json['noc'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$MetricsImplToJson(_$MetricsImpl instance) =>
     <String, dynamic>{
-      'dit': instance.dit,
-      'rfc': instance.rfc,
-      'cbo': instance.cbo,
-      'wmc': instance.wmc,
+      'y': instance.y,
+      'x1': instance.x1,
+      'x2': instance.x2,
+      'x3': instance.x3,
       'noc': instance.noc,
     };

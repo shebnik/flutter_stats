@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
-import 'package:flutter_stats/views/settings/settings.dart';
+import 'package:flutter_stats/views/settings/settings_view.dart';
 import 'package:flutter_stats/widgets/load_file_button.dart';
 
 class ScaffoldWithNavigationDrawer extends StatefulWidget {
@@ -71,7 +71,7 @@ class _ScaffoldWithNavigationDrawerState
                         builder: (context) {
                           return AlertDialog(
                             title: const Text('Settings'),
-                            content: const Settings(),
+                            content: const SettingsView(),
                             actions: [
                               TextButton(
                                 onPressed: () {

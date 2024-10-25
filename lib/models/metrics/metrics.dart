@@ -6,10 +6,10 @@ part 'metrics.g.dart';
 @freezed
 class Metrics with _$Metrics {
   const factory Metrics({
-    double? dit,
-    double? rfc,
-    double? cbo,
-    double? wmc,
+    required double y,
+    required double x1,
+    double? x2,
+    double? x3,
     double? noc,
   }) = _Metrics;
 
