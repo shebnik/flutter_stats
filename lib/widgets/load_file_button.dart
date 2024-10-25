@@ -9,7 +9,10 @@ class LoadFileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       elevation: 0,
-      onPressed: () => context.read<DataHandler>().loadDataFile(context),
+      onPressed: () => context.read<DataHandler>().loadDataFile(
+            context,
+            retrieveCached: false,
+          ),
       tooltip: 'Load CSV file',
       child: const Icon(Icons.file_upload_outlined),
     );

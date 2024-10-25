@@ -7,11 +7,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_stats/models/dataset/dataset.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/models/settings/settings.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
+import 'package:flutter_stats/services/database.dart';
 import 'package:flutter_stats/services/logger.dart';
 import 'package:flutter_stats/services/normalization.dart';
 import 'package:flutter_stats/services/utils.dart';
@@ -27,19 +29,55 @@ class DataHandler {
   Future<void> loadDataFile(
     BuildContext context, {
     bool useAssetDataset = false,
+    bool retrieveCached = true,
+    bool promptUser = true,
   }) async {
     final projectsProvider = context.read<ProjectsProvider>();
-    final settings = context.read<SettingsProvider>().settings;
+    if (!promptUser && projectsProvider.projects.isEmpty) {
+      return;
+    }
+
+    var settings = context.read<SettingsProvider>().settings;
+    final db = context.read<Database>();
+
     try {
-      final projects = await retrieveData(
-        useAssetDataset: useAssetDataset,
-        settings: settings,
-      );
-      if (projects == null) {
+      Uint8List? bytes;
+
+      // First, try to get cached data if requested
+      if (retrieveCached) {
+        final cachedDataset = db.getDataset();
+        if (cachedDataset != null) {
+          bytes = cachedDataset.data;
+        }
+      }
+
+      // If no cached data, retrieve new data
+      if (bytes == null && promptUser) {
+        bytes = await retrieveData(
+          useAssetDataset: useAssetDataset,
+          settings: settings,
+        );
+        settings = context.read<SettingsProvider>().settings;
+
+        // Save the new data to cache
+        if (bytes != null) {
+          await db.setDataset(Dataset(data: bytes, name: 'dataset.csv'));
+        }
+      }
+
+      // Handle no data case
+      if (bytes == null) {
         _logger.i('No file selected');
         return;
       }
-      if (projects.isEmpty) {
+
+      // Parse and validate data
+      final projects = parseData(
+        bytes: bytes,
+        settings: settings,
+      );
+
+      if (projects == null || projects.isEmpty) {
         Utils.showNotification(
           context,
           message: 'No data found in the file. Consider visiting app settings',
@@ -47,9 +85,12 @@ class DataHandler {
         );
         return;
       }
+
+      // Update projects
       await projectsProvider.setProjects(
         projects,
-        useRelativeNOC: context.read<SettingsProvider>().useRelativeNOC,
+        useRelativeNOC: settings.useRelativeNOC,
+        includeIntervalsMethod: settings.includeIntervalsMethod,
       );
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);
@@ -89,7 +130,7 @@ class DataHandler {
     return bytes;
   }
 
-  Future<List<Project>?> retrieveData({
+  Future<Uint8List?> retrieveData({
     required Settings settings,
     bool useAssetDataset = false,
   }) async {
@@ -103,16 +144,25 @@ class DataHandler {
     if (bytes == null) {
       return null;
     }
+    return bytes;
+  }
+
+  List<Project>? parseData({
+    required Uint8List bytes,
+    required Settings settings,
+  }) {
     try {
-      final rows = const CsvToListConverter().convert(
+      final rows = const CsvToListConverter(
+        eol: '\n',
+      ).convert(
         String.fromCharCodes(bytes),
       );
 
-      final headers = rows[0].map((h) => h.toString().toLowerCase()).toList();
+      final headers = rows[0].map((h) => h.toString().toUpperCase()).toList();
       final csvAlias = settings.csvAlias;
 
       final nameIndex = headers.indexOf('name');
-      final urlIndex = headers.indexOf(csvAlias.url.toLowerCase());
+      final urlIndex = headers.indexOf(csvAlias.url.toUpperCase());
       final x1Index = getMetricIndex(headers, [csvAlias.x1, 'x', 'x1']);
       final x2Index = getMetricIndex(headers, [csvAlias.x2, 'x2']);
       final x3Index = getMetricIndex(headers, [csvAlias.x3, 'x3']);
@@ -130,14 +180,17 @@ class DataHandler {
         final x1 = getDoubleValue(row, x1Index);
         final x2 = getDoubleValue(row, x2Index);
         final x3 = getDoubleValue(row, x3Index);
-        final rfc = getDoubleValue(row, yIndex);
         final noc = getDoubleValue(row, nocIndex);
+        var y = getDoubleValue(row, yIndex);
+        if (settings.useYInThousands) {
+          y = y != null ? y / 1000 : null;
+        }
 
         final project = Project(
           name: name,
           url: url,
           metrics: Metrics(
-            y: rfc ?? 0,
+            y: y ?? 0,
             x1: x1 ?? 0,
             x2: settings.hasX2 ? x2 : null,
             x3: settings.hasX3 ? x3 : null,
@@ -157,9 +210,9 @@ class DataHandler {
 
   int getMetricIndex(List<dynamic> headers, List<String> aliases) {
     for (var i = 0; i < headers.length; i++) {
-      final lowerHeader = headers[i].toString().toLowerCase();
+      final lowerHeader = headers[i].toString().toUpperCase();
       for (final alias in aliases) {
-        final lowerAlias = alias.toLowerCase();
+        final lowerAlias = alias.toUpperCase();
         if (lowerHeader.contains(lowerAlias)) {
           if (lowerAlias == 'y' && lowerAlias != lowerHeader) continue;
           return i;

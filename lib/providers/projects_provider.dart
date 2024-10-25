@@ -1,14 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/models/dataset/dataset.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 
 class ProjectsProvider with ChangeNotifier {
-  ProjectsProvider(this._regressionModelProvider);
+  ProjectsProvider(
+    this._regressionModelProvider, {
+    this.dataset,
+  });
 
   final RegressionModelProvider _regressionModelProvider;
+  Dataset? dataset;
 
   List<Project> _fileProjects = [];
   List<Project> _projects = [];
@@ -22,11 +27,12 @@ class ProjectsProvider with ChangeNotifier {
   }
 
   List<Project> get projects => _projects;
-  late Outliers _outliers;
+  Outliers _outliers = Outliers([]);
 
   Future<void> setProjects(
     List<Project>? projects, {
     required bool useRelativeNOC,
+    required bool includeIntervalsMethod,
   }) async {
     if (projects == null) return;
     _fileProjects = List.from(projects);
@@ -34,39 +40,60 @@ class ProjectsProvider with ChangeNotifier {
     _outliersRemoved = 0;
 
     divideByNOC(useRelativeNOC: useRelativeNOC);
-    await refitOutliers(projects);
-    notifyListeners();
     refitModel();
+    await refitOutliers(
+      projects,
+      includeIntervalsMethod: includeIntervalsMethod,
+    );
+    notifyListeners();
   }
 
-  Future<void> removeProjects(List<int> indexes) async {
+  Future<void> removeProjects(
+    List<int> indexes, {
+    required bool includeIntervalsMethod,
+  }) async {
     indexes.sort();
     for (var i = indexes.length - 1; i >= 0; i--) {
       _projects.removeAt(indexes[i]);
       _fileProjects.removeAt(indexes[i]);
     }
     _outliersRemoved += indexes.length;
-    await refitOutliers(_projects);
-    notifyListeners();
     refitModel();
+    await refitOutliers(
+      projects,
+      includeIntervalsMethod: includeIntervalsMethod,
+    );
+    notifyListeners();
   }
 
-  Future<void> removeProject(int index) async {
+  Future<void> removeProject(
+    int index, {
+    required bool includeIntervalsMethod,
+  }) async {
     _projects.removeAt(index);
     _fileProjects.removeAt(index);
     _outliersRemoved++;
-    await refitOutliers(_projects);
-    notifyListeners();
     refitModel();
+    await refitOutliers(
+      projects,
+      includeIntervalsMethod: includeIntervalsMethod,
+    );
+    notifyListeners();
   }
 
   void refitModel() {
     _regressionModelProvider.model = RegressionModel(_projects);
   }
 
-  Future<void> refitOutliers(List<Project> projects) async {
+  Future<void> refitOutliers(
+    List<Project> projects, {
+    required bool includeIntervalsMethod,
+  }) async {
     _outliers = Outliers(projects);
-    await _outliers.determineOutliers();
+    await _outliers.determineOutliers(
+      includeIntervalsMethod: includeIntervalsMethod,
+      regressionModel: _regressionModelProvider.model,
+    );
   }
 
   List<int> get outliers => _outliers.outliers;

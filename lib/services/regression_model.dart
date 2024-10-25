@@ -254,20 +254,32 @@ class RegressionModel {
     return prediction.toDouble();
   }
 
-  Future<(List<double>, List<double>)> calculatePredictionInterval() async {
-    final n = _predictedValues.length;
+  Future<(List<double>, List<double>)> calculatePredictionInterval({
+    bool useAllProjects = false,
+  }) async {
+    final factors = useAllProjects
+        ? _normalization
+            .normalizeProjects(_projects)
+            .map(RegressionFactors.fromProject)
+            .toList()
+        : _factors;
+    final predictedValues = useAllProjects
+        ? _calculatePredictedValues(factors: factors)
+        : _predictedValues;
+
+    final n = factors.length;
 
     final X = Matrix.fromColumns([
       Vector.fromList(List.filled(n, 1.0)),
       ...List.generate(
         p,
-        (i) => Vector.fromList(_factors.map((f) => f.x[i]).toList()),
+        (i) => Vector.fromList(factors.map((f) => f.x[i]).toList()),
       ),
     ]);
-    final y = Vector.fromList(_factors.map((f) => f.y).toList());
+    final y = Vector.fromList(factors.map((f) => f.y).toList());
 
     final residuals = Vector.fromList(
-      List.generate(n, (i) => y[i] - _predictedValues[i]),
+      List.generate(n, (i) => y[i] - predictedValues[i]),
     );
     final mse = residuals.dot(residuals) / (n - p - 1);
 
@@ -278,8 +290,8 @@ class RegressionModel {
     final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - p - 1);
     final margin = List.generate(n, (i) => tValue! * se[i]);
 
-    final lowerBound = List.generate(n, (i) => _predictedValues[i] - margin[i]);
-    final upperBound = List.generate(n, (i) => _predictedValues[i] + margin[i]);
+    final lowerBound = List.generate(n, (i) => predictedValues[i] - margin[i]);
+    final upperBound = List.generate(n, (i) => predictedValues[i] + margin[i]);
 
     return (lowerBound, upperBound);
   }

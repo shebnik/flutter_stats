@@ -43,7 +43,7 @@ class _ProjectsListState extends State<ProjectsList> {
         subtitle.write('$label $aliasValue: ${formatMetricValue(value)}');
       }
     }
-    
+
     addMetricLine('(Y)', alias.y, metrics.y);
     addMetricLine('(X1)', alias.x1, metrics.x1);
 
@@ -128,7 +128,13 @@ class _ProjectsListState extends State<ProjectsList> {
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                context.read<ProjectsProvider>().removeProject(index);
+                context.read<ProjectsProvider>().removeProject(
+                      index,
+                      includeIntervalsMethod: context
+                          .read<SettingsProvider>()
+                          .settings
+                          .includeIntervalsMethod,
+                    );
               },
             ),
           ),

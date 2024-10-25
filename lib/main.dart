@@ -18,7 +18,6 @@ Future<void> main() async {
     final sp = await SharedPreferencesWithCache.create(
       cacheOptions: const SharedPreferencesWithCacheOptions(),
     );
-    
     runApp(App(sp: sp));
   }, (error, stackTrace) {
     _log.e(

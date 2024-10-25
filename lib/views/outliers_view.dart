@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -36,9 +37,8 @@ class _OutliersViewState extends State<OutliersView> {
                   child: ValueListenableBuilder(
                     valueListenable: isRemoving,
                     builder: (_, disabled, __) => ElevatedButton(
-                      onPressed: disabled
-                          ? null
-                          : () => _removeAllClick(provider),
+                      onPressed:
+                          disabled ? null : () => _removeAllClick(provider),
                       child: const Padding(
                         padding: EdgeInsets.all(8),
                         child: Text(
@@ -78,7 +78,11 @@ class _OutliersViewState extends State<OutliersView> {
   }
 
   Future<void> _removeAllOutliers(ProjectsProvider provider) async {
-    await provider.removeProjects(provider.outliers);
+    await provider.removeProjects(
+      provider.outliers,
+      includeIntervalsMethod:
+          context.read<SettingsProvider>().settings.includeIntervalsMethod,
+    );
 
     if (provider.outliers.isEmpty) {
       return;

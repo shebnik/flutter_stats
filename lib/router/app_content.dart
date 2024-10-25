@@ -25,7 +25,10 @@ class AppContent extends StatelessWidget {
               children: [
                 StyledButton(
                   text: 'Load Data File',
-                  onPressed: () => dataHandler.loadDataFile(context),
+                  onPressed: () => dataHandler.loadDataFile(
+                    context,
+                    retrieveCached: false,
+                  ),
                   svgPicturePath: excelSVG,
                 ),
                 const SizedBox(height: 8),
@@ -34,6 +37,7 @@ class AppContent extends StatelessWidget {
                   onPressed: () => dataHandler.loadDataFile(
                     context,
                     useAssetDataset: true,
+                    retrieveCached: false,
                   ),
                 ),
               ],

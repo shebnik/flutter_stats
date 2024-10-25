@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/router/app_content.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/widgets/load_file_button.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class ScaffoldWithNavigationDrawer extends StatefulWidget {
   const ScaffoldWithNavigationDrawer({
@@ -50,15 +52,23 @@ class _ScaffoldWithNavigationDrawerState
                     groupAlignment: 0,
                     useIndicator: true,
                     leading: const LoadFileButton(),
-                    destinations: appRoutes
-                        .map(
-                          (route) => NavigationRailDestination(
-                            icon: Icon(route.icon),
-                            selectedIcon: Icon(route.selectedIcon),
-                            label: Text(route.label),
-                          ),
-                        )
-                        .toList(),
+                    destinations: appRoutes.map(
+                      (route) {
+                        var label = route.label;
+                        if (route.type == AppRouteType.outliers) {
+                          final outliers =
+                              context.watch<ProjectsProvider>().outliers.length;
+                          if (outliers > 0) {
+                            label = '$label ($outliers)';
+                          }
+                        }
+                        return NavigationRailDestination(
+                          icon: Icon(route.icon),
+                          selectedIcon: Icon(route.selectedIcon),
+                          label: Text(label),
+                        );
+                      },
+                    ).toList(),
                   ),
                 ),
                 Padding(

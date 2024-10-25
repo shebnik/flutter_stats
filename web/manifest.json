@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Calculate your project size in lines of code.",
+    "description": "Build Regression Models for prediction using Code Metrics",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

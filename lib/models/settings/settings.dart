@@ -14,6 +14,8 @@ class Settings with _$Settings {
     @Default(true) bool hasX2,
     @Default(true) bool hasX3,
     @Default(true) bool hasNOC,
+    @Default(false) bool useYInThousands,
+    @Default(false) bool includeIntervalsMethod,
     @Default(CSVAlias.defaultAlias) CSVAlias csvAlias,
   }) = _Settings;
 

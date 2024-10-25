@@ -10,6 +10,8 @@ class SettingsProvider extends ChangeNotifier {
   Settings get settings => _settings;
 
   bool get useRelativeNOC => _settings.useRelativeNOC;
+  bool get useYInThousands => _settings.useYInThousands;
+  bool get includeIntervalsMethod => _settings.includeIntervalsMethod;
   String get nocAlias => _settings.csvAlias.noc;
   bool get useSigma => _settings.useSigma;
   bool get hasX2 => _settings.hasX2;
@@ -20,6 +22,16 @@ class SettingsProvider extends ChangeNotifier {
   String get x2Alias => _settings.csvAlias.x2;
   String get x3Alias => _settings.csvAlias.x3;
   String get urlAlias => _settings.csvAlias.url;
+
+  set useYInThousands(bool value) {
+    _settings = _settings.copyWith(useYInThousands: value);
+    notifyListeners();
+  }
+
+  set includeIntervalsMethod(bool value) {
+    _settings = _settings.copyWith(includeIntervalsMethod: value);
+    notifyListeners();
+  }
 
   set useRelativeNOC(bool value) {
     _settings = _settings.copyWith(useRelativeNOC: value);

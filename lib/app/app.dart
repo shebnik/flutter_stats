@@ -36,7 +36,10 @@ class App extends StatelessWidget {
         Provider(create: (_) => DataHandler()),
         Provider(create: (_) => Utils()),
         ChangeNotifierProvider(
-          create: (_) => ProjectsProvider(regressionModelProvider),
+          create: (_) => ProjectsProvider(
+            regressionModelProvider,
+            dataset: db.getDataset(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => regressionModelProvider,

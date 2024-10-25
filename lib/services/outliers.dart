@@ -7,6 +7,7 @@ import 'package:flutter_stats/models/regression_factors/regression_factors.dart'
 import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/fisher.dart';
 import 'package:flutter_stats/services/normalization.dart';
+import 'package:flutter_stats/services/regression_model.dart';
 
 class Outliers {
   Outliers(this.projects) {
@@ -58,7 +59,14 @@ class Outliers {
   Future<double?> calculateFisherFDistribution() =>
       Fisher.inv(alpha: alpha, df1: p, df2: n - p);
 
-  Future<void> determineOutliers() async {
+  Future<void> determineOutliers({
+    bool includeIntervalsMethod = false,
+    RegressionModel? regressionModel,
+  }) async {
+    if (includeIntervalsMethod && regressionModel == null) {
+      debugPrint('Regression model is required for prediction intervals');
+    }
+
     final testStatistics = calculateTestStatistics();
     final f = await calculateFisherFDistribution();
     if (f == null) {
@@ -66,7 +74,34 @@ class Outliers {
       return;
     }
 
-    _outliers =
+    final mahalanobisOutliers =
         List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
+
+    if (includeIntervalsMethod && regressionModel != null) {
+      final predictionOutliers =
+          await calculatePredictionIntervalOutliers(regressionModel);
+      final predictionIndices = List.generate(n, (i) => i)
+          .where((i) => predictionOutliers[i])
+          .toList();
+
+      _outliers = {...mahalanobisOutliers, ...predictionIndices}.toList()
+        ..sort();
+    } else {
+      _outliers = mahalanobisOutliers;
+    }
+  }
+
+  Future<List<bool>> calculatePredictionIntervalOutliers(
+    RegressionModel regressionModel,
+  ) async {
+    // Calculate prediction intervals
+    final (lowerBound, upperBound) =
+        await regressionModel.calculatePredictionInterval(useAllProjects: true);
+
+    // Check if each point falls outside the prediction intervals
+    return List.generate(n, (i) {
+      final actualValue = _factors[i].y;
+      return actualValue < lowerBound[i] || actualValue > upperBound[i];
+    });
   }
 }

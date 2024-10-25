@@ -168,14 +168,14 @@ class _PredictionViewState extends State<PredictionView> {
 
   Widget x1Field(SettingsProvider provider) => _buildTextField(
         x1Controller,
-        'Enter X1 ${provider.settings.csvAlias.x1}',
+        'Enter X1 (${provider.settings.csvAlias.x1})',
         x1Error,
       );
 
   Widget? x2Field(SettingsProvider provider) => provider.hasX2
       ? _buildTextField(
           x2Controller,
-          'Enter X2 ${provider.settings.csvAlias.x2}',
+          'Enter X2 (${provider.settings.csvAlias.x2})',
           x2Error,
         )
       : null;
@@ -183,7 +183,7 @@ class _PredictionViewState extends State<PredictionView> {
   Widget? x3Field(SettingsProvider provider) => provider.hasX3
       ? _buildTextField(
           x3Controller,
-          'Enter X3 ${provider.settings.csvAlias.x3}',
+          'Enter X3 (${provider.settings.csvAlias.x3})',
           x3Error,
         )
       : null;
@@ -247,7 +247,7 @@ class _PredictionViewState extends State<PredictionView> {
                 const SizedBox(height: 16),
                 _buildPredictionOutput(),
                 const SizedBox(height: 32),
-                _availableFactorsRange(),
+                _availableFactorsRange(provider),
                 const SizedBox(height: 32),
               ],
             );
@@ -257,7 +257,7 @@ class _PredictionViewState extends State<PredictionView> {
     );
   }
 
-  Widget _availableFactorsRange() {
+  Widget _availableFactorsRange(SettingsProvider provider) {
     minMaxFactors = model.minMaxFactors;
     if (minMaxFactors == null) {
       return const SizedBox.shrink();
@@ -267,14 +267,14 @@ class _PredictionViewState extends State<PredictionView> {
 
     String? minX2;
     String? maxX2;
-    if (minMaxFactors!.x2 != null) {
+    if (provider.hasX2 && minMaxFactors!.x2 != null) {
       minX2 = Utils.formatNumber(minMaxFactors!.x2!.min);
       maxX2 = Utils.formatNumber(minMaxFactors!.x2!.max);
     }
 
     String? minX3;
     String? maxX3;
-    if (minMaxFactors!.x3 != null) {
+    if (provider.hasX3 && minMaxFactors!.x3 != null) {
       minX3 = Utils.formatNumber(minMaxFactors!.x3!.min);
       maxX3 = Utils.formatNumber(minMaxFactors!.x3!.max);
     }
@@ -292,24 +292,24 @@ class _PredictionViewState extends State<PredictionView> {
           children: [
             Flexible(
               child: MetricsCard(
-                title: 'DIT',
+                title: provider.settings.csvAlias.x1,
                 value: '[$minX1 - $maxX1]',
               ),
             ),
-            if (minMaxFactors!.x2 != null) ...[
+            if (provider.hasX2 && minMaxFactors!.x2 != null) ...[
               const SizedBox(width: 16),
               Flexible(
                 child: MetricsCard(
-                  title: 'CBO',
+                  title: provider.settings.csvAlias.x2,
                   value: '[$minX2 - $maxX2]',
                 ),
               ),
             ],
-            if (minMaxFactors!.x3 != null) ...[
+            if (provider.hasX3 && minMaxFactors!.x3 != null) ...[
               const SizedBox(width: 16),
               Flexible(
                 child: MetricsCard(
-                  title: 'WMC',
+                  title: provider.settings.csvAlias.x3,
                   value: '[$minX3 - $maxX3]',
                 ),
               ),
