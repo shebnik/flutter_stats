@@ -3,25 +3,46 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/app/app.dart';
-import 'package:flutter_stats/services/logger.dart';
+import 'package:flutter_stats/services/logging/logger_config.dart';
+import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-final _log = AppLogger().logger;
+import 'package:universal_io/io.dart';
 
 Future<void> main() async {
-  _log.i('App started');
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    final logger = await LoggerService.initialize(
+      config: const LoggerConfig(
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        logDirectory: 'FlutterStats/logs',
+        minLogLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
+        enableFileOutput: !kIsWeb,
+      ),
+    );
+    logger.i(
+      'Application started',
+      metadata: {
+        'version': '1.0.0',
+        'buildNumber': '42',
+        'isWeb': kIsWeb,
+        'platform': Platform.operatingSystem,
+        'operatingSystemVersion': Platform.operatingSystemVersion,
+        'localHostname': Platform.localHostname,
+        'numberOfProcessors': Platform.numberOfProcessors,
+      },
+    );
+
     usePathUrlStrategy();
-    registerErrorHandlers();
+    registerErrorHandlers(logger);
 
     final sp = await SharedPreferencesWithCache.create(
       cacheOptions: const SharedPreferencesWithCacheOptions(),
     );
     runApp(App(sp: sp));
   }, (error, stackTrace) {
-    _log.e(
+    LoggerService.instance.e(
       'Error',
       error: error,
       stackTrace: stackTrace,
@@ -29,9 +50,9 @@ Future<void> main() async {
   });
 }
 
-void registerErrorHandlers() {
+void registerErrorHandlers(LoggerService logger) {
   FlutterError.onError = (details) {
-    _log.e(
+    logger.e(
       'FlutterError',
       error: details.exception,
       stackTrace: details.stack,
@@ -39,7 +60,7 @@ void registerErrorHandlers() {
   };
 
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    _log.e(
+    logger.e(
       'PlatformDispatcher Error',
       error: error,
       stackTrace: stack,

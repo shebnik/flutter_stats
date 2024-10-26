@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter_stats/models/dataset/dataset.dart';
 import 'package:flutter_stats/models/settings/settings.dart';
-import 'package:flutter_stats/services/logger.dart';
+import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Database {
   Database(this._db);
   final SharedPreferencesWithCache _db;
-  final _logger = AppLogger().logger;
+  final _logger = LoggerService.instance;
 
   Map<String, dynamic>? getMap(String key) {
     try {

@@ -14,7 +14,7 @@ import 'package:flutter_stats/models/settings/settings.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/database.dart';
-import 'package:flutter_stats/services/logger.dart';
+import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:flutter_stats/services/normalization.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +23,7 @@ import 'package:universal_html/html.dart' as html;
 class DataHandler {
   DataHandler();
 
-  final _logger = AppLogger().logger;
+  final _logger = LoggerService.instance;
   final filePicker = FilePicker.platform;
 
   Future<void> loadDataFile(
