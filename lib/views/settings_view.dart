@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
+import 'package:flutter_stats/services/logging/bug_report.dart';
 import 'package:flutter_stats/widgets/alias_selector.dart';
 import 'package:flutter_stats/widgets/text_switch.dart';
 import 'package:provider/provider.dart';
@@ -155,6 +157,13 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                 ],
                 SizedBox(height: aliases.length / 2 * 52),
+                // Logging to file on web is not supported
+                if (!kIsWeb) ...[
+                  const TextButton(
+                    onPressed: BugReportService.reportBug,
+                    child: Text('Report a bug'),
+                  ),
+                ],
               ],
             ),
           ),

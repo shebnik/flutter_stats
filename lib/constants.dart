@@ -20,3 +20,5 @@ const aliases = [
   'CBO',
   'WMC',
 ];
+
+const email = 'shebnik@outlook.com';

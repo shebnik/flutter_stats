@@ -6,6 +6,7 @@ import 'package:flutter_stats/app/app.dart';
 import 'package:flutter_stats/services/logging/logger_config.dart';
 import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:universal_io/io.dart';
 
@@ -14,9 +15,9 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     final logger = await LoggerService.initialize(
-      config: const LoggerConfig(
+      config: LoggerConfig(
         maxFileSize: 5 * 1024 * 1024, // 5MB
-        logDirectory: 'FlutterStats/logs',
+        logDirectory: path.join('FlutterStats', 'logs'),
         minLogLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
         enableFileOutput: !kIsWeb,
       ),

@@ -28,6 +28,7 @@ class LoggerService {
   }
 
   late final LoggerConfig _config;
+  LoggerConfig get config => _config;
   final List<BaseLogOutput> _outputs = [];
 
   Future<void> _initialize(LoggerConfig config) async {
