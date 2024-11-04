@@ -1,62 +1,67 @@
 import pandas as pd
-import numpy as np
 from statsmodels.stats.outliers_influence import variance_inflation_factor
-import seaborn as sns
-import matplotlib.pyplot as plt
 import os
 
-# Read the CSV file
-# Assuming the CSV file is named 'metrics.csv'
-df = pd.read_csv(
-    os.path.join(os.path.dirname(__file__), os.path.join("data", "100.csv"))
-)
-
-# Remove the URL column as it's not needed for the analysis
-features = ["SLOC", "NOC", "NOM", "DIT", "RFC", "CBO", "WMC"]
-df_metrics = df[features]
-
-min_cbo = np.min(df_metrics["CBO"])
-max_cbo = np.max(df_metrics["CBO"])
-
-min_wmc = np.min(df_metrics["WMC"])
-max_wmc = np.max(df_metrics["WMC"])
-
-min_rfc = np.min(df_metrics["RFC"])
-max_rfc = np.max(df_metrics["RFC"])
-
-print(f"Min CBO: {min_cbo}, Max CBO: {max_cbo}")
-print(f"Min WMC: {min_wmc}, Max WMC: {max_wmc}")
-print(f"Min RFC: {min_rfc}, Max RFC: {max_rfc}")
-
-# Calculate correlation matrix
-correlation_matrix = df_metrics.corr()
-
-# Create a heatmap
-plt.figure(figsize=(10, 8))
-sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", center=0)
-plt.title("Correlation Matrix of Software Metrics")
-plt.tight_layout()
-plt.savefig(os.path.join(os.path.dirname(__file__), "correlation_heatmap.png"))
-plt.close()
-
-
-# Calculate VIF for each feature
-def calculate_vif(df):
+def analyze_metrics(file_path):
+    # Read the CSV file
+    df = pd.read_csv(file_path)
+    
+    # Define features
+    features = ['NOC', 'NOM', 'DIT', 'CBO', 'WMC']
+    
+    # Create a copy of the dataframe with selected features
+    df_metrics = df[features].copy()
+    
+    # Convert relevant columns to float type before division
+    df_metrics = df_metrics.astype(float)
+    
+    # Calculate relative metrics
+    for metric in ['CBO', 'WMC', 'DIT', 'NOM']:
+        df_metrics[metric] = df_metrics[metric] / df_metrics['NOC']
+    
+    # Calculate correlation matrix
+    correlation_matrix = df_metrics.corr()
+    
+    # Calculate VIF
     vif_data = pd.DataFrame()
-    vif_data["Feature"] = df.columns
-    vif_data["VIF"] = [
-        variance_inflation_factor(df.values, i) for i in range(df.shape[1])
-    ]
-    return vif_data.sort_values("VIF", ascending=False)
+    vif_data["Feature"] = df_metrics.columns
+    vif_data["VIF"] = [variance_inflation_factor(df_metrics.values, i) 
+                       for i in range(df_metrics.shape[1])]
+    vif_results = vif_data.sort_values('VIF', ascending=False)
+    
+    # Find highly correlated pairs
+    high_correlations = []
+    for i in range(len(features)):
+        for j in range(i+1, len(features)):
+            corr = correlation_matrix.iloc[i,j]
+            if abs(corr) > 0.7:
+                high_correlations.append({
+                    'pair': f"{features[i]} - {features[j]}",
+                    'correlation': corr
+                })
+    
+    # Calculate descriptive statistics
+    metrics_stats = df_metrics.describe()
+    
+    return {
+        'correlation_matrix': correlation_matrix,
+        'vif_results': vif_results,
+        'high_correlations': high_correlations,
+        'metrics_stats': metrics_stats
+    }
 
-
-vif_results = calculate_vif(df_metrics)
-print("\nVariance Inflation Factors:")
-print(vif_results)
-
-# Print highly correlated pairs
-print("\nHighly correlated pairs (|r| > 0.7):")
-for i in range(len(features)):
-    for j in range(i + 1, len(features)):
-        if abs(correlation_matrix.iloc[i, j]) > 0.7:
-            print(f"{features[i]} - {features[j]}: {correlation_matrix.iloc[i,j]:.3f}")
+# Usage
+if __name__ == "__main__":
+    file_path = os.path.join(os.path.dirname(__file__), 'data', '100.csv')
+    results = analyze_metrics(file_path)
+    
+    # Print results
+    print("\nDescriptive Statistics:")
+    print(results['metrics_stats'])
+    
+    print("\nVariance Inflation Factors:")
+    print(results['vif_results'])
+    
+    print("\nHighly correlated pairs (|r| > 0.7):")
+    for corr in results['high_correlations']:
+        print(f"{corr['pair']}: {corr['correlation']:.3f}")

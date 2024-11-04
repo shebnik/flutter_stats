@@ -234,6 +234,7 @@ class DataHandler {
     required String fileName,
     required List<Project> projects,
     required Settings settings,
+    List<double> mahalanobisDistances = const [],
   }) async {
     final csvAlias = settings.csvAlias;
     fileName = fileName.endsWith('.csv') ? fileName : '$fileName.csv';
@@ -252,6 +253,7 @@ class DataHandler {
         'Zx1',
         if (settings.hasX2) 'Zx2',
         if (settings.hasX3) 'Zx3',
+        if (mahalanobisDistances.isNotEmpty) 'Mahalanobis Distances',
       ],
       ...List.generate(projects.length, (i) {
         final project = projects[i];
@@ -270,6 +272,7 @@ class DataHandler {
           normalized.x1,
           if (settings.hasX2) normalized.x2,
           if (settings.hasX3) normalized.x3,
+          if (mahalanobisDistances.isNotEmpty) mahalanobisDistances[i],
         ];
       }),
     ]);

@@ -4,20 +4,24 @@ import numpy as np
 from typing import List, Tuple
 import os
 
+
 @dataclass(frozen=True)
 class Project:
     url: str
-    cbo: float
-    wmc: float
-    rfc: float
-    noc: float
-    zx1: float
-    zx2: float
-    zy: float
-    
+    x1: float
+    x2: float
+    y: float
+    x3: float
+    zx1: float = 0.0
+    zx2: float = 0.0
+    zx3: float = 0.0
+    zy: float = 0.0
+
+
 def data_path(filename: str) -> str:
     """Return the full path to the data file."""
-    return os.path.join(os.path.dirname(__file__), os.path.join('data', filename))
+    return os.path.join(os.path.dirname(__file__), "data", filename)
+
 
 def retrieve_data(filename: str = "train_data.csv") -> List[Project]:
     """Load data from CSV file and return a list of Project objects."""
@@ -25,135 +29,151 @@ def retrieve_data(filename: str = "train_data.csv") -> List[Project]:
     projects = []
     for _, row in df.iterrows():
         project = Project(
-            url=row['URL'],
-            cbo=row['CBO'],
-            wmc=row['WMC'],
-            rfc=row['RFC'],
-            noc=row['NOC'],
-            zx1=row['ZX1'] if 'ZX1' in df.columns else 0.0,
-            zx2=row['ZX2'] if 'ZX2' in df.columns else 0.0,
-            zy=row['ZY'] if 'ZY' in df.columns else 0.0
+            url="",
+            x1=row["CBO"],
+            x2=row["DIT"],
+            x3=row["WMC"],
+            y=row["RFC"],
         )
         projects.append(project)
     return projects
+
 
 def normalize_data(projects: List[Project]) -> List[Project]:
     """Normalize the data."""
     normalized_projects = []
     for project in projects:
-        cbo = max(project.cbo, 1)
-        wmc = max(project.wmc, 1)
-        rfc = max(project.rfc, 1)
-        noc = max(project.noc, 1)
-        
-        zx1 = np.log10(cbo / noc)
-        zx2 = np.log10(wmc / noc)
-        zy = np.log10(rfc / noc)
-        
-        normalized_projects.append(Project(project.url, project.cbo, project.wmc, project.rfc, project.noc, zx1, zx2, zy))
-    
-    return normalized_projects
-    
-def projects_to_array(projects: List[Project]) -> np.ndarray:
-    """Convert a list of Project objects to a numpy array."""
-    return np.array([[p.zx1, p.zx2, p.zy] for p in projects])
+        zx1 = np.log10(project.x1)
+        zx2 = np.log10(project.x2)
+        zx3 = np.log10(project.x3)
+        zy = np.log10(project.y)
 
-def calculate_regression_coefficients(Z: np.ndarray) -> tuple[float, float, float]:
+        normalized_projects.append(
+            Project(
+                url=project.url,
+                x1=project.x1,
+                x2=project.x2,
+                y=project.y,
+                x3=project.x3,
+                zx1=zx1,
+                zx2=zx2,
+                zx3=zx3,
+                zy=zy,
+            )
+        )
+
+    return normalized_projects
+
+
+def calculate_regression_coefficients(
+    X: np.ndarray, Y: np.ndarray
+) -> Tuple[float, float, float, float]:
     """Calculate regression coefficients."""
-    X = Z[:, :-1]
-    Y = Z[:, -1]
     X = np.column_stack((np.ones(X.shape[0]), X))
     coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
-    return coffs[0], coffs[1], coffs[2]
+    return coffs[0], coffs[1], coffs[2], coffs[3]
 
-def calculate_residual_statistics(Y: np.ndarray, Y_hat: np.ndarray) -> tuple[float, float]:
-    """Calculate the sample mean and variance of residuals."""
-    residuals = Y - Y_hat
-    mean_residual = np.mean(residuals)
-    variance_residual = np.var(residuals, ddof=1)
-    return mean_residual, variance_residual
+
+def calculate_regression_metrics(
+    Y: np.ndarray, Y_hat: np.ndarray
+) -> Tuple[float, float, float]:
+    """Calculate regression model metrics."""
+    n = len(Y)
+    Y_hat_original = 10**Y_hat
+    Y_original = 10**Y
+
+    residuals = Y_original - Y_hat_original
+    y_mean = np.mean(Y_original)
+
+    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y_original - y_mean) ** 2))
+    mmre = np.mean(np.abs(residuals / Y_original))
+    pred = np.sum(np.abs(residuals / Y_original) < 0.25) / n
+
+    return r_squared, mmre, pred
+
 
 def calculate_epsilon_std(Y: np.ndarray, Y_hat: np.ndarray) -> float:
     """Calculate the standard deviation of epsilon."""
-    residuals = np.log10(Y) - np.log10(Y_hat)
+    residuals = Y - Y_hat
     n = len(residuals)
-    epsilon_std = np.sqrt(np.sum(residuals**2) / (n - 3))
+    epsilon_std = np.sqrt(np.sum(residuals**2) / (n - 4))
     return epsilon_std
 
-def build_model(projects: list[Project]) -> tuple[float, float, float, np.ndarray, np.ndarray, float]:
-    """Build a regression model and calculate epsilon standard deviation."""
-    Z = projects_to_array(projects)
-    b0, b1, b2 = calculate_regression_coefficients(Z)
-    
-    # Calculate Y_hat using the model Y = 10^b0 * X1^b1 * X2^b2
-    Y_hat = 10**b0 * (10**Z[:, 0])**b1 * (10**Z[:, 1])**b2
-    Y = 10**Z[:, -1]  # Convert Y back to original scale
-    
-    # Calculate epsilon standard deviation
-    epsilon_std = calculate_epsilon_std(Y, Y_hat)
-    
-    return b0, b1, b2, Y_hat, Y, epsilon_std
 
-def calculate_regression_metrics(Y: np.ndarray, Y_hat: np.ndarray) -> tuple[float, float, float]:
-    """Calculate regression model metrics."""
-    n = len(Y)
-    
-    residuals = Y - Y_hat
-    y_mean = np.mean(Y)
-    
-    r_squared = 1 - (np.sum(residuals**2) / np.sum((Y - y_mean)**2))
-    mmre = np.mean(np.abs(residuals / Y))
-    pred = np.sum(np.abs(residuals / Y) < 0.25) / n
-    
-    return r_squared, mmre, pred
+def build_model(
+    x1, x2, x3, y
+) -> Tuple[float, float, float, float, np.ndarray, np.ndarray]:
+    """Build a regression model."""
+    b0, b1, b2, b3 = calculate_regression_coefficients(np.column_stack((x1, x2, x3)), y)
+    Y_hat = b0 + b1 * x1 + b2 * x2 + b3 * x3
 
-def print_results(b0: float, b1: float, b2: float, r_squared: float, mmre: float, pred: float, mean_residual: float, variance_residual: float):
+    epsilon_std = calculate_epsilon_std(y, Y_hat)
+    print(epsilon_std)
+
+    return b0, b1, b2, b3, Y_hat
+
+
+def print_results(
+    b0: float,
+    b1: float,
+    b2: float,
+    b3: float,
+    r_squared: float,
+    mmre: float,
+    pred: float,
+):
     """Print regression results and residual statistics."""
     print(f"\nModel Results:")
-    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}")
-    print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
-    print(f"Sample Mean of Residuals: {mean_residual:.6f}")
-    print(f"Sample Variance of Residuals: {variance_residual:.6f}")
+    print(
+        f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}"
+    )
+    print(
+        f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}"
+    )
 
-def test_model(model_coefficients: Tuple[float, float, float], test_file: str = "test_data.csv", sigma: float = 0) -> Tuple[float, float, float]:
+
+def test_model(
+    model_coefficients: Tuple[float, float, float, float],
+    test_file: str = "test_data.csv",
+) -> Tuple[float, float, float]:
     """Test the model on a separate dataset."""
     projects = retrieve_data(test_file)
-    if projects[0].zx1 == 0:
-        projects = normalize_data(projects)
-    
-    Z_test = projects_to_array(projects)
-    
-    b0, b1, b2 = model_coefficients
-    Y_test = Z_test[:, -1]
-    Y_hat_test = b0 + b1 * Z_test[:, 0] + b2 * Z_test[:, 1] + sigma
-    
-    r_squared, mmre, pred = calculate_regression_metrics(Y_test, Y_hat_test)
-    
+    projects = normalize_data(projects)
+
+    zx1 = np.array([project.zx1 for project in projects])
+    zx2 = np.array([project.zx2 for project in projects])
+    zx3 = np.array([project.zx3 for project in projects])
+    zy = np.array([project.zy for project in projects])
+
+    b0, b1, b2, b3 = model_coefficients
+    Y_hat_test = b0 + b1 * zx1 + b2 * zx2 + b3 * zx3
+
+    r_squared, mmre, pred = calculate_regression_metrics(zy, Y_hat_test)
+
     return r_squared, mmre, pred
 
-def main():    
-    # Java test
-    b0, b1, b2 = -0.054776, 0.672260, 0.441541
-    r_squared, mmre, pred = test_model((b0, b1, b2), "100.csv", 0.06538)
-    print(f"Test Results for Java: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
-    
-    # Kotlin test
-    b0, b1, b2 = 0.306892, 0.228584, 1.36206
-    r_squared, mmre, pred = test_model((b0, b1, b2), "100.csv", 0.1128)
-    print(f"Test Results for Kotlin: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
-    
+
+def main():
     # Model test
-    b0, b1, b2, Y_hat, Y, epsilon_std = build_model(retrieve_data())
-    r_squared, mmre, pred = calculate_regression_metrics(Y, Y_hat)
-    print(f"Model Results:")
-    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}")
-    print(f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}")
-    print(f"Estimated standard deviation of epsilon: {epsilon_std:.6f}")
-    
+    projects = retrieve_data()
+    projects = normalize_data(projects)
+
+    zx1 = np.array([project.zx1 for project in projects])
+    zx2 = np.array([project.zx2 for project in projects])
+    zx3 = np.array([project.zx3 for project in projects])
+    zy = np.array([project.zy for project in projects])
+
+    b0, b1, b2, b3, Y_hat = build_model(zx1, zx2, zx3, zy)
+
+    r_squared, mmre, pred = calculate_regression_metrics(zy, Y_hat)
+    print_results(b0, b1, b2, b3, r_squared, mmre, pred)
+
     # Test model on a separate dataset
-    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2))
-    print(f"Test Results: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}")
-    
-    
+    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2, b3))
+    print(
+        f"Test Results: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}"
+    )
+
+
 if __name__ == "__main__":
     main()

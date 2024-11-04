@@ -30,6 +30,9 @@ class _PredictionViewState extends State<PredictionView> {
   double? x2;
   double? x3;
 
+  bool hasX2 = true;
+  bool hasX3 = true;
+
   MinMaxFactors? minMaxFactors;
   String? x1Error;
   String? x2Error;
@@ -44,7 +47,7 @@ class _PredictionViewState extends State<PredictionView> {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
         LengthLimitingTextInputFormatter(10),
       ],
       decoration: InputDecoration(
@@ -122,9 +125,13 @@ class _PredictionViewState extends State<PredictionView> {
 
   void makePrediction() {
     x1 = double.tryParse(x1Controller.text);
-    x2 = double.tryParse(x2Controller.text);
-    x3 = double.tryParse(x3Controller.text);
-    if (x1 == null || x2 == null || x3 == null) {
+    if (hasX2) {
+      x2 = double.tryParse(x2Controller.text);
+    }
+    if (hasX3) {
+      x3 = double.tryParse(x3Controller.text);
+    }
+    if (x1 == null || (hasX2 && x2 == null) || (hasX3 && x3 == null)) {
       _prediction = null;
       x1Error = null;
       x2Error = null;
@@ -132,7 +139,14 @@ class _PredictionViewState extends State<PredictionView> {
       setState(() {});
       return;
     }
-    _prediction = model.predictY([x1!, x2!, x3!]);
+    final x = [x1 ?? 0];
+    if (hasX2) {
+      x.add(x2 ?? 0);
+    }
+    if (hasX3) {
+      x.add(x3 ?? 0);
+    }
+    _prediction = model.predictY(x);
 
     if (minMaxFactors != null) {
       if (x1! > minMaxFactors!.x1.max || x1! < minMaxFactors!.x1.min) {
@@ -202,6 +216,8 @@ class _PredictionViewState extends State<PredictionView> {
             final x1Field = this.x1Field(provider);
             final x2Field = this.x2Field(provider);
             final x3Field = this.x3Field(provider);
+            hasX2 = provider.hasX2;
+            hasX3 = provider.hasX3;
             return ListView(
               shrinkWrap: true,
               children: [

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/project/project.dart';
-import 'package:flutter_stats/models/settings/settings.dart';
 import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
+import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
+import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -32,12 +33,14 @@ class DownloadProjectsButton extends StatelessWidget {
           return;
         }
         context.read<DataHandler>().downloadFile(
-              settings: context.read<Settings>(),
+              settings: context.read<SettingsProvider>().settings,
               fileName: filename,
               projects: projects ??
                   context.read<MetricsNavigationProvider>().getProjects(
                         model: model,
                       ),
+              mahalanobisDistances:
+                  context.read<ProjectsProvider>().mahalanobisDistances,
             );
       },
     );
