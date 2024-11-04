@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_stats/constants.dart';
@@ -29,7 +30,7 @@ class RegressionModel {
     _testModel();
   }
 
-  final _logger = LoggerService.instance;
+  final _log = LoggerService.instance;
   final Algebra _algebra = Algebra();
   final Normalization _normalization = Normalization();
 
@@ -216,24 +217,26 @@ class RegressionModel {
   void _evaluateModel() {
     final normalizedProjects = _normalization.normalizeProjects(_trainProjects);
     _factors = normalizedProjects.map(RegressionFactors.fromProject).toList();
-    _logger.i('Factors: ${_factors.length}');
+    _log.i('Factors: ${_factors.length}');
 
     _coefficients = _calculateRegressionCoefficients();
-    _logger.i('Coefficients: ${_coefficients.b}');
+    _log.i('Coefficients: ${_coefficients.b}');
 
     _predictedValues = _calculatePredictedValues();
-    _logger.i('Predicted values: $_predictedValues');
+    _log.i('Predicted values: $_predictedValues');
 
     _modelQuality = _calculateModelQuality(
       y: _factors.map((f) => f.y).toList(),
       yHat: _predictedValues,
     );
-    _logger.i('Model quality: $_modelQuality');
+    _log.i('Model quality: $_modelQuality');
   }
 
   void _testModel() {
     final normalizedTestProjects =
         _normalization.normalizeProjects(_testProjects);
+
+    unawaited(_testProjectsQuality(normalizedTestProjects));
 
     final testFactors =
         normalizedTestProjects.map(RegressionFactors.fromProject).toList();
@@ -242,7 +245,56 @@ class RegressionModel {
       y: testFactors.map((f) => f.y).toList(),
       yHat: _calculatePredictedValues(factors: testFactors),
     );
-    _logger.i('Test model quality: $_testModelQuality');
+    _log.i('Test model quality: $_testModelQuality');
+  }
+
+  Future<void> _testProjectsQuality(List<Project> projects) async {
+    var highQualityCount = 0;
+    var mediumQualityCount = 0;
+    var lowQualityCount = 0;
+
+    for (var i = 0; i < projects.length; i++) {
+      final project = projects[i];
+      final (predLower, predUpper) = await calculatePredictionInterval();
+      final (confLower, confUpper) = await calculateConfidenceInterval();
+
+      final avgPredLower = _algebra.average(predLower);
+      final avgPredUpper = _algebra.average(predUpper);
+      final avgConfLower = _algebra.average(confLower);
+      final avgConfUpper = _algebra.average(confUpper);
+
+      final y = project.metrics.y;
+
+      if (y >= avgConfLower && y <= avgConfUpper) {
+        // Середня якість - значення в межах довірчого інтервалу
+        mediumQualityCount++;
+      } else if (y > avgConfUpper && y <= avgPredUpper) {
+        // Низька якість - значення між довірчим та прогнозним інтервалами
+        lowQualityCount++;
+      } else if (y >= avgPredLower && y < avgConfLower) {
+        // Висока якість - значення нижче довірчого інтервалу
+        highQualityCount++;
+      }
+      // Значення вище верхньої межі прогнозного інтервалу вважаються дуже низької якості
+      // і враховуються в lowQualityCount
+      else if (y > avgPredUpper) {
+        lowQualityCount++;
+      }
+    }
+
+    final totalProjects = projects.length;
+    final highQualityPercentage =
+        (highQualityCount / totalProjects * 100).toStringAsFixed(1);
+    final mediumQualityPercentage =
+        (mediumQualityCount / totalProjects * 100).toStringAsFixed(1);
+    final lowQualityPercentage =
+        (lowQualityCount / totalProjects * 100).toStringAsFixed(1);
+
+    _log
+      ..i('Розподіл якості $totalProjects проектів:')
+      ..i('Висока якість: $highQualityPercentage% проектів')
+      ..i('Середня якість: $mediumQualityPercentage% проектів')
+      ..i('Низька якість: $lowQualityPercentage% проектів');
   }
 
   double predictY(List<double> x) {
@@ -338,6 +390,9 @@ class RegressionModel {
   Future<double> calculateProjectQuality(double y) async {
     final (predLower, predUpper) = await calculatePredictionInterval();
     final (confLower, confUpper) = await calculateConfidenceInterval();
+    _log
+      ..i('Confidence interval: $confLower - $confUpper')
+      ..i('Prediction interval: $predLower - $predUpper');
 
     final avgConfLower = _algebra.average(confLower);
     final avgConfUpper = _algebra.average(confUpper);

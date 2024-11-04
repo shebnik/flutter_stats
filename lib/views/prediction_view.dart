@@ -47,7 +47,7 @@ class _PredictionViewState extends State<PredictionView> {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,6}')),
         LengthLimitingTextInputFormatter(10),
       ],
       decoration: InputDecoration(
