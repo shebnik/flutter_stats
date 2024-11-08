@@ -21,12 +21,10 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Settings {
   bool get useRelativeNOC => throw _privateConstructorUsedError;
-  bool get useSigma => throw _privateConstructorUsedError;
   bool get hasX2 => throw _privateConstructorUsedError;
   bool get hasX3 => throw _privateConstructorUsedError;
   bool get hasNOC => throw _privateConstructorUsedError;
   bool get useYInThousands => throw _privateConstructorUsedError;
-  bool get includeIntervalsMethod => throw _privateConstructorUsedError;
   CSVAlias get csvAlias => throw _privateConstructorUsedError;
 
   /// Serializes this Settings to a JSON map.
@@ -46,12 +44,10 @@ abstract class $SettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool useRelativeNOC,
-      bool useSigma,
       bool hasX2,
       bool hasX3,
       bool hasNOC,
       bool useYInThousands,
-      bool includeIntervalsMethod,
       CSVAlias csvAlias});
 
   $CSVAliasCopyWith<$Res> get csvAlias;
@@ -73,22 +69,16 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   @override
   $Res call({
     Object? useRelativeNOC = null,
-    Object? useSigma = null,
     Object? hasX2 = null,
     Object? hasX3 = null,
     Object? hasNOC = null,
     Object? useYInThousands = null,
-    Object? includeIntervalsMethod = null,
     Object? csvAlias = null,
   }) {
     return _then(_value.copyWith(
       useRelativeNOC: null == useRelativeNOC
           ? _value.useRelativeNOC
           : useRelativeNOC // ignore: cast_nullable_to_non_nullable
-              as bool,
-      useSigma: null == useSigma
-          ? _value.useSigma
-          : useSigma // ignore: cast_nullable_to_non_nullable
               as bool,
       hasX2: null == hasX2
           ? _value.hasX2
@@ -105,10 +95,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       useYInThousands: null == useYInThousands
           ? _value.useYInThousands
           : useYInThousands // ignore: cast_nullable_to_non_nullable
-              as bool,
-      includeIntervalsMethod: null == includeIntervalsMethod
-          ? _value.includeIntervalsMethod
-          : includeIntervalsMethod // ignore: cast_nullable_to_non_nullable
               as bool,
       csvAlias: null == csvAlias
           ? _value.csvAlias
@@ -138,12 +124,10 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool useRelativeNOC,
-      bool useSigma,
       bool hasX2,
       bool hasX3,
       bool hasNOC,
       bool useYInThousands,
-      bool includeIntervalsMethod,
       CSVAlias csvAlias});
 
   @override
@@ -164,22 +148,16 @@ class __$$SettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? useRelativeNOC = null,
-    Object? useSigma = null,
     Object? hasX2 = null,
     Object? hasX3 = null,
     Object? hasNOC = null,
     Object? useYInThousands = null,
-    Object? includeIntervalsMethod = null,
     Object? csvAlias = null,
   }) {
     return _then(_$SettingsImpl(
       useRelativeNOC: null == useRelativeNOC
           ? _value.useRelativeNOC
           : useRelativeNOC // ignore: cast_nullable_to_non_nullable
-              as bool,
-      useSigma: null == useSigma
-          ? _value.useSigma
-          : useSigma // ignore: cast_nullable_to_non_nullable
               as bool,
       hasX2: null == hasX2
           ? _value.hasX2
@@ -197,10 +175,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.useYInThousands
           : useYInThousands // ignore: cast_nullable_to_non_nullable
               as bool,
-      includeIntervalsMethod: null == includeIntervalsMethod
-          ? _value.includeIntervalsMethod
-          : includeIntervalsMethod // ignore: cast_nullable_to_non_nullable
-              as bool,
       csvAlias: null == csvAlias
           ? _value.csvAlias
           : csvAlias // ignore: cast_nullable_to_non_nullable
@@ -215,12 +189,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
 class _$SettingsImpl implements _Settings {
   const _$SettingsImpl(
       {this.useRelativeNOC = false,
-      this.useSigma = false,
       this.hasX2 = true,
       this.hasX3 = true,
       this.hasNOC = true,
       this.useYInThousands = false,
-      this.includeIntervalsMethod = false,
       this.csvAlias = CSVAlias.defaultAlias});
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -229,9 +201,6 @@ class _$SettingsImpl implements _Settings {
   @override
   @JsonKey()
   final bool useRelativeNOC;
-  @override
-  @JsonKey()
-  final bool useSigma;
   @override
   @JsonKey()
   final bool hasX2;
@@ -246,14 +215,11 @@ class _$SettingsImpl implements _Settings {
   final bool useYInThousands;
   @override
   @JsonKey()
-  final bool includeIntervalsMethod;
-  @override
-  @JsonKey()
   final CSVAlias csvAlias;
 
   @override
   String toString() {
-    return 'Settings(useRelativeNOC: $useRelativeNOC, useSigma: $useSigma, hasX2: $hasX2, hasX3: $hasX3, hasNOC: $hasNOC, useYInThousands: $useYInThousands, includeIntervalsMethod: $includeIntervalsMethod, csvAlias: $csvAlias)';
+    return 'Settings(useRelativeNOC: $useRelativeNOC, hasX2: $hasX2, hasX3: $hasX3, hasNOC: $hasNOC, useYInThousands: $useYInThousands, csvAlias: $csvAlias)';
   }
 
   @override
@@ -263,23 +229,19 @@ class _$SettingsImpl implements _Settings {
             other is _$SettingsImpl &&
             (identical(other.useRelativeNOC, useRelativeNOC) ||
                 other.useRelativeNOC == useRelativeNOC) &&
-            (identical(other.useSigma, useSigma) ||
-                other.useSigma == useSigma) &&
             (identical(other.hasX2, hasX2) || other.hasX2 == hasX2) &&
             (identical(other.hasX3, hasX3) || other.hasX3 == hasX3) &&
             (identical(other.hasNOC, hasNOC) || other.hasNOC == hasNOC) &&
             (identical(other.useYInThousands, useYInThousands) ||
                 other.useYInThousands == useYInThousands) &&
-            (identical(other.includeIntervalsMethod, includeIntervalsMethod) ||
-                other.includeIntervalsMethod == includeIntervalsMethod) &&
             (identical(other.csvAlias, csvAlias) ||
                 other.csvAlias == csvAlias));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, useRelativeNOC, useSigma, hasX2,
-      hasX3, hasNOC, useYInThousands, includeIntervalsMethod, csvAlias);
+  int get hashCode => Object.hash(runtimeType, useRelativeNOC, hasX2, hasX3,
+      hasNOC, useYInThousands, csvAlias);
 
   /// Create a copy of Settings
   /// with the given fields replaced by the non-null parameter values.
@@ -300,12 +262,10 @@ class _$SettingsImpl implements _Settings {
 abstract class _Settings implements Settings {
   const factory _Settings(
       {final bool useRelativeNOC,
-      final bool useSigma,
       final bool hasX2,
       final bool hasX3,
       final bool hasNOC,
       final bool useYInThousands,
-      final bool includeIntervalsMethod,
       final CSVAlias csvAlias}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
@@ -314,8 +274,6 @@ abstract class _Settings implements Settings {
   @override
   bool get useRelativeNOC;
   @override
-  bool get useSigma;
-  @override
   bool get hasX2;
   @override
   bool get hasX3;
@@ -323,8 +281,6 @@ abstract class _Settings implements Settings {
   bool get hasNOC;
   @override
   bool get useYInThousands;
-  @override
-  bool get includeIntervalsMethod;
   @override
   CSVAlias get csvAlias;
 

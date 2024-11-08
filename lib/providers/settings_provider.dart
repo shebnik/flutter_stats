@@ -15,9 +15,7 @@ class SettingsProvider extends ChangeNotifier {
 
   bool get useRelativeNOC => _settings.useRelativeNOC;
   bool get useYInThousands => _settings.useYInThousands;
-  bool get includeIntervalsMethod => _settings.includeIntervalsMethod;
   String get nocAlias => _settings.csvAlias.noc;
-  bool get useSigma => _settings.useSigma;
   bool get hasX2 => _settings.hasX2;
   bool get hasX3 => _settings.hasX3;
   bool get hasNOC => _settings.hasNOC;
@@ -35,14 +33,6 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  set includeIntervalsMethod(bool value) {
-    _log.i(
-      'Setting includeIntervalsMethod: $value',
-    );
-    _settings = _settings.copyWith(includeIntervalsMethod: value);
-    notifyListeners();
-  }
-
   set useRelativeNOC(bool value) {
     _log.i('Setting useRelativeNOC: $value');
     _settings = _settings.copyWith(useRelativeNOC: value);
@@ -54,12 +44,6 @@ class SettingsProvider extends ChangeNotifier {
     _settings = _settings.copyWith(
       csvAlias: _settings.csvAlias.copyWith(noc: value),
     );
-    notifyListeners();
-  }
-
-  set useSigma(bool value) {
-    _log.i('Setting useSigma: $value');
-    _settings = _settings.copyWith(useSigma: value);
     notifyListeners();
   }
 

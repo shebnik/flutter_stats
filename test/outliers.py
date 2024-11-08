@@ -158,7 +158,10 @@ def calculate_regression_coefficients(
 def remove_outliers(projects: List[Project]) -> List[Project]:
     """Remove outliers"""
     outliers_mahalanobis = determine_outliers_mahalanobis(projects)
-
+    for i in outliers_mahalanobis:
+        print(
+            f"Removed {i+1} project as mahalanobis outlier: CBO: {projects[i].x1:.4f} WMC: {projects[i].x2:.4f} RFC: {projects[i].y:.4f} zx1: {projects[i].zx1:.4f} zx2: {projects[i].zx2:.4f} zy: {projects[i].zy:.4f}"
+        )
     # Get the data array for prediction intervals
     Z = projects_to_array(projects)
     b0, b1, b2 = calculate_regression_coefficients(Z)
@@ -176,6 +179,10 @@ def remove_outliers(projects: List[Project]) -> List[Project]:
 
     # Get outliers using prediction intervals
     outliers_intervals = identify_outliers_intervals(Z, lower_bound, upper_bound)
+    for i in outliers_intervals:
+        print(
+            f"Removed {i} project as interval outlier: CBO: {projects[i].x1:.4f} WMC: {projects[i].x2:.4f} RFC: {projects[i].y:.4f} zx1: {projects[i].zx1:.4f} zx2: {projects[i].zx2:.4f} zy: {projects[i].zy:.4f}"
+        )
 
     # Combine both sets of outliers
     all_outliers = set(outliers_mahalanobis + outliers_intervals)
@@ -277,9 +284,9 @@ def main():
 
     # Save the training and testing sets to CSV files
     save_to_csv(final_projects, "final_projects.csv")
-    save_to_csv(train_projects, "train_data.csv")
-    save_to_csv(test_projects, "test_data.csv")
-    print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")
+    # save_to_csv(train_projects, "train_data.csv")
+    # save_to_csv(test_projects, "test_data.csv")
+    # print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")
 
 
 if __name__ == "__main__":

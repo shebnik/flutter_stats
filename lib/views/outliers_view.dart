@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
-import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -80,8 +79,6 @@ class _OutliersViewState extends State<OutliersView> {
   Future<void> _removeAllOutliers(ProjectsProvider provider) async {
     await provider.removeProjects(
       provider.outliers,
-      includeIntervalsMethod:
-          context.read<SettingsProvider>().settings.includeIntervalsMethod,
     );
 
     if (provider.outliers.isEmpty) {

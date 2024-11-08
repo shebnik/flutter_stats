@@ -62,13 +62,8 @@ class Outliers {
       Fisher.inv(alpha: alpha, df1: p, df2: n - p);
 
   Future<void> determineOutliers({
-    bool includeIntervalsMethod = false,
     RegressionModel? regressionModel,
   }) async {
-    if (includeIntervalsMethod && regressionModel == null) {
-      debugPrint('Regression model is required for prediction intervals');
-    }
-
     final testStatistics = calculateTestStatistics();
     final f = await calculateFisherFDistribution();
     if (f == null) {
@@ -80,7 +75,7 @@ class Outliers {
     final mahalanobisOutliers =
         List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
 
-    if (includeIntervalsMethod && regressionModel != null) {
+    if (regressionModel != null) {
       final predictionOutliers =
           await calculatePredictionIntervalOutliers(regressionModel);
       final predictionIndices = List.generate(n, (i) => i)
@@ -98,8 +93,8 @@ class Outliers {
     RegressionModel regressionModel,
   ) async {
     // Calculate prediction intervals
-    final (lowerBound, upperBound) =
-        await regressionModel.calculatePredictionInterval(useAllProjects: true);
+    final (lowerBound, upperBound) = await regressionModel
+        .calculatePredictionInterval(includeProjectsForTesting: true);
 
     // Check if each point falls outside the prediction intervals
     return List.generate(n, (i) {

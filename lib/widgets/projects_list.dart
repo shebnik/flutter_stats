@@ -128,13 +128,7 @@ class _ProjectsListState extends State<ProjectsList> {
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                context.read<ProjectsProvider>().removeProject(
-                      index,
-                      includeIntervalsMethod: context
-                          .read<SettingsProvider>()
-                          .settings
-                          .includeIntervalsMethod,
-                    );
+                context.read<ProjectsProvider>().removeProject(index);
               },
             ),
           ),

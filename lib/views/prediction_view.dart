@@ -224,7 +224,6 @@ class _PredictionViewState extends State<PredictionView> {
                 MetricsCard(
                   value: EquationFormatter.getPredictionEquation(
                     model.coefficients,
-                    useSigma: provider.useSigma,
                     isMobile: ResponsiveBreakpoints.of(context).isMobile,
                     xValues: [x1, x2, x3],
                     alias: provider.settings.csvAlias,

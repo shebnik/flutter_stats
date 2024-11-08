@@ -41,7 +41,6 @@ class ProjectsProvider with ChangeNotifier {
   Future<void> setProjects(
     List<Project>? projects, {
     required bool useRelativeNOC,
-    required bool includeIntervalsMethod,
   }) async {
     if (projects == null) return;
     _fileProjects = List.from(projects);
@@ -51,16 +50,12 @@ class ProjectsProvider with ChangeNotifier {
     divideByNOC(useRelativeNOC: useRelativeNOC);
     refitModel();
     await refitOutliers(
-      projects,
-      includeIntervalsMethod: includeIntervalsMethod,
+      _projects,
     );
     notifyListeners();
   }
 
-  Future<void> removeProjects(
-    List<int> indexes, {
-    required bool includeIntervalsMethod,
-  }) async {
+  Future<void> removeProjects(List<int> indexes) async {
     indexes.sort();
     final outliers = <Project>[];
     final normalized = Normalization().normalizeProjects(projects);
@@ -80,23 +75,18 @@ class ProjectsProvider with ChangeNotifier {
     _outliersRemoved += indexes.length;
     refitModel();
     await refitOutliers(
-      projects,
-      includeIntervalsMethod: includeIntervalsMethod,
+      _projects,
     );
     notifyListeners();
   }
 
-  Future<void> removeProject(
-    int index, {
-    required bool includeIntervalsMethod,
-  }) async {
+  Future<void> removeProject(int index) async {
     _projects.removeAt(index);
     _fileProjects.removeAt(index);
     _outliersRemoved++;
     refitModel();
     await refitOutliers(
-      projects,
-      includeIntervalsMethod: includeIntervalsMethod,
+      _projects,
     );
     notifyListeners();
   }
@@ -105,13 +95,9 @@ class ProjectsProvider with ChangeNotifier {
     _regressionModelProvider.model = RegressionModel(_projects);
   }
 
-  Future<void> refitOutliers(
-    List<Project> projects, {
-    required bool includeIntervalsMethod,
-  }) async {
+  Future<void> refitOutliers(List<Project> projects) async {
     _outliers = Outliers(projects);
     await _outliers.determineOutliers(
-      includeIntervalsMethod: includeIntervalsMethod,
       regressionModel: _regressionModelProvider.model,
     );
   }
@@ -145,16 +131,5 @@ class ProjectsProvider with ChangeNotifier {
     } else {
       _projects = List.from(_fileProjects);
     }
-  }
-
-  void refitModelWithSigma({required bool useSigma}) {
-    if (_regressionModelProvider.model == null) return;
-    final model = _regressionModelProvider.model;
-    _regressionModelProvider.model = RegressionModel(
-      model!.projects,
-      useSigma: useSigma,
-      trainProjects: model.trainProjects,
-      testProjects: model.testProjects,
-    );
   }
 }

@@ -90,7 +90,6 @@ class DataHandler {
       await projectsProvider.setProjects(
         projects,
         useRelativeNOC: settings.useRelativeNOC,
-        includeIntervalsMethod: settings.includeIntervalsMethod,
       );
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);

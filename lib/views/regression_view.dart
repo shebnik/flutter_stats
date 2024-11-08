@@ -78,7 +78,6 @@ class _RegressionViewState extends State<RegressionView> {
                 title: 'Linear Regression Equation',
                 value: EquationFormatter.getLinearEquation(
                   model.coefficients,
-                  useSigma: settingsProvider.useSigma,
                   isMobile: isMobile,
                 ),
                 isEquation: true,
@@ -90,7 +89,6 @@ class _RegressionViewState extends State<RegressionView> {
                 title: 'Nonlinear Regression Equation',
                 value: EquationFormatter.getNonlinearEquation(
                   model.coefficients,
-                  useSigma: settingsProvider.useSigma,
                   isMobile: isMobile,
                 ),
                 isEquation: true,

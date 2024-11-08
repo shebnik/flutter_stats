@@ -18,7 +18,6 @@ class RegressionModel {
     this._projects, {
     List<Project>? trainProjects,
     List<Project>? testProjects,
-    this.useSigma = false,
   }) {
     if (trainProjects != null && testProjects != null) {
       _trainProjects = trainProjects;
@@ -38,8 +37,6 @@ class RegressionModel {
   late final List<Project> _trainProjects;
   late final List<Project> _testProjects;
 
-  bool useSigma;
-
   List<Project> get projects => _projects;
   List<Project> get trainProjects => _trainProjects;
   List<Project> get testProjects => _testProjects;
@@ -58,7 +55,7 @@ class RegressionModel {
   ModelQuality _testModelQuality = ModelQuality.empty();
   ModelQuality get testModelQuality => _testModelQuality;
 
-  int get p => _factors.firstOrNull?.x.length ?? 0;
+  int get p => (_factors.firstOrNull?.x.length ?? 0) + 1;
 
   MinMaxFactors get minMaxFactors {
     final values = _trainProjects.map((p) => p.metrics).toList();
@@ -87,7 +84,10 @@ class RegressionModel {
   }
 
   void _splitData([double trainRatio = 0.6]) {
+    final projects = List<Project>.from(_projects);
+
     // Sort projects by each metric
+    // ignore: cascade_invocations
     projects.sort((a, b) => a.metrics.y.compareTo(b.metrics.y));
     final sortedByY = List<Project>.from(projects);
 
@@ -133,31 +133,53 @@ class RegressionModel {
     _testProjects = remainingProjects.skip(nTrain).toList();
   }
 
-  Coefficients _calculateRegressionCoefficients() {
-    final n = _factors.length;
-    final X = Matrix.fromColumns([
-      Vector.fromList(List.filled(n, 1.0)),
-      ...List.generate(
-        p,
-        (i) => Vector.fromList(_factors.map((f) => f.x[i]).toList()),
-      ),
-    ]);
+  Coefficients _calculateRegressionCoefficients({
+    List<RegressionFactors>? factors,
+  }) {
+    factors ??= _factors;
+    final n = factors.length;
+    final p = this.p;
 
-    final y = Vector.fromList(_factors.map((f) => f.y).toList());
+    if (n == 0 || p == 0) {
+      _log.e('Insufficient data to calculate regression coefficients.');
+      return Coefficients.empty();
+    }
 
-    final xt = X.transpose();
-    final xtX = xt * X;
-    final xtXInverse = xtX.inverse();
-    final xtY = xt * y;
-    final coefficientsVector = xtXInverse * xtY;
-    final coefficients =
-        List<double>.from(coefficientsVector.map((value) => value.first));
+    // Construct the design matrix X and the target vector y
+    final xData = factors.map((f) => f.x).toList();
+    final yData = factors.map((f) => f.y).toList();
 
-    final residuals = y - X * coefficientsVector;
-    final sigma = sqrt(residuals.dot(residuals) / (n - p - 1));
+    // Add a column of 1s for the intercept term
+    final designMatrixData =
+        xData.map((x) => Vector.fromList([1.0, ...x])).toList();
+    final X = Matrix.fromRows(designMatrixData);
+    final y = Vector.fromList(yData);
+
+    // Calculate X^T * X
+    final xtX = X.transpose() * X;
+
+    // Calculate (X^T * X)^-1
+    Matrix xtXInverse;
+    try {
+      xtXInverse = xtX.inverse();
+    } catch (e) {
+      _log.e('Matrix inversion failed: $e');
+      return Coefficients.empty();
+    }
+
+    // Calculate X^T * y
+    final xty = X.transpose() * y;
+
+    // Calculate the coefficients: (X^T * X)^-1 * (X^T * y)
+    final coefficients = xtXInverse * xty;
+
+    final yPred = X * coefficients;
+    final residuals = y - yPred;
+    final mse = residuals.dot(residuals) / (n - p - 1);
+    final sigma = sqrt(mse);
 
     return Coefficients(
-      b: coefficients,
+      b: List<double>.from(coefficients.map((value) => value.first)),
       sigma: sigma,
     );
   }
@@ -171,20 +193,34 @@ class RegressionModel {
     return List.generate(factors.length, (i) {
       final factor = factors![i];
       var prediction = coefficients!.b[0];
-      if (useSigma) {
-        prediction += coefficients.sigma;
+      for (var j = 1; j < coefficients.b.length; j++) {
+        prediction += coefficients.b[j] * factor.x[j - 1];
       }
-      for (var j = 1; j < _coefficients.b.length; j++) {
-        prediction += _coefficients.b[j] * factor.x[j - 1];
+      final epsilon = factor.y - prediction;
+      return prediction + epsilon;
+    });
+  }
+
+  List<double> _calculateNonlinearPredictedValues({
+    List<RegressionFactors>? factors,
+    Coefficients? coefficients,
+  }) {
+    factors ??= _factors;
+    coefficients ??= _coefficients;
+    return List.generate(factors.length, (i) {
+      final factor = factors![i];
+      var prediction = pow(10, coefficients!.b[0]);
+      for (var j = 1; j < coefficients.b.length; j++) {
+        prediction *= pow(factor.x[j - 1], coefficients.b[j]);
       }
-      return prediction;
+      return prediction.toDouble();
     });
   }
 
   ModelQuality _calculateModelQuality({
     required List<double> y,
     required List<double> yHat,
-    bool normalized = true,
+    bool normalized = false,
   }) {
     if (normalized) {
       y = _normalization.revertNormalization(y);
@@ -222,28 +258,29 @@ class RegressionModel {
     _coefficients = _calculateRegressionCoefficients();
     _log.i('Coefficients: ${_coefficients.b}');
 
-    _predictedValues = _calculatePredictedValues();
+    _predictedValues = _calculateNonlinearPredictedValues(
+      factors: _trainProjects.map(RegressionFactors.fromProject).toList(),
+    );
     _log.i('Predicted values: $_predictedValues');
 
     _modelQuality = _calculateModelQuality(
-      y: _factors.map((f) => f.y).toList(),
+      y: _trainProjects.map((p) => p.metrics.y).toList(),
       yHat: _predictedValues,
     );
     _log.i('Model quality: $_modelQuality');
   }
 
-  void _testModel() {
+  Future<void> _testModel() async {
     final normalizedTestProjects =
         _normalization.normalizeProjects(_testProjects);
 
-    unawaited(_testProjectsQuality(normalizedTestProjects));
-
-    final testFactors =
-        normalizedTestProjects.map(RegressionFactors.fromProject).toList();
+    await _testProjectsQuality(normalizedTestProjects);
 
     _testModelQuality = _calculateModelQuality(
-      y: testFactors.map((f) => f.y).toList(),
-      yHat: _calculatePredictedValues(factors: testFactors),
+      y: _testProjects.map((p) => p.metrics.y).toList(),
+      yHat: _calculateNonlinearPredictedValues(
+        factors: _testProjects.map(RegressionFactors.fromProject).toList(),
+      ),
     );
     _log.i('Test model quality: $_testModelQuality');
   }
@@ -255,7 +292,9 @@ class RegressionModel {
 
     for (var i = 0; i < projects.length; i++) {
       final project = projects[i];
-      final (predLower, predUpper) = await calculatePredictionInterval();
+      final (predLower, predUpper) = await calculatePredictionInterval(
+        includeProjectsForTesting: false,
+      );
       final (confLower, confUpper) = await calculateConfidenceInterval();
 
       final avgPredLower = _algebra.average(predLower);
@@ -266,18 +305,12 @@ class RegressionModel {
       final y = project.metrics.y;
 
       if (y >= avgConfLower && y <= avgConfUpper) {
-        // Середня якість - значення в межах довірчого інтервалу
         mediumQualityCount++;
       } else if (y > avgConfUpper && y <= avgPredUpper) {
-        // Низька якість - значення між довірчим та прогнозним інтервалами
         lowQualityCount++;
       } else if (y >= avgPredLower && y < avgConfLower) {
-        // Висока якість - значення нижче довірчого інтервалу
         highQualityCount++;
-      }
-      // Значення вище верхньої межі прогнозного інтервалу вважаються дуже низької якості
-      // і враховуються в lowQualityCount
-      else if (y > avgPredUpper) {
+      } else if (y > avgPredUpper) {
         lowQualityCount++;
       }
     }
@@ -291,15 +324,14 @@ class RegressionModel {
         (lowQualityCount / totalProjects * 100).toStringAsFixed(1);
 
     _log
-      ..i('Розподіл якості $totalProjects проектів:')
-      ..i('Висока якість: $highQualityPercentage% проектів')
-      ..i('Середня якість: $mediumQualityPercentage% проектів')
-      ..i('Низька якість: $lowQualityPercentage% проектів');
+      ..i('Quality distribution of $totalProjects projects:')
+      ..i('High quality: $highQualityPercentage% projects')
+      ..i('Medium quality: $mediumQualityPercentage% projects')
+      ..i('Low quality: $lowQualityPercentage% projects');
   }
 
   double predictY(List<double> x) {
-    var prediction =
-        pow(10, _coefficients.b[0] + (useSigma ? _coefficients.sigma : 0));
+    var prediction = pow(10, _coefficients.b[0] + _coefficients.sigma);
     for (var i = 1; i < _coefficients.b.length; i++) {
       prediction *= pow(x[i - 1], _coefficients.b[i]);
     }
@@ -307,24 +339,32 @@ class RegressionModel {
   }
 
   Future<(List<double>, List<double>)> calculatePredictionInterval({
-    bool useAllProjects = false,
+    required bool includeProjectsForTesting,
   }) async {
-    final factors = useAllProjects
-        ? _normalization
-            .normalizeProjects(_projects)
-            .map(RegressionFactors.fromProject)
-            .toList()
-        : _factors;
-    final predictedValues = useAllProjects
-        ? _calculatePredictedValues(factors: factors)
-        : _predictedValues;
+    var factors = _factors;
+    var predictedValues = _predictedValues;
+
+    if (includeProjectsForTesting) {
+      final normalizedProjects = _normalization.normalizeProjects(_projects);
+      factors = normalizedProjects.map(RegressionFactors.fromProject).toList();
+      final coefficients = _calculateRegressionCoefficients(
+        factors: factors,
+      );
+      _log.i('Coefficients: ${coefficients.b}');
+
+      predictedValues = _calculatePredictedValues(
+        factors: factors,
+        coefficients: coefficients,
+      );
+      _log.i('Predicted values: $predictedValues');
+    }
 
     final n = factors.length;
 
     final X = Matrix.fromColumns([
       Vector.fromList(List.filled(n, 1.0)),
       ...List.generate(
-        p,
+        p - 1,
         (i) => Vector.fromList(factors.map((f) => f.x[i]).toList()),
       ),
     ]);
@@ -353,7 +393,7 @@ class RegressionModel {
     final X = Matrix.fromColumns([
       Vector.fromList(List.filled(n, 1.0)),
       ...List.generate(
-        p,
+        p - 1,
         (i) => Vector.fromList(_factors.map((f) => f.x[i]).toList()),
       ),
     ]);
@@ -388,7 +428,9 @@ class RegressionModel {
   }
 
   Future<double> calculateProjectQuality(double y) async {
-    final (predLower, predUpper) = await calculatePredictionInterval();
+    final (predLower, predUpper) = await calculatePredictionInterval(
+      includeProjectsForTesting: false,
+    );
     final (confLower, confUpper) = await calculateConfidenceInterval();
     _log
       ..i('Confidence interval: $confLower - $confUpper')

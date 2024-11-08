@@ -5,7 +5,6 @@ import 'package:flutter_stats/services/utils.dart';
 class EquationFormatter {
   static String getLinearEquation(
     Coefficients coefficients, {
-    bool useSigma = false,
     bool isMobile = false,
   }) {
     if (coefficients.b.isEmpty) {
@@ -33,7 +32,7 @@ class EquationFormatter {
           ..write('}');
       }
 
-      buffer.write(useSigma ? r' + \sigma =' : '=');
+      buffer.write(r' + \sigma =');
     }
 
     // Add constant term
@@ -48,18 +47,15 @@ class EquationFormatter {
         ..write('}');
     }
 
-    if (useSigma) {
-      buffer
-        ..write(' + ')
-        ..write(Utils.formatNumber(coefficients.sigma));
-    }
+    buffer
+      ..write(' + ')
+      ..write(Utils.formatNumber(coefficients.sigma));
 
     return buffer.toString();
   }
 
   static String getNonlinearEquation(
     Coefficients coefficients, {
-    bool useSigma = false,
     bool isMobile = false,
   }) {
     if (coefficients.b.isEmpty) {
@@ -69,7 +65,7 @@ class EquationFormatter {
     final buffer = StringBuffer(r'\hat{Y} = ');
 
     if (!isMobile) {
-      buffer.write(useSigma ? r'10^{\beta_0 + \sigma}' : r'10^{\beta_0}');
+      buffer.write(r'10^{\beta_0 + \sigma}');
 
       // Add beta terms
       for (var i = 1; i < coefficients.b.length; i++) {
@@ -87,14 +83,10 @@ class EquationFormatter {
     // Add base and sigma
     buffer
       ..write('10^{')
-      ..write(Utils.formatNumber(coefficients.b[0]));
-
-    if (useSigma) {
-      buffer
-        ..write(' + ')
-        ..write(Utils.formatNumber(coefficients.sigma));
-    }
-    buffer.write('}');
+      ..write(Utils.formatNumber(coefficients.b[0]))
+      ..write(' + ')
+      ..write(Utils.formatNumber(coefficients.sigma))
+      ..write('}');
 
     // Add variable terms
     for (var i = 1; i < coefficients.b.length; i++) {
@@ -111,7 +103,6 @@ class EquationFormatter {
 
   static String getPredictionEquation(
     Coefficients coefficients, {
-    bool useSigma = false,
     List<double?> xValues = const [],
     bool isMobile = false,
     CSVAlias alias = CSVAlias.defaultAlias,
@@ -125,7 +116,7 @@ class EquationFormatter {
     // Desktop format includes beta coefficients
     if (!isMobile) {
       // Add base with optional sigma
-      buffer.write(useSigma ? r'10^{\beta_0 + \sigma}' : r'10^{\beta_0}');
+      buffer.write(r'10^{\beta_0 + \sigma}');
 
       // Add beta terms dynamically
       for (var i = 1; i < coefficients.b.length; i++) {
@@ -139,17 +130,13 @@ class EquationFormatter {
       buffer.write('=');
     }
 
-    // Add base value with optional sigma
+    // Add base value with sigma
     buffer
       ..write('10^{')
-      ..write(Utils.formatNumber(coefficients.b[0]));
-
-    if (useSigma) {
-      buffer
-        ..write(' + ')
-        ..write(Utils.formatNumber(coefficients.sigma));
-    }
-    buffer.write('}');
+      ..write(Utils.formatNumber(coefficients.b[0]))
+      ..write(' + ')
+      ..write(Utils.formatNumber(coefficients.sigma))
+      ..write('}');
 
     // Add variable terms dynamically
     for (var i = 1; i < coefficients.b.length; i++) {

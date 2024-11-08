@@ -119,27 +119,6 @@ class _SettingsViewState extends State<SettingsView> {
                   },
                 ),
                 const SizedBox(height: 16),
-                TextSwitch(
-                  caption: 'Use Prediction Intervals to detect outliers upon'
-                      ' with Mahalanobis distances',
-                  value: settings.includeIntervalsMethod,
-                  onChanged: () async {
-                    settings.includeIntervalsMethod =
-                        !settings.includeIntervalsMethod;
-                    await updateDataset();
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextSwitch(
-                  caption: 'Use sigma',
-                  value: settings.useSigma,
-                  onChanged: () {
-                    settings.useSigma = !settings.useSigma;
-                    projectsProvider.refitModelWithSigma(
-                      useSigma: settings.useSigma,
-                    );
-                  },
-                ),
                 if (settings.hasNOC) ...[
                   const SizedBox(height: 16),
                   TextSwitch(

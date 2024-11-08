@@ -10,12 +10,10 @@ class Settings with _$Settings {
   @JsonSerializable(explicitToJson: true)
   const factory Settings({
     @Default(false) bool useRelativeNOC,
-    @Default(false) bool useSigma,
     @Default(true) bool hasX2,
     @Default(true) bool hasX3,
     @Default(true) bool hasNOC,
     @Default(false) bool useYInThousands,
-    @Default(false) bool includeIntervalsMethod,
     @Default(CSVAlias.defaultAlias) CSVAlias csvAlias,
   }) = _Settings;
 
