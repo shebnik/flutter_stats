@@ -13,10 +13,8 @@ class Project:
     x1: float
     x2: float
     y: float
-    x3: float
     zx1: float = 0.0
     zx2: float = 0.0
-    zx3: float = 0.0
     zy: float = 0.0
 
 
@@ -32,8 +30,7 @@ def retrieve_data(filename: str = "100.csv") -> List[Project]:
         Project(
             url=row["URL"],
             x1=row["CBO"] / row["NOC"],
-            x2=row["DIT"] / row["NOC"],
-            x3=row["WMC"] / row["NOC"],
+            x2=row["WMC"] / row["NOC"],
             y=row["RFC"] / row["NOC"],
         )
         for _, row in df.iterrows()
@@ -48,10 +45,9 @@ def normalize_data(projects: List[Project]) -> List[Project]:
         try:
             zx1 = np.log10(project.x1) if project.x1 > 0 else 0.0
             zx2 = np.log10(project.x2) if project.x2 > 0 else 0.0
-            zx3 = np.log10(project.x3) if project.x3 > 0 else 0.0
             zy = np.log10(project.y) if project.y > 0 else 0.0
         except ValueError:
-            zx1, zx2, zx3, zy = 0.0, 0.0, 0.0, 0.0
+            zx1, zx2, zy = 0.0, 0.0, 0.0
 
         normalized_projects.append(
             Project(
@@ -59,10 +55,8 @@ def normalize_data(projects: List[Project]) -> List[Project]:
                 x1=project.x1,
                 x2=project.x2,
                 y=project.y,
-                x3=project.x3,
                 zx1=zx1,
                 zx2=zx2,
-                zx3=zx3,
                 zy=zy,
             )
         )
@@ -71,7 +65,7 @@ def normalize_data(projects: List[Project]) -> List[Project]:
 
 def projects_to_array(projects: List[Project]) -> np.ndarray:
     """Convert a list of Project objects to a numpy array."""
-    return np.array([[p.zx1, p.zx2, p.zx3, p.zy] for p in projects])
+    return np.array([[p.zx1, p.zx2, p.zy] for p in projects])
 
 
 def calculate_cov_inv(Z: np.ndarray) -> np.ndarray:
@@ -94,7 +88,7 @@ def calculate_mahalanobis_distances(Z: np.ndarray, cov_inv: np.ndarray) -> np.nd
 
 def calculate_test_statistic(n: int, mahalanobis_distances: np.ndarray) -> np.ndarray:
     """Calculate the test statistic based on Mahalanobis distances."""
-    return ((n - 4) * n / ((n**2 - 1) * 4)) * mahalanobis_distances ** 2
+    return ((n - 3) * n / ((n**2 - 1) * 3)) * mahalanobis_distances**2
 
 
 def determine_outliers_mahalanobis(
@@ -107,7 +101,7 @@ def determine_outliers_mahalanobis(
     mahalanobis_distances = calculate_mahalanobis_distances(Z, cov_inv)
     test_statistic = calculate_test_statistic(n, mahalanobis_distances)
 
-    fisher_f = f.ppf(1 - alpha, 4, n - 4)
+    fisher_f = f.ppf(1 - alpha, 3, n - 3)
 
     outliers = np.where(test_statistic > fisher_f)[0].tolist()
 
@@ -122,7 +116,7 @@ def calculate_prediction_interval(
     n, p = X.shape
 
     residuals = Z[:, -1] - Y_hat
-    mse = np.sum(residuals ** 2) / (n - p)
+    mse = np.sum(residuals**2) / (n - p)
 
     leverage = np.diagonal(X @ np.linalg.inv(X.T @ X) @ X.T)
     se = np.sqrt(mse * (1 + leverage))
@@ -155,21 +149,23 @@ def calculate_regression_coefficients(
     try:
         coefficients = np.linalg.inv(X.T @ X) @ X.T @ Y
     except np.linalg.LinAlgError:
-        raise ValueError("Matrix inversion failed during regression coefficient calculation.")
+        raise ValueError(
+            "Matrix inversion failed during regression coefficient calculation."
+        )
     return tuple(coefficients)
 
 
 def remove_outliers(projects: List[Project]) -> List[Project]:
     """Remove outliers"""
     outliers_mahalanobis = determine_outliers_mahalanobis(projects)
-    
+
     # Get the data array for prediction intervals
-    Z = projects_to_array(projects)    
-    b0, b1, b2, b3 = calculate_regression_coefficients(Z)
-    
+    Z = projects_to_array(projects)
+    b0, b1, b2 = calculate_regression_coefficients(Z)
+
     # Calculate predicted values without noise first
-    Y_hat_initial = b0 + b1 * Z[:, 0] + b2 * Z[:, 1] + b3 * Z[:, 2]
-    
+    Y_hat_initial = b0 + b1 * Z[:, 0] + b2 * Z[:, 1]
+
     # Calculate residuals (epsilon) as difference between actual and predicted values
     epsilon = Z[:, -1] - Y_hat_initial
 
@@ -186,7 +182,7 @@ def remove_outliers(projects: List[Project]) -> List[Project]:
 
     # Return projects with outliers removed
     return [p for i, p in enumerate(projects) if i not in all_outliers]
- 
+
 
 def iterative_outlier_removal(projects: List[Project]) -> List[Project]:
     """Iteratively remove outliers until no more outliers are found."""
@@ -194,18 +190,18 @@ def iterative_outlier_removal(projects: List[Project]) -> List[Project]:
     while True:
         print(f"\nStarting iteration {iteration}")
         new_projects = remove_outliers(projects)
-        
+
         if len(new_projects) == len(projects):
             print("No more outliers found. Stopping iterations.")
             break
-        
+
         removed_projects = [p for p in projects if p not in new_projects]
         for project in removed_projects:
             print(f"Removed project: {project.url}")
-        
+
         projects = new_projects
         iteration += 1
-    
+
     return projects
 
 
@@ -219,7 +215,6 @@ def split_data(
     # Sort projects by each metric
     sorted_by_x1 = sorted(projects, key=lambda p: p.x1)
     sorted_by_x2 = sorted(projects, key=lambda p: p.x2)
-    sorted_by_x3 = sorted(projects, key=lambda p: p.x3)
     sorted_by_y = sorted(projects, key=lambda p: p.y)
 
     # Get min and max projects for each metric
@@ -228,8 +223,6 @@ def split_data(
         sorted_by_x1[-1],
         sorted_by_x2[0],
         sorted_by_x2[-1],
-        sorted_by_x3[0],
-        sorted_by_x3[-1],
         sorted_by_y[0],
         sorted_by_y[-1],
     }
@@ -259,7 +252,6 @@ def save_to_csv(projects: List[Project], filename: str):
                 "RFC": p.y,
                 "CBO": p.x1,
                 "WMC": p.x2,
-                "DIT": p.x3,
             }
             for p in projects
         ]

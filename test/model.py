@@ -11,10 +11,8 @@ class Project:
     x1: float
     x2: float
     y: float
-    x3: float
     zx1: float = 0.0
     zx2: float = 0.0
-    zx3: float = 0.0
     zy: float = 0.0
 
 
@@ -29,10 +27,9 @@ def retrieve_data(filename: str = "train_data.csv") -> List[Project]:
     projects = []
     for _, row in df.iterrows():
         project = Project(
-            url="",
+            url=row["URL"],
             x1=row["CBO"],
-            x2=row["DIT"],
-            x3=row["WMC"],
+            x2=row["WMC"],
             y=row["RFC"],
         )
         projects.append(project)
@@ -45,7 +42,6 @@ def normalize_data(projects: List[Project]) -> List[Project]:
     for project in projects:
         zx1 = np.log10(project.x1)
         zx2 = np.log10(project.x2)
-        zx3 = np.log10(project.x3)
         zy = np.log10(project.y)
 
         normalized_projects.append(
@@ -54,10 +50,8 @@ def normalize_data(projects: List[Project]) -> List[Project]:
                 x1=project.x1,
                 x2=project.x2,
                 y=project.y,
-                x3=project.x3,
                 zx1=zx1,
                 zx2=zx2,
-                zx3=zx3,
                 zy=zy,
             )
         )
@@ -67,11 +61,11 @@ def normalize_data(projects: List[Project]) -> List[Project]:
 
 def calculate_regression_coefficients(
     X: np.ndarray, Y: np.ndarray
-) -> Tuple[float, float, float, float]:
+) -> Tuple[float, float, float]:
     """Calculate regression coefficients."""
     X = np.column_stack((np.ones(X.shape[0]), X))
     coffs = np.linalg.inv(X.T @ X) @ X.T @ Y
-    return coffs[0], coffs[1], coffs[2], coffs[3]
+    return coffs[0], coffs[1], coffs[2]
 
 
 def calculate_regression_metrics(
@@ -96,44 +90,39 @@ def calculate_epsilon_std(Y: np.ndarray, Y_hat: np.ndarray) -> float:
     """Calculate the standard deviation of epsilon."""
     residuals = Y - Y_hat
     n = len(residuals)
-    epsilon_std = np.sqrt(np.sum(residuals**2) / (n - 4))
+    epsilon_std = np.sqrt(np.sum(residuals**2) / (n - 3))
     return epsilon_std
 
 
-def build_model(
-    x1, x2, x3, y
-) -> Tuple[float, float, float, float, np.ndarray, np.ndarray]:
+def build_model(x1, x2, y) -> Tuple[float, float, float, np.ndarray, np.ndarray]:
     """Build a regression model."""
-    b0, b1, b2, b3 = calculate_regression_coefficients(np.column_stack((x1, x2, x3)), y)
-    Y_hat = b0 + b1 * x1 + b2 * x2 + b3 * x3
+    b0, b1, b2 = calculate_regression_coefficients(np.column_stack((x1, x2)), y)
+    Y_hat = b0 + b1 * x1 + b2 * x2
 
     epsilon_std = calculate_epsilon_std(y, Y_hat)
-    print(epsilon_std)
+    print(f"Standard Deviation of Epsilon: {epsilon_std:.4f}")
 
-    return b0, b1, b2, b3, Y_hat
+    return b0, b1, b2, Y_hat
 
 
 def print_results(
     b0: float,
     b1: float,
     b2: float,
-    b3: float,
     r_squared: float,
     mmre: float,
     pred: float,
 ):
     """Print regression results and residual statistics."""
-    print(f"\nModel Results:")
-    print(
-        f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, b3 = {b3:.4f}"
-    )
+    print(f"Model Results:")
+    print(f"Regression Coefficients: b0 = {b0:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}")
     print(
         f"Regression Metrics: R^2 = {r_squared:.4f}, MMRE = {mmre:.4f}, PRED = {pred:.4f}"
     )
 
 
 def test_model(
-    model_coefficients: Tuple[float, float, float, float],
+    model_coefficients: Tuple[float, float, float],
     test_file: str = "test_data.csv",
 ) -> Tuple[float, float, float]:
     """Test the model on a separate dataset."""
@@ -142,11 +131,10 @@ def test_model(
 
     zx1 = np.array([project.zx1 for project in projects])
     zx2 = np.array([project.zx2 for project in projects])
-    zx3 = np.array([project.zx3 for project in projects])
     zy = np.array([project.zy for project in projects])
 
-    b0, b1, b2, b3 = model_coefficients
-    Y_hat_test = b0 + b1 * zx1 + b2 * zx2 + b3 * zx3
+    b0, b1, b2 = model_coefficients
+    Y_hat_test = b0 + b1 * zx1 + b2 * zx2
 
     r_squared, mmre, pred = calculate_regression_metrics(zy, Y_hat_test)
 
@@ -160,16 +148,15 @@ def main():
 
     zx1 = np.array([project.zx1 for project in projects])
     zx2 = np.array([project.zx2 for project in projects])
-    zx3 = np.array([project.zx3 for project in projects])
     zy = np.array([project.zy for project in projects])
 
-    b0, b1, b2, b3, Y_hat = build_model(zx1, zx2, zx3, zy)
+    b0, b1, b2, Y_hat = build_model(zx1, zx2, zy)
 
     r_squared, mmre, pred = calculate_regression_metrics(zy, Y_hat)
-    print_results(b0, b1, b2, b3, r_squared, mmre, pred)
+    print_results(b0, b1, b2, r_squared, mmre, pred)
 
     # Test model on a separate dataset
-    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2, b3))
+    test_r_squared, test_mmre, test_pred = test_model((b0, b1, b2))
     print(
         f"Test Results: R^2 = {test_r_squared:.4f}, MMRE = {test_mmre:.4f}, PRED = {test_pred:.4f}"
     )
