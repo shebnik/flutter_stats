@@ -11,11 +11,14 @@ import 'package:flutter_stats/models/dataset/dataset.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/models/settings/settings.dart';
+import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/projects_provider.dart';
+import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/database.dart';
 import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:flutter_stats/services/normalization.dart';
+import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -54,6 +57,7 @@ class DataHandler {
       // If no cached data, retrieve new data
       if (bytes == null && promptUser) {
         bytes = await retrieveData(
+          dialogTitle: 'Load Dataset File',
           useAssetDataset: useAssetDataset,
           settings: settings,
         );
@@ -101,14 +105,94 @@ class DataHandler {
     }
   }
 
+  Future<void> uploadFile({
+    required BuildContext context,
+    required MetricsNavigationType type,
+  }) async {
+    try {
+      final settings = context.read<SettingsProvider>().settings;
+      final bytes = await retrieveData(
+        settings: settings,
+        dialogTitle: 'Load ${type.label}',
+      );
+
+      if (bytes == null) {
+        _logger.i('No file selected');
+        return;
+      }
+
+      var projects = parseData(
+        bytes: bytes,
+        settings: settings,
+      );
+
+      if (projects == null || projects.isEmpty) {
+        Utils.showNotification(
+          context,
+          message: 'No data found in the file. Consider visiting app settings',
+          isError: true,
+        );
+        return;
+      }
+
+      if (settings.useRelativeNOC) {
+        projects = projects.map((e) {
+          final metrics = e.metrics;
+          final denominator =
+              metrics.noc != null && metrics.noc! > 0 ? metrics.noc! : 1.0;
+          return e.copyWith(
+            metrics: metrics.copyWith(
+              y: metrics.y / denominator,
+              x1: metrics.x1 / denominator,
+              x2: metrics.x2 != null ? metrics.x2! / denominator : null,
+              x3: metrics.x3 != null ? metrics.x3! / denominator : null,
+            ),
+          );
+        }).toList();
+      }
+      final regressionModelProvider = context.read<RegressionModelProvider>();
+      final model = regressionModelProvider.model;
+      var allProjects = <Project>[];
+      if (type == MetricsNavigationType.train) {
+        allProjects = [...projects, ...model?.testProjects ?? []];
+        regressionModelProvider.model = RegressionModel(
+          allProjects,
+          trainProjects: projects,
+          testProjects: model?.testProjects ?? [],
+        );
+      } else {
+        allProjects = [...model?.trainProjects ?? [], ...projects];
+        regressionModelProvider.model = RegressionModel(
+          allProjects,
+          trainProjects: model?.trainProjects ?? [],
+          testProjects: projects,
+        );
+      }
+      await context.read<ProjectsProvider>().setProjects(
+            allProjects,
+            useRelativeNOC: false,
+            refit: false,
+          );
+    } catch (e, s) {
+      _logger.e('Error uploading file', error: e, stackTrace: s);
+      Utils.showNotification(
+        context,
+        message: e.toString(),
+        isError: true,
+      );
+    }
+  }
+
   Future<Uint8List?> _pickFile({
     bool useAssetDataset = false,
+    String? dialogTitle,
   }) async {
     if (useAssetDataset) {
       final asset = await rootBundle.load('assets/dataset.csv');
       return asset.buffer.asUint8List();
     }
     final result = await filePicker.pickFiles(
+      dialogTitle: dialogTitle,
       allowedExtensions: ['csv'],
       type: FileType.custom,
     );
@@ -131,11 +215,15 @@ class DataHandler {
 
   Future<Uint8List?> retrieveData({
     required Settings settings,
+    String? dialogTitle,
     bool useAssetDataset = false,
   }) async {
     Uint8List? bytes;
     try {
-      bytes = await _pickFile(useAssetDataset: useAssetDataset);
+      bytes = await _pickFile(
+        useAssetDataset: useAssetDataset,
+        dialogTitle: dialogTitle,
+      );
     } catch (e, s) {
       _logger.e('Error picking file', error: e, stackTrace: s);
       throw Exception('Error picking file');

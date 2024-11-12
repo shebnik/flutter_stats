@@ -41,6 +41,7 @@ class ProjectsProvider with ChangeNotifier {
   Future<void> setProjects(
     List<Project>? projects, {
     required bool useRelativeNOC,
+    bool refit = true,
   }) async {
     if (projects == null) return;
     _fileProjects = List.from(projects);
@@ -48,7 +49,10 @@ class ProjectsProvider with ChangeNotifier {
     _outliersRemoved = 0;
 
     divideByNOC(useRelativeNOC: useRelativeNOC);
-    refitModel();
+
+    if (refit) {
+      refitModel();
+    }
     await refitOutliers(
       _projects,
     );

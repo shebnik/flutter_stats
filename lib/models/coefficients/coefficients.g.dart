@@ -11,11 +11,11 @@ _$CoefficientsImpl _$$CoefficientsImplFromJson(Map<String, dynamic> json) =>
       b: (json['b'] as List<dynamic>)
           .map((e) => (e as num).toDouble())
           .toList(),
-      sigma: (json['sigma'] as num).toDouble(),
+      epsilon: (json['epsilon'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$CoefficientsImplToJson(_$CoefficientsImpl instance) =>
     <String, dynamic>{
       'b': instance.b,
-      'sigma': instance.sigma,
+      'epsilon': instance.epsilon,
     };

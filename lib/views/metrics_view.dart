@@ -3,6 +3,7 @@ import 'package:flutter_stats/providers/metrics_navigation_provider.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/widgets/download_projects_button.dart';
 import 'package:flutter_stats/widgets/projects_list.dart';
+import 'package:flutter_stats/widgets/upload_projects_button.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
@@ -55,6 +56,11 @@ class MetricsView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (navigationProvider.type == MetricsNavigationType.train ||
+                    navigationProvider.type == MetricsNavigationType.test)
+                  UploadProjectsButton(
+                    type: navigationProvider.type,
+                  ),
                 DownloadProjectsButton(
                   filename: navigationProvider.type.label,
                   projects: projects,

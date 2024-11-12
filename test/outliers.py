@@ -3,9 +3,11 @@ import pandas as pd
 import numpy as np
 import os
 from typing import List, Tuple
-from scipy.stats import f, t
+from scipy.stats import f, t, chi2, norm
 import random
+import pingouin as pg
 
+alpha = 0.05
 
 @dataclass(frozen=True)
 class Project:
@@ -16,6 +18,7 @@ class Project:
     zx1: float = 0.0
     zx2: float = 0.0
     zy: float = 0.0
+    ts: float = 0.0
 
 
 def data_path(filename: str) -> str:
@@ -36,6 +39,174 @@ def retrieve_data(filename: str = "100.csv") -> List[Project]:
         for _, row in df.iterrows()
     ]
     return projects
+
+
+def mardia_test(data: np.ndarray, cov: bool = True) -> Tuple[float, float, float, float]:
+    """
+    https://rdrr.io/cran/MVN/src/R/mvn.R
+    https://stats.stackexchange.com/questions/317147/how-to-get-a-single-p-value-from-the-two-p-values-of-a-mardias-multinormality-t
+    Mardia's multivariate skewness and kurtosis.
+    Calculates the Mardia's multivariate skewness and kurtosis coefficients
+    as well as their corresponding statistical test. For large sample size
+    the multivariate skewness is asymptotically distributed as a Chi-square
+    random variable; here it is corrected for small sample size. However,
+    both uncorrected and corrected skewness statistic are presented. Likewise,
+    the multivariate kurtosis it is distributed as a unit-normal.
+
+     Syntax: function [Mskekur] = Mskekur(X,c,alpha)
+
+     Inputs:
+          X - multivariate data matrix [Size of matrix must be n(data)-by-p(variables)].
+          cov - boolean to whether to normalize the covariance matrix by n (c=1[default]) or by n-1 (c~=1)
+
+     Outputs:
+          - skewness test statistic
+          - kurtosis test statistic
+          - significance value for skewness
+          - significance value for kurtosis
+    """
+    n, p = data.shape
+
+    # correct for small sample size
+    small: bool = True if n < 20 else False
+
+    if cov:
+        S = ((n - 1)/n) * np.cov(data.T)
+    else:
+        S = np.cov(data.T)
+
+    # calculate mean
+    data_mean = data.mean(axis=0)
+    # inverse - check if singular matrix
+    try:
+        iS = np.linalg.inv(S)
+    except Exception as e:
+        # print for now
+        print(e)
+        return 0.0, 0.0, 0.0, 0.0
+    # squared-Mahalanobis' distances matrix
+    D: np.ndarray = (data - data_mean) @ iS @ (data - data_mean).T
+    # multivariate skewness coefficient
+    g1p: float = np.sum(D**3)/n**2
+    # multivariate kurtosis coefficient
+    g2p: float = np.trace(D**2)/n
+    # small sample correction
+    k: float = ((p + 1)*(n + 1)*(n + 3))/(n*(((n + 1)*(p + 1)) - 6))
+    # degrees of freedom
+    df: float = (p * (p + 1) * (p + 2))/6
+
+    if small:
+        # skewness test statistic corrected for small sample: it approximates to a chi-square distribution
+        g_skew = (n * g1p * k)/6
+    else:
+        # skewness test statistic:it approximates to a chi-square distribution
+        g_skew = (n * g1p)/6
+
+    # significance value associated to the skewness corrected for small sample
+    p_skew: float = 1.0 - chi2.cdf(g_skew, df)
+
+    # kurtosis test statistic: it approximates to a unit-normal distribution
+    g_kurt = (g2p - (p*(p + 2)))/(np.sqrt((8 * p * (p + 2))/n))
+    # significance value associated to the kurtosis
+    p_kurt: float = 2 * (1.0 - norm.cdf(np.abs(g_kurt)))
+
+    return g_skew, g_kurt, p_skew, p_kurt
+
+def mardia_skewness_kurtosis(X):
+    """
+    Calculate Mardia's multivariate skewness and kurtosis for the dataset X.
+    
+    Parameters:
+        X (np.ndarray): A 2D numpy array where each row represents an observation and each column represents a variable.
+    
+    Returns:
+        tuple: (beta_1_k, beta_2_k) where beta_1_k is the multivariate skewness and beta_2_k is the multivariate kurtosis.
+    """
+    N, k = X.shape
+    mean_vector = np.mean(X, axis=0)
+    S = np.cov(X, rowvar=False, bias=True)  # Sample covariance matrix
+    
+    # Calculate the inverse of the covariance matrix
+    S_inv = np.linalg.inv(S)
+    
+    # Center the data
+    centered_data = X - mean_vector
+    
+    # Calculate multivariate skewness (beta_1_k)
+    skewness_sum = 0
+    for i in range(N):
+        for j in range(N):
+            skewness_sum += (centered_data[i].T @ S_inv @ centered_data[j]) ** 3
+    beta_1_k = skewness_sum / (N ** 2)
+    
+    # Calculate multivariate kurtosis (beta_2_k)
+    mahalanobis_distances = np.array([centered_data[i].T @ S_inv @ centered_data[i] for i in range(N)])
+    beta_2_k = np.mean(mahalanobis_distances ** 2)
+    
+    return beta_1_k, beta_2_k
+
+def mardia_tests(X, alpha=0.005):
+    """
+    Perform Mardia's test for multivariate skewness and kurtosis.
+    
+    Parameters:
+        X (np.ndarray): A 2D numpy array where each row represents an observation and each column represents a variable.
+        alpha (float): Significance level for the hypothesis test (default is 0.005).
+    
+    Returns:
+        dict: Test results with keys 'skewness', 'kurtosis', 'normality' and the test statistics and p-values.
+    """
+    N, k = X.shape
+    beta_1_k, beta_2_k = mardia_skewness_kurtosis(X)
+    
+    # Test statistic for skewness
+    skewness_stat = N / 6 * beta_1_k
+    skewness_df = k * (k + 1) * (k + 2) / 6
+    skewness_critical_value = chi2.ppf(1 - alpha, df=skewness_df)
+    skewness_significant = skewness_stat > skewness_critical_value
+    skewness_p_value = 1 - chi2.cdf(skewness_stat, df=skewness_df)
+    
+    # Test statistic for kurtosis
+    expected_kurtosis = k * (k + 2)
+    kurtosis_variance = 8 * k * (k + 2) / N
+    kurtosis_stat = (beta_2_k - expected_kurtosis) / np.sqrt(kurtosis_variance)
+    kurtosis_critical_value = norm.ppf(1 - alpha / 2)  # Two-tailed
+    kurtosis_significant = abs(kurtosis_stat) > kurtosis_critical_value
+    kurtosis_p_value = 2 * (1 - norm.cdf(abs(kurtosis_stat)))  # two-tailed test
+    
+    # Determine if the distribution is normal based on skewness and kurtosis tests
+    normality = not (skewness_significant or kurtosis_significant)
+    
+    return {
+        "skewness_stat": skewness_stat,
+        "skewness_p_value": skewness_p_value,
+        "skewness_significant": skewness_significant,
+        "skewness_critical_value": skewness_critical_value,
+        "kurtosis_stat": kurtosis_stat,
+        "kurtosis_p_value": kurtosis_p_value,
+        "kurtosis_significant": kurtosis_significant,
+        "kurtosis_critical_value": kurtosis_critical_value,
+        "normality": normality
+    }
+
+
+def perform_mardia_test(data: np.ndarray):
+    g_skew, g_kurt, p_skew, p_kurt = mardia_test(data)
+    print(f"\nMardia's test for multivariate normality:")
+    print(f"Skewness: {g_skew:.4f} (p-value: {p_skew:.4f})")
+    print(f"Kurtosis: {g_kurt:.4f} (p-value: {p_kurt:.4f})")
+    p = data.shape[1]
+    skewn_crit = chi2.ppf(1 - alpha, p * (p + 1) * (p + 2) / 6)
+    kurt_crit = norm.ppf(1 - alpha)
+    print(f"Skewness critical value: {skewn_crit:.4f}")
+    print(f"Kurtosis critical value: {kurt_crit:.4f}")
+    
+    if g_skew > skewn_crit or g_kurt > kurt_crit:
+        print("Data is not multivariate normal.")
+    else:
+        print("Data is multivariate normal.")
+        
+    print(mardia_tests(data))
 
 
 def normalize_data(projects: List[Project]) -> List[Project]:
@@ -93,7 +264,7 @@ def calculate_test_statistic(n: int, mahalanobis_distances: np.ndarray) -> np.nd
 
 def determine_outliers_mahalanobis(
     projects: List[Project], alpha: float = 0.05
-) -> List[int]:
+) -> Tuple[List[int], List[Project]]:
     """Determine outliers using Mahalanobis distance."""
     Z = projects_to_array(projects)
     n = Z.shape[0]
@@ -102,10 +273,26 @@ def determine_outliers_mahalanobis(
     test_statistic = calculate_test_statistic(n, mahalanobis_distances)
 
     fisher_f = f.ppf(1 - alpha, 3, n - 3)
+    print(f"Fisher F value for {n} projects = {fisher_f:.4f}")
 
     outliers = np.where(test_statistic > fisher_f)[0].tolist()
 
-    return outliers
+    projects_with_ts = []
+    for i, p in enumerate(projects):
+        projects_with_ts.append(
+            Project(
+                url=p.url,
+                x1=p.x1,
+                x2=p.x2,
+                y=p.y,
+                zx1=p.zx1,
+                zx2=p.zx2,
+                zy=p.zy,
+                ts=test_statistic[i],
+            )
+        )
+
+    return outliers, projects_with_ts
 
 
 def calculate_prediction_interval(
@@ -157,10 +344,10 @@ def calculate_regression_coefficients(
 
 def remove_outliers(projects: List[Project]) -> List[Project]:
     """Remove outliers"""
-    outliers_mahalanobis = determine_outliers_mahalanobis(projects)
+    outliers_mahalanobis, ts_projects = determine_outliers_mahalanobis(projects)
     for i in outliers_mahalanobis:
         print(
-            f"Removed {i+1} project as mahalanobis outlier: CBO: {projects[i].x1:.4f} WMC: {projects[i].x2:.4f} RFC: {projects[i].y:.4f} zx1: {projects[i].zx1:.4f} zx2: {projects[i].zx2:.4f} zy: {projects[i].zy:.4f}"
+            f"Removed {projects[i].url} project as mahalanobis outlier: zy: {projects[i].zy:.4f} zx1: {projects[i].zx1:.4f} zx2: {projects[i].zx2:.4f} (TS: {ts_projects[i].ts:.4f})"
         )
     # Get the data array for prediction intervals
     Z = projects_to_array(projects)
@@ -181,7 +368,7 @@ def remove_outliers(projects: List[Project]) -> List[Project]:
     outliers_intervals = identify_outliers_intervals(Z, lower_bound, upper_bound)
     for i in outliers_intervals:
         print(
-            f"Removed {i} project as interval outlier: CBO: {projects[i].x1:.4f} WMC: {projects[i].x2:.4f} RFC: {projects[i].y:.4f} zx1: {projects[i].zx1:.4f} zx2: {projects[i].zx2:.4f} zy: {projects[i].zy:.4f}"
+            f"Removed {projects[i].url} project as prediction interval outlier: zy: {projects[i].zy:.4f} zx1: {projects[i].zx1:.4f} zx2: {projects[i].zx2:.4f} (Y_hat: {Y_hat[i]:.4f})"
         )
 
     # Combine both sets of outliers
@@ -201,10 +388,6 @@ def iterative_outlier_removal(projects: List[Project]) -> List[Project]:
         if len(new_projects) == len(projects):
             print("No more outliers found. Stopping iterations.")
             break
-
-        removed_projects = [p for p in projects if p not in new_projects]
-        for project in removed_projects:
-            print(f"Removed project: {project.url}")
 
         projects = new_projects
         iteration += 1
@@ -269,6 +452,9 @@ def save_to_csv(projects: List[Project], filename: str):
 
 def main():
     projects = retrieve_data()
+    data = np.array([[p.x1, p.x2, p.y] for p in projects])
+    perform_mardia_test(data)
+
     print(f"Initial number of data points: {len(projects)}")
 
     normalized_projects = normalize_data(projects)
@@ -283,7 +469,7 @@ def main():
     print(f"Number of testing data points: {len(test_projects)}")
 
     # Save the training and testing sets to CSV files
-    save_to_csv(final_projects, "final_projects.csv")
+    # save_to_csv(final_projects, "final_projects.csv")
     # save_to_csv(train_projects, "train_data.csv")
     # save_to_csv(test_projects, "test_data.csv")
     # print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")

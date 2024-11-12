@@ -40,9 +40,9 @@ def normalize_data(projects: List[Project]) -> List[Project]:
     """Normalize the data."""
     normalized_projects = []
     for project in projects:
-        zx1 = np.log10(project.x1)
-        zx2 = np.log10(project.x2)
-        zy = np.log10(project.y)
+        zx1 = np.log10(np.maximum(project.x1, 1))
+        zx2 = np.log10(np.maximum(project.x2, 1))
+        zy = np.log10(np.maximum(project.y, 1))
 
         normalized_projects.append(
             Project(
@@ -94,7 +94,7 @@ def calculate_epsilon_std(Y: np.ndarray, Y_hat: np.ndarray) -> float:
     return epsilon_std
 
 
-def build_model(x1, x2, y) -> Tuple[float, float, float, np.ndarray, np.ndarray]:
+def build_model(x1, x2, y) -> Tuple[float, float, float, np.ndarray, float]:
     """Build a regression model."""
     b0, b1, b2 = calculate_regression_coefficients(np.column_stack((x1, x2)), y)
     Y_hat = b0 + b1 * x1 + b2 * x2
@@ -102,7 +102,7 @@ def build_model(x1, x2, y) -> Tuple[float, float, float, np.ndarray, np.ndarray]
     epsilon_std = calculate_epsilon_std(y, Y_hat)
     print(f"Standard Deviation of Epsilon: {epsilon_std:.4f}")
 
-    return b0, b1, b2, Y_hat
+    return b0, b1, b2, Y_hat, epsilon_std
 
 
 def print_results(
@@ -150,7 +150,7 @@ def main():
     zx2 = np.array([project.zx2 for project in projects])
     zy = np.array([project.zy for project in projects])
 
-    b0, b1, b2, Y_hat = build_model(zx1, zx2, zy)
+    b0, b1, b2, Y_hat, e = build_model(zx1, zx2, zy)
 
     r_squared, mmre, pred = calculate_regression_metrics(zy, Y_hat)
     print_results(b0, b1, b2, r_squared, mmre, pred)

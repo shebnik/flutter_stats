@@ -21,7 +21,7 @@ Coefficients _$CoefficientsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Coefficients {
   List<double> get b => throw _privateConstructorUsedError;
-  double get sigma => throw _privateConstructorUsedError;
+  double get epsilon => throw _privateConstructorUsedError;
 
   /// Serializes this Coefficients to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -39,7 +39,7 @@ abstract class $CoefficientsCopyWith<$Res> {
           Coefficients value, $Res Function(Coefficients) then) =
       _$CoefficientsCopyWithImpl<$Res, Coefficients>;
   @useResult
-  $Res call({List<double> b, double sigma});
+  $Res call({List<double> b, double epsilon});
 }
 
 /// @nodoc
@@ -58,16 +58,16 @@ class _$CoefficientsCopyWithImpl<$Res, $Val extends Coefficients>
   @override
   $Res call({
     Object? b = null,
-    Object? sigma = null,
+    Object? epsilon = null,
   }) {
     return _then(_value.copyWith(
       b: null == b
           ? _value.b
           : b // ignore: cast_nullable_to_non_nullable
               as List<double>,
-      sigma: null == sigma
-          ? _value.sigma
-          : sigma // ignore: cast_nullable_to_non_nullable
+      epsilon: null == epsilon
+          ? _value.epsilon
+          : epsilon // ignore: cast_nullable_to_non_nullable
               as double,
     ) as $Val);
   }
@@ -81,7 +81,7 @@ abstract class _$$CoefficientsImplCopyWith<$Res>
       __$$CoefficientsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<double> b, double sigma});
+  $Res call({List<double> b, double epsilon});
 }
 
 /// @nodoc
@@ -98,16 +98,16 @@ class __$$CoefficientsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? b = null,
-    Object? sigma = null,
+    Object? epsilon = null,
   }) {
     return _then(_$CoefficientsImpl(
       b: null == b
           ? _value._b
           : b // ignore: cast_nullable_to_non_nullable
               as List<double>,
-      sigma: null == sigma
-          ? _value.sigma
-          : sigma // ignore: cast_nullable_to_non_nullable
+      epsilon: null == epsilon
+          ? _value.epsilon
+          : epsilon // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
@@ -116,7 +116,8 @@ class __$$CoefficientsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CoefficientsImpl implements _Coefficients {
-  const _$CoefficientsImpl({required final List<double> b, required this.sigma})
+  const _$CoefficientsImpl(
+      {required final List<double> b, required this.epsilon})
       : _b = b;
 
   factory _$CoefficientsImpl.fromJson(Map<String, dynamic> json) =>
@@ -131,11 +132,11 @@ class _$CoefficientsImpl implements _Coefficients {
   }
 
   @override
-  final double sigma;
+  final double epsilon;
 
   @override
   String toString() {
-    return 'Coefficients(b: $b, sigma: $sigma)';
+    return 'Coefficients(b: $b, epsilon: $epsilon)';
   }
 
   @override
@@ -144,13 +145,13 @@ class _$CoefficientsImpl implements _Coefficients {
         (other.runtimeType == runtimeType &&
             other is _$CoefficientsImpl &&
             const DeepCollectionEquality().equals(other._b, _b) &&
-            (identical(other.sigma, sigma) || other.sigma == sigma));
+            (identical(other.epsilon, epsilon) || other.epsilon == epsilon));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_b), sigma);
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_b), epsilon);
 
   /// Create a copy of Coefficients
   /// with the given fields replaced by the non-null parameter values.
@@ -171,7 +172,7 @@ class _$CoefficientsImpl implements _Coefficients {
 abstract class _Coefficients implements Coefficients {
   const factory _Coefficients(
       {required final List<double> b,
-      required final double sigma}) = _$CoefficientsImpl;
+      required final double epsilon}) = _$CoefficientsImpl;
 
   factory _Coefficients.fromJson(Map<String, dynamic> json) =
       _$CoefficientsImpl.fromJson;
@@ -179,7 +180,7 @@ abstract class _Coefficients implements Coefficients {
   @override
   List<double> get b;
   @override
-  double get sigma;
+  double get epsilon;
 
   /// Create a copy of Coefficients
   /// with the given fields replaced by the non-null parameter values.

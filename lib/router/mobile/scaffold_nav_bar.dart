@@ -7,6 +7,7 @@ import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/widgets/app_drawer.dart';
 import 'package:flutter_stats/widgets/download_projects_button.dart';
 import 'package:flutter_stats/widgets/load_file_button.dart';
+import 'package:flutter_stats/widgets/upload_projects_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -49,6 +50,13 @@ class _ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
       appBar: AppBar(
         title: Text(title),
         actions: [
+          if (widget.selectedIndex == 0 &&
+              model != null &&
+              (navigationProvider.type == MetricsNavigationType.train ||
+                  navigationProvider.type == MetricsNavigationType.test))
+            UploadProjectsButton(
+              type: navigationProvider.type,
+            ),
           if (widget.selectedIndex == 0 && model != null)
             DownloadProjectsButton(
               filename: navigationProvider.type.label,

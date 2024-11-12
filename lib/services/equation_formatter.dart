@@ -49,7 +49,7 @@ class EquationFormatter {
 
     buffer
       ..write(' + ')
-      ..write(Utils.formatNumber(coefficients.sigma));
+      ..write(Utils.formatNumber(coefficients.epsilon));
 
     return buffer.toString();
   }
@@ -85,7 +85,7 @@ class EquationFormatter {
       ..write('10^{')
       ..write(Utils.formatNumber(coefficients.b[0]))
       ..write(' + ')
-      ..write(Utils.formatNumber(coefficients.sigma))
+      ..write(Utils.formatNumber(coefficients.epsilon))
       ..write('}');
 
     // Add variable terms
@@ -135,7 +135,7 @@ class EquationFormatter {
       ..write('10^{')
       ..write(Utils.formatNumber(coefficients.b[0]))
       ..write(' + ')
-      ..write(Utils.formatNumber(coefficients.sigma))
+      ..write(Utils.formatNumber(coefficients.epsilon))
       ..write('}');
 
     // Add variable terms dynamically
@@ -144,7 +144,7 @@ class EquationFormatter {
 
       // Use provided X value if available, otherwise use X_i notation
       if (i - 1 < xValues.length && xValues[i - 1] != null) {
-        buffer.write(xValues[i - 1]!.toInt().toString());
+        buffer.write(Utils.formatNumber(xValues[i - 1]));
       } else {
         buffer
           ..write('X_')

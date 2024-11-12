@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_stats/models/model_quality/model_quality.dart';
+import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/algebra.dart';
@@ -8,7 +8,6 @@ import 'package:flutter_stats/services/equation_formatter.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
@@ -47,7 +46,7 @@ class _PredictionViewState extends State<PredictionView> {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,6}')),
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),
         LengthLimitingTextInputFormatter(10),
       ],
       decoration: InputDecoration(
@@ -77,14 +76,12 @@ class _PredictionViewState extends State<PredictionView> {
         !_prediction!.isNaN &&
         !_prediction!.isInfinite &&
         _prediction! > 0) {
-      final formatter = NumberFormat('#,###');
-      final formatted = formatter.format(_prediction?.round());
       return Row(
         children: [
           Expanded(
             child: MetricsCard(
               title: 'Y Prediction (RFC)',
-              value: formatted.replaceAll(',', ' '),
+              value: Utils.formatNumber(_prediction?.toDouble() ?? 0),
             ),
           ),
           const SizedBox(
@@ -92,24 +89,17 @@ class _PredictionViewState extends State<PredictionView> {
           ),
           Expanded(
             child: FutureBuilder(
-              future: model.calculateProjectQuality(
-                Algebra().logBase10(
-                  _prediction!.toDouble(),
-                ),
-              ),
+              future: model.calculateProjectQuality(_prediction!.toDouble()),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox();
                 }
                 if (snapshot.hasData && snapshot.data != null) {
-                  final quality = Utils.formatNumber(snapshot.data! * 100);
+                  final quality = snapshot.data ?? QualityTypes.unknown;
                   return MetricsCard(
                     title: 'Project Quality',
-                    value: '$quality%',
-                    valueColor: Utils.getQualityColor(
-                      ModelQualityTypes.project,
-                      snapshot.data!,
-                    ),
+                    value: quality.name.capitalize(),
+                    valueColor: quality.color,
                   );
                 }
                 return const Text('Error calculating project quality');
@@ -147,10 +137,12 @@ class _PredictionViewState extends State<PredictionView> {
       x.add(x3 ?? 0);
     }
     _prediction = model.predictY(x);
+    final csvAlias =
+        Provider.of<SettingsProvider>(context, listen: false).settings.csvAlias;
 
     if (minMaxFactors != null) {
       if (x1! > minMaxFactors!.x1.max || x1! < minMaxFactors!.x1.min) {
-        x1Error = 'DIT should be between '
+        x1Error = '${csvAlias.x1} should be between '
             '${Utils.formatNumber(minMaxFactors!.x1.min)}'
             ' and ${Utils.formatNumber(minMaxFactors!.x1.max)}';
       } else {
@@ -158,7 +150,7 @@ class _PredictionViewState extends State<PredictionView> {
       }
       if (minMaxFactors!.x2 != null) {
         if (x2! > minMaxFactors!.x2!.max || x2! < minMaxFactors!.x2!.min) {
-          x2Error = 'CBO should be between '
+          x2Error = '${csvAlias.x2} should be between '
               '${Utils.formatNumber(minMaxFactors!.x2!.min)}'
               ' and ${Utils.formatNumber(minMaxFactors!.x2!.max)}';
         } else {
@@ -168,7 +160,7 @@ class _PredictionViewState extends State<PredictionView> {
 
       if (minMaxFactors!.x3 != null) {
         if (x3! > minMaxFactors!.x3!.max || x3! < minMaxFactors!.x3!.min) {
-          x3Error = 'WMC should be between '
+          x3Error = '${csvAlias.x3} should be between '
               '${Utils.formatNumber(minMaxFactors!.x3!.min)}'
               ' and ${Utils.formatNumber(minMaxFactors!.x3!.max)}';
         } else {

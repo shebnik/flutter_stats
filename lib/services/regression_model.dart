@@ -176,11 +176,11 @@ class RegressionModel {
     final yPred = X * coefficients;
     final residuals = y - yPred;
     final mse = residuals.dot(residuals) / (n - p - 1);
-    final sigma = sqrt(mse);
+    final epsilon = sqrt(mse);
 
     return Coefficients(
       b: List<double>.from(coefficients.map((value) => value.first)),
-      sigma: sigma,
+      epsilon: epsilon,
     );
   }
 
@@ -261,7 +261,7 @@ class RegressionModel {
     _predictedValues = _calculateNonlinearPredictedValues(
       factors: _trainProjects.map(RegressionFactors.fromProject).toList(),
     );
-    _log.i('Predicted values: $_predictedValues');
+    _log.i('Predicted values ${_predictedValues.length}: $_predictedValues');
 
     _modelQuality = _calculateModelQuality(
       y: _trainProjects.map((p) => p.metrics.y).toList(),
@@ -290,19 +290,20 @@ class RegressionModel {
     var mediumQualityCount = 0;
     var lowQualityCount = 0;
 
+    final (predLower, predUpper) = await calculatePredictionInterval(
+      includeProjectsForTesting: false,
+    );
+    final (confLower, confUpper) = await calculateConfidenceInterval();
+
     for (var i = 0; i < projects.length; i++) {
       final project = projects[i];
-      final (predLower, predUpper) = await calculatePredictionInterval(
-        includeProjectsForTesting: false,
-      );
-      final (confLower, confUpper) = await calculateConfidenceInterval();
 
       final avgPredLower = _algebra.average(predLower);
       final avgPredUpper = _algebra.average(predUpper);
       final avgConfLower = _algebra.average(confLower);
       final avgConfUpper = _algebra.average(confUpper);
 
-      final y = project.metrics.y;
+      final y = pow(10, project.metrics.y);
 
       if (y >= avgConfLower && y <= avgConfUpper) {
         mediumQualityCount++;
@@ -331,7 +332,7 @@ class RegressionModel {
   }
 
   double predictY(List<double> x) {
-    var prediction = pow(10, _coefficients.b[0] + _coefficients.sigma);
+    var prediction = pow(10, _coefficients.b[0] + _coefficients.epsilon);
     for (var i = 1; i < _coefficients.b.length; i++) {
       prediction *= pow(x[i - 1], _coefficients.b[i]);
     }
@@ -350,13 +351,10 @@ class RegressionModel {
       final coefficients = _calculateRegressionCoefficients(
         factors: factors,
       );
-      _log.i('Coefficients: ${coefficients.b}');
-
       predictedValues = _calculatePredictedValues(
         factors: factors,
         coefficients: coefficients,
       );
-      _log.i('Predicted values: $predictedValues');
     }
 
     final n = factors.length;
@@ -385,11 +383,24 @@ class RegressionModel {
     final lowerBound = List.generate(n, (i) => predictedValues[i] - margin[i]);
     final upperBound = List.generate(n, (i) => predictedValues[i] + margin[i]);
 
+    // for (var i = 0; i < n; i++) {
+    //   _log.d(
+    //     'Prediction interval for project ${i + 1},'
+    //     // ignore: lines_longer_than_80_chars
+    //     '${includeProjectsForTesting ? _projects[i].url : trainProjects[i].url},'
+    //     // ignore: lines_longer_than_80_chars
+    //     '${includeProjectsForTesting ? _projects[i].metrics.y : trainProjects[i].metrics.y},'
+    //     '${predictedValues[i]},${lowerBound[i]},${upperBound[i]}',
+    //   );
+    // }
+
     return (lowerBound, upperBound);
   }
 
   Future<(List<double>, List<double>)> calculateConfidenceInterval() async {
     final n = _predictedValues.length;
+
+    // Matrix X with intercept and factors
     final X = Matrix.fromColumns([
       Vector.fromList(List.filled(n, 1.0)),
       ...List.generate(
@@ -402,79 +413,81 @@ class RegressionModel {
     final xtX = xt * X;
     final xtXInverse = xtX.inverse();
 
-    // Calculate standard error for confidence interval
+    // Print covariance matrix
+    // _log.d("Covariance Matrix (X'X)^-1: $xtXInverse");
+
+    // Residuals and Mean Squared Error (MSE)
     final residuals = Vector.fromList(
       List.generate(n, (i) => _factors[i].y - _predictedValues[i]),
     );
     final mse = residuals.dot(residuals) / (n - p - 1);
 
+    // Print residual standard deviation (sqrt of MSE)
+    // _log.d('Residual Standard Deviation (sqrt(MSE)): ${sqrt(mse)}');
+
+    // Hat matrix and leverage values
     final hatMatrix = X * xtXInverse * xt;
     final leverageDiagonal = List.generate(n, (i) => hatMatrix[i][i]);
 
+    // Standard error for confidence interval
     final seConf = List.generate(
       n,
       (i) => sqrt(mse * leverageDiagonal[i]),
     );
 
+    // Student's t-distribution quantile
     final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - p - 1);
-    final confMargin = List.generate(n, (i) => tValue! * seConf[i]);
+    // _log.d('Student t-quantile (t-value): $tValue');
 
+    // Confidence margin and intervals
+    final confMargin = List.generate(n, (i) => tValue! * seConf[i]);
     final confLower =
         List.generate(n, (i) => _predictedValues[i] - confMargin[i]);
     final confUpper =
         List.generate(n, (i) => _predictedValues[i] + confMargin[i]);
 
+    // Print mean vector (average of each column in X)
+    // final meanVector =
+    //     Vector.fromList(X.columns.map((col) => col.mean()).toList());
+    // _log.d('Mean Vector: $meanVector');
+
+    // for (var i = 0; i < n; i++) {
+    //   _log.d(
+    //     'Confidence interval for project ${i + 1},'
+    //     '${trainProjects[i].url},${trainProjects[i].metrics.y},'
+    //     '${_predictedValues[i]},${confLower[i]},${confUpper[i]}',
+    //   );
+    // }
+
     return (confLower, confUpper);
   }
 
-  Future<double> calculateProjectQuality(double y) async {
+  Future<QualityTypes> calculateProjectQuality(double y) async {
     final (predLower, predUpper) = await calculatePredictionInterval(
       includeProjectsForTesting: false,
     );
     final (confLower, confUpper) = await calculateConfidenceInterval();
-    _log
-      ..i('Confidence interval: $confLower - $confUpper')
-      ..i('Prediction interval: $predLower - $predUpper');
 
-    final avgConfLower = _algebra.average(confLower);
-    final avgConfUpper = _algebra.average(confUpper);
     final avgPredLower = _algebra.average(predLower);
     final avgPredUpper = _algebra.average(predUpper);
+    final avgConfLower = _algebra.average(confLower);
+    final avgConfUpper = _algebra.average(confUpper);
 
-    // Calculate distances between intervals for scaling
-    final confInterval = avgConfUpper - avgConfLower;
-    final lowerPredInterval = avgConfLower - avgPredLower;
-    final upperPredInterval = avgPredUpper - avgConfUpper;
+    _log.i('Calculating quality for project with y = $y, '
+        'prediction interval: $avgPredLower - $avgPredUpper, '
+        'confidence interval: $avgConfLower - $avgConfUpper');
 
-    // Calculate quality percentage based on where y falls
     if (y >= avgConfLower && y <= avgConfUpper) {
-      // Within confidence interval - scale from 40% to 60%
-      final center = (avgConfUpper + avgConfLower) / 2;
-      final distanceFromCenter = (y - center).abs();
-      final maxDistance = confInterval / 2;
-      final positionInInterval = 1 - (distanceFromCenter / maxDistance);
-      return 0.4 + (positionInInterval * 0.2);
-    } else if (y < avgPredLower) {
-      // Below prediction interval - scale from 80% to 100%
-      final distanceBelowPred = avgPredLower - y;
-      final scaleFactor = min(distanceBelowPred / lowerPredInterval, 1);
-      return 0.8 + (scaleFactor * 0.2);
+      return QualityTypes.medium;
+    } else if (y > avgConfUpper && y <= avgPredUpper) {
+      return QualityTypes.low;
+    } else if (y >= avgPredLower && y < avgConfLower) {
+      return QualityTypes.high;
     } else if (y > avgPredUpper) {
-      // Above prediction interval - scale from 0% to 20%
-      final distanceAbovePred = y - avgPredUpper;
-      final scaleFactor = min(distanceAbovePred / upperPredInterval, 1);
-      return 0.2 * (1 - scaleFactor);
-    } else if (y > avgConfUpper) {
-      // Between confidence and upper prediction interval scale from 20% to 40%
-      final distanceAboveConf = y - avgConfUpper;
-      final scaleFactor = distanceAboveConf / upperPredInterval;
-      return 0.4 * (1 - scaleFactor);
-    } else {
-      // Between lower prediction and confidence interval scale from 60% to 80%
-      final distanceBelowConf = avgConfLower - y;
-      final scaleFactor = distanceBelowConf / lowerPredInterval;
-      return 0.6 + (scaleFactor * 0.2);
+      return QualityTypes.low;
     }
+
+    return QualityTypes.unknown;
   }
 }
 

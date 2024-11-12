@@ -37,11 +37,14 @@ class Utils {
     );
   }
 
-  static String formatNumber(double number) {
+  static String formatNumber(double? number) {
+    if (number == null) {
+      return '0';
+    }
     if (number % 1 == 0) {
       return number.toStringAsFixed(0);
     }
-    return number.toStringAsFixed(4);
+    return number.toStringAsFixed(4).replaceAll(RegExp(r'0*$'), '');
   }
 
   static void copyToClipboard(String value, BuildContext context) {

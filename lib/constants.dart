@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 const appName = 'Flutter Stats';
 const List<String> intervalHeaders = [
   'Lower confidence limit',
@@ -22,3 +24,25 @@ const aliases = [
 ];
 
 const email = 'shebnik@outlook.com';
+
+enum QualityTypes {
+  high,
+  medium,
+  low,
+  unknown,
+}
+
+extension QualityTypesExtension on QualityTypes {
+  Color get color {
+    switch (this) {
+      case QualityTypes.high:
+        return Colors.green;
+      case QualityTypes.medium:
+        return Colors.orange;
+      case QualityTypes.low:
+        return Colors.red;
+      case QualityTypes.unknown:
+        return Colors.grey;
+    }
+  }
+}

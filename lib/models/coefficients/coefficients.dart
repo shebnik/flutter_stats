@@ -8,7 +8,7 @@ part 'coefficients.g.dart';
 class Coefficients with _$Coefficients {
   const factory Coefficients({
     required List<double> b,
-    required double sigma,
+    required double epsilon,
   }) = _Coefficients;
 
   factory Coefficients.fromJson(Map<String, dynamic> json) =>
@@ -16,6 +16,6 @@ class Coefficients with _$Coefficients {
 
   factory Coefficients.empty() => const Coefficients(
         b: [],
-        sigma: 0,
+        epsilon: 0,
       );
 }
