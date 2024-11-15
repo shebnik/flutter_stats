@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/models/coefficients/coefficients.dart';
+import 'package:flutter_stats/models/intervals/intervals.dart';
 import 'package:flutter_stats/models/model_quality/model_quality.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/models/regression_factors/regression_factors.dart';
@@ -26,7 +27,6 @@ class RegressionModel {
       _splitData();
     }
     _evaluateModel();
-    _testModel();
   }
 
   final _log = LoggerService.instance;
@@ -54,6 +54,9 @@ class RegressionModel {
 
   ModelQuality _testModelQuality = ModelQuality.empty();
   ModelQuality get testModelQuality => _testModelQuality;
+
+  Intervals _intervals = Intervals.empty();
+  Intervals get intervals => _intervals;
 
   int get p => (_factors.firstOrNull?.x.length ?? 0) + 1;
 
@@ -133,7 +136,7 @@ class RegressionModel {
     _testProjects = remainingProjects.skip(nTrain).toList();
   }
 
-  Coefficients _calculateRegressionCoefficients({
+  Coefficients calculateRegressionCoefficients({
     List<RegressionFactors>? factors,
   }) {
     factors ??= _factors;
@@ -173,18 +176,21 @@ class RegressionModel {
     // Calculate the coefficients: (X^T * X)^-1 * (X^T * y)
     final coefficients = xtXInverse * xty;
 
-    final yPred = X * coefficients;
-    final residuals = y - yPred;
-    final mse = residuals.dot(residuals) / (n - p - 1);
-    final epsilon = sqrt(mse);
-
     return Coefficients(
       b: List<double>.from(coefficients.map((value) => value.first)),
-      epsilon: epsilon,
+      epsilon: 0,
     );
   }
 
-  List<double> _calculatePredictedValues({
+  double _calculateEpsilon(List<double> y, List<double> predictedY) {
+    final residuals = List.generate(y.length, (i) => y[i] - predictedY[i]);
+    final n = residuals.length;
+    return sqrt(
+      residuals.map((r) => pow(r, 2)).reduce((a, b) => a + b) / (n - 3),
+    );
+  }
+
+  List<double> calculatePredictedValues({
     List<RegressionFactors>? factors,
     Coefficients? coefficients,
   }) {
@@ -196,31 +202,14 @@ class RegressionModel {
       for (var j = 1; j < coefficients.b.length; j++) {
         prediction += coefficients.b[j] * factor.x[j - 1];
       }
-      final epsilon = factor.y - prediction;
-      return prediction + epsilon;
-    });
-  }
-
-  List<double> _calculateNonlinearPredictedValues({
-    List<RegressionFactors>? factors,
-    Coefficients? coefficients,
-  }) {
-    factors ??= _factors;
-    coefficients ??= _coefficients;
-    return List.generate(factors.length, (i) {
-      final factor = factors![i];
-      var prediction = pow(10, coefficients!.b[0]);
-      for (var j = 1; j < coefficients.b.length; j++) {
-        prediction *= pow(factor.x[j - 1], coefficients.b[j]);
-      }
-      return prediction.toDouble();
+      return prediction;
     });
   }
 
   ModelQuality _calculateModelQuality({
     required List<double> y,
     required List<double> yHat,
-    bool normalized = false,
+    bool normalized = true,
   }) {
     if (normalized) {
       y = _normalization.revertNormalization(y);
@@ -250,39 +239,56 @@ class RegressionModel {
     );
   }
 
-  void _evaluateModel() {
+  Future<void> _evaluateModel() async {
     final normalizedProjects = _normalization.normalizeProjects(_trainProjects);
     _factors = normalizedProjects.map(RegressionFactors.fromProject).toList();
     _log.i('Factors: ${_factors.length}');
 
-    _coefficients = _calculateRegressionCoefficients();
+    _coefficients = calculateRegressionCoefficients();
     _log.i('Coefficients: ${_coefficients.b}');
 
-    _predictedValues = _calculateNonlinearPredictedValues(
-      factors: _trainProjects.map(RegressionFactors.fromProject).toList(),
-    );
+    _predictedValues = calculatePredictedValues();
     _log.i('Predicted values ${_predictedValues.length}: $_predictedValues');
 
+    _coefficients = _coefficients.copyWith(
+      epsilon: _calculateEpsilon(
+        _factors.map((e) => e.y).toList(),
+        calculatePredictedValues(),
+      ),
+    );
+
     _modelQuality = _calculateModelQuality(
-      y: _trainProjects.map((p) => p.metrics.y).toList(),
+      y: _factors.map((f) => f.y).toList(),
       yHat: _predictedValues,
     );
     _log.i('Model quality: $_modelQuality');
+    _intervals = await calculateIntervals(
+      zyHat: _predictedValues,
+      z: _factors.map((f) => f.x).toList(),
+      zy: factors.map((f) => f.y).toList(),
+    );
+    await _testModel();
   }
 
   Future<void> _testModel() async {
+    final normalizedProjects = _normalization.normalizeProjects(_trainProjects);
     final normalizedTestProjects =
         _normalization.normalizeProjects(_testProjects);
-
-    await _testProjectsQuality(normalizedTestProjects);
+    final factors =
+        normalizedTestProjects.map(RegressionFactors.fromProject).toList();
 
     _testModelQuality = _calculateModelQuality(
-      y: _testProjects.map((p) => p.metrics.y).toList(),
-      yHat: _calculateNonlinearPredictedValues(
-        factors: _testProjects.map(RegressionFactors.fromProject).toList(),
+      y: factors.map((f) => f.y).toList(),
+      yHat: calculatePredictedValues(
+        factors: factors,
+        coefficients: _coefficients,
       ),
     );
     _log.i('Test model quality: $_testModelQuality');
+
+    await _testProjectsQuality(
+      [...normalizedProjects, ...normalizedTestProjects],
+    );
   }
 
   Future<void> _testProjectsQuality(List<Project> projects) async {
@@ -290,18 +296,13 @@ class RegressionModel {
     var mediumQualityCount = 0;
     var lowQualityCount = 0;
 
-    final (predLower, predUpper) = await calculatePredictionInterval(
-      includeProjectsForTesting: false,
-    );
-    final (confLower, confUpper) = await calculateConfidenceInterval();
+    final avgPredLower = _algebra.average(intervals.predictionLower);
+    final avgPredUpper = _algebra.average(intervals.predictionUpper);
+    final avgConfLower = _algebra.average(intervals.confidenceLower);
+    final avgConfUpper = _algebra.average(intervals.confidenceUpper);
 
     for (var i = 0; i < projects.length; i++) {
       final project = projects[i];
-
-      final avgPredLower = _algebra.average(predLower);
-      final avgPredUpper = _algebra.average(predUpper);
-      final avgConfLower = _algebra.average(confLower);
-      final avgConfUpper = _algebra.average(confUpper);
 
       final y = pow(10, project.metrics.y);
 
@@ -339,139 +340,86 @@ class RegressionModel {
     return prediction.toDouble();
   }
 
-  Future<(List<double>, List<double>)> calculatePredictionInterval({
-    required bool includeProjectsForTesting,
+  Future<Intervals> calculateIntervals({
+    required List<List<double>> z,
+    required List<double> zy,
+    required List<double> zyHat,
   }) async {
-    var factors = _factors;
-    var predictedValues = _predictedValues;
+    final n = z.length;
+    final p = z.first.length;
+    final nu = n - (p + 1); // Degrees of freedom
 
-    if (includeProjectsForTesting) {
-      final normalizedProjects = _normalization.normalizeProjects(_projects);
-      factors = normalizedProjects.map(RegressionFactors.fromProject).toList();
-      final coefficients = _calculateRegressionCoefficients(
-        factors: factors,
+    // Calculate t-statistic
+    final tStat = await Student.inv2T(alpha: 0.05 / 2, df: nu) ?? 0;
+
+    try {
+      // Calculate residual standard deviation
+      final residuals = List.generate(n, (i) => zy[i] - zyHat[i]);
+      final szy =
+          sqrt(residuals.map((r) => r * r).reduce((a, b) => a + b) / nu);
+
+      // Calculate means for each predictor
+      final zMeans = List.generate(
+        p,
+        (j) => z.map((row) => row[j]).reduce((a, b) => a + b) / n,
       );
-      predictedValues = _calculatePredictedValues(
-        factors: factors,
-        coefficients: coefficients,
+
+      // Calculate centered Z matrix
+      final zCentered =
+          List.generate(n, (i) => List.generate(p, (j) => z[i][j] - zMeans[j]));
+
+      // Calculate covariance matrix
+      final sZ = _algebra.matrixMultiply(
+        _algebra.transposeMatrix(zCentered),
+        zCentered,
       );
+
+      // Invert covariance matrix
+      final sZInv = _algebra.invertMatrix(sZ);
+
+      // Calculate quadratic form for each observation
+      final quadraticForm = List.generate(n, (i) {
+        final temp = _algebra.matrixVectorMultiply(sZInv, zCentered[i]);
+        return List.generate(p, (j) => temp[j] * zCentered[i][j])
+            .reduce((a, b) => a + b);
+      });
+
+      // Calculate intervals in log scale
+      final predLower = List.generate(
+        n,
+        (i) => zyHat[i] - tStat * szy * sqrt(1 + 1 / n + quadraticForm[i]),
+      );
+      final predUpper = List.generate(
+        n,
+        (i) => zyHat[i] + tStat * szy * sqrt(1 + 1 / n + quadraticForm[i]),
+      );
+      final confLower = List.generate(
+        n,
+        (i) => zyHat[i] - tStat * szy * sqrt(1 / n + quadraticForm[i]),
+      );
+      final confUpper = List.generate(
+        n,
+        (i) => zyHat[i] + tStat * szy * sqrt(1 / n + quadraticForm[i]),
+      );
+
+      // Transform back to original scale
+      return Intervals(
+        predictionLower: predLower.map((x) => pow(10, x).toDouble()).toList(),
+        predictionUpper: predUpper.map((x) => pow(10, x).toDouble()).toList(),
+        confidenceLower: confLower.map((x) => pow(10, x).toDouble()).toList(),
+        confidenceUpper: confUpper.map((x) => pow(10, x).toDouble()).toList(),
+      );
+    } catch (e) {
+      _log.e('Failed to calculate intervals: $e');
+      return Intervals.empty();
     }
-
-    final n = factors.length;
-
-    final X = Matrix.fromColumns([
-      Vector.fromList(List.filled(n, 1.0)),
-      ...List.generate(
-        p - 1,
-        (i) => Vector.fromList(factors.map((f) => f.x[i]).toList()),
-      ),
-    ]);
-    final y = Vector.fromList(factors.map((f) => f.y).toList());
-
-    final residuals = Vector.fromList(
-      List.generate(n, (i) => y[i] - predictedValues[i]),
-    );
-    final mse = residuals.dot(residuals) / (n - p - 1);
-
-    final leverage = X * (X.transpose() * X).inverse() * X.transpose();
-    final leverageDiagonal = List.generate(n, (i) => leverage[i][i]);
-    final se = List.generate(n, (i) => sqrt(mse * (1 + leverageDiagonal[i])));
-
-    final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - p - 1);
-    final margin = List.generate(n, (i) => tValue! * se[i]);
-
-    final lowerBound = List.generate(n, (i) => predictedValues[i] - margin[i]);
-    final upperBound = List.generate(n, (i) => predictedValues[i] + margin[i]);
-
-    // for (var i = 0; i < n; i++) {
-    //   _log.d(
-    //     'Prediction interval for project ${i + 1},'
-    //     // ignore: lines_longer_than_80_chars
-    //     '${includeProjectsForTesting ? _projects[i].url : trainProjects[i].url},'
-    //     // ignore: lines_longer_than_80_chars
-    //     '${includeProjectsForTesting ? _projects[i].metrics.y : trainProjects[i].metrics.y},'
-    //     '${predictedValues[i]},${lowerBound[i]},${upperBound[i]}',
-    //   );
-    // }
-
-    return (lowerBound, upperBound);
-  }
-
-  Future<(List<double>, List<double>)> calculateConfidenceInterval() async {
-    final n = _predictedValues.length;
-
-    // Matrix X with intercept and factors
-    final X = Matrix.fromColumns([
-      Vector.fromList(List.filled(n, 1.0)),
-      ...List.generate(
-        p - 1,
-        (i) => Vector.fromList(_factors.map((f) => f.x[i]).toList()),
-      ),
-    ]);
-
-    final xt = X.transpose();
-    final xtX = xt * X;
-    final xtXInverse = xtX.inverse();
-
-    // Print covariance matrix
-    // _log.d("Covariance Matrix (X'X)^-1: $xtXInverse");
-
-    // Residuals and Mean Squared Error (MSE)
-    final residuals = Vector.fromList(
-      List.generate(n, (i) => _factors[i].y - _predictedValues[i]),
-    );
-    final mse = residuals.dot(residuals) / (n - p - 1);
-
-    // Print residual standard deviation (sqrt of MSE)
-    // _log.d('Residual Standard Deviation (sqrt(MSE)): ${sqrt(mse)}');
-
-    // Hat matrix and leverage values
-    final hatMatrix = X * xtXInverse * xt;
-    final leverageDiagonal = List.generate(n, (i) => hatMatrix[i][i]);
-
-    // Standard error for confidence interval
-    final seConf = List.generate(
-      n,
-      (i) => sqrt(mse * leverageDiagonal[i]),
-    );
-
-    // Student's t-distribution quantile
-    final tValue = await Student.inv2T(alpha: 1 - alpha / 2, df: n - p - 1);
-    // _log.d('Student t-quantile (t-value): $tValue');
-
-    // Confidence margin and intervals
-    final confMargin = List.generate(n, (i) => tValue! * seConf[i]);
-    final confLower =
-        List.generate(n, (i) => _predictedValues[i] - confMargin[i]);
-    final confUpper =
-        List.generate(n, (i) => _predictedValues[i] + confMargin[i]);
-
-    // Print mean vector (average of each column in X)
-    // final meanVector =
-    //     Vector.fromList(X.columns.map((col) => col.mean()).toList());
-    // _log.d('Mean Vector: $meanVector');
-
-    // for (var i = 0; i < n; i++) {
-    //   _log.d(
-    //     'Confidence interval for project ${i + 1},'
-    //     '${trainProjects[i].url},${trainProjects[i].metrics.y},'
-    //     '${_predictedValues[i]},${confLower[i]},${confUpper[i]}',
-    //   );
-    // }
-
-    return (confLower, confUpper);
   }
 
   Future<QualityTypes> calculateProjectQuality(double y) async {
-    final (predLower, predUpper) = await calculatePredictionInterval(
-      includeProjectsForTesting: false,
-    );
-    final (confLower, confUpper) = await calculateConfidenceInterval();
-
-    final avgPredLower = _algebra.average(predLower);
-    final avgPredUpper = _algebra.average(predUpper);
-    final avgConfLower = _algebra.average(confLower);
-    final avgConfUpper = _algebra.average(confUpper);
+    final avgPredLower = _algebra.average(intervals.predictionLower);
+    final avgPredUpper = _algebra.average(intervals.predictionUpper);
+    final avgConfLower = _algebra.average(intervals.confidenceLower);
+    final avgConfUpper = _algebra.average(intervals.confidenceUpper);
 
     _log.i('Calculating quality for project with y = $y, '
         'prediction interval: $avgPredLower - $avgPredUpper, '

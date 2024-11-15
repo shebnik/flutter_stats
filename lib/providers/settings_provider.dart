@@ -14,6 +14,7 @@ class SettingsProvider extends ChangeNotifier {
   Settings get settings => _settings;
 
   bool get useRelativeNOC => _settings.useRelativeNOC;
+  bool get divideYByNOC => _settings.divideYByNOC;
   bool get useYInThousands => _settings.useYInThousands;
   String get nocAlias => _settings.csvAlias.noc;
   bool get hasX2 => _settings.hasX2;
@@ -36,6 +37,12 @@ class SettingsProvider extends ChangeNotifier {
   set useRelativeNOC(bool value) {
     _log.i('Setting useRelativeNOC: $value');
     _settings = _settings.copyWith(useRelativeNOC: value);
+    notifyListeners();
+  }
+
+  set divideYByNOC(bool value) {
+    _log.i('Setting divideYByNOC: $value');
+    _settings = _settings.copyWith(divideYByNOC: value);
     notifyListeners();
   }
 

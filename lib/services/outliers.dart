@@ -92,14 +92,24 @@ class Outliers {
   Future<List<bool>> calculatePredictionIntervalOutliers(
     RegressionModel regressionModel,
   ) async {
-    // Calculate prediction intervals
-    final (lowerBound, upperBound) = await regressionModel
-        .calculatePredictionInterval(includeProjectsForTesting: true);
+    final coefficients =
+        regressionModel.calculateRegressionCoefficients(factors: _factors);
+    final zyHat = regressionModel.calculatePredictedValues(
+      factors: _factors,
+      coefficients: coefficients,
+    );
+
+    final intervals = await regressionModel.calculateIntervals(
+      z: _factors.map((f) => f.x).toList(),
+      zy: _factors.map((f) => f.y).toList(),
+      zyHat: zyHat,
+    );
 
     // Check if each point falls outside the prediction intervals
     return List.generate(n, (i) {
-      final actualValue = _factors[i].y;
-      return actualValue < lowerBound[i] || actualValue > upperBound[i];
+      final actualValue = pow(10, _factors[i].y);
+      return actualValue < intervals.predictionLower[i] ||
+          actualValue > intervals.predictionUpper[i];
     });
   }
 }

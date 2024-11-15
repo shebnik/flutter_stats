@@ -41,6 +41,7 @@ class ProjectsProvider with ChangeNotifier {
   Future<void> setProjects(
     List<Project>? projects, {
     required bool useRelativeNOC,
+    required bool divideYByNOC,
     bool refit = true,
   }) async {
     if (projects == null) return;
@@ -48,7 +49,10 @@ class ProjectsProvider with ChangeNotifier {
     _projects = List.from(projects);
     _outliersRemoved = 0;
 
-    divideByNOC(useRelativeNOC: useRelativeNOC);
+    divideByNOC(
+      useRelativeNOC: useRelativeNOC,
+      divideYByNOC: divideYByNOC,
+    );
 
     if (refit) {
       refitModel();
@@ -110,14 +114,21 @@ class ProjectsProvider with ChangeNotifier {
 
   void useRelativeNOC({
     required bool useRelativeNOC,
+    required bool divideYByNOC,
   }) {
     if (_fileProjects.isEmpty) return;
-    divideByNOC(useRelativeNOC: useRelativeNOC);
+    divideByNOC(
+      useRelativeNOC: useRelativeNOC,
+      divideYByNOC: divideYByNOC,
+    );
     notifyListeners();
     refitModel();
   }
 
-  void divideByNOC({required bool useRelativeNOC}) {
+  void divideByNOC({
+    required bool useRelativeNOC,
+    required bool divideYByNOC,
+  }) {
     if (useRelativeNOC) {
       _projects = _fileProjects.map((e) {
         final metrics = e.metrics;
@@ -125,7 +136,7 @@ class ProjectsProvider with ChangeNotifier {
             metrics.noc != null && metrics.noc! > 0 ? metrics.noc! : 1.0;
         return e.copyWith(
           metrics: metrics.copyWith(
-            y: metrics.y / denominator,
+            y: divideYByNOC ? metrics.y / denominator : metrics.y,
             x1: metrics.x1 / denominator,
             x2: metrics.x2 != null ? metrics.x2! / denominator : null,
             x3: metrics.x3 != null ? metrics.x3! / denominator : null,

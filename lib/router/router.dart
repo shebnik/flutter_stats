@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stats/models/intervals/intervals.dart';
+import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/router/scaffold_nav.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/views/metrics_view.dart';
@@ -6,7 +8,9 @@ import 'package:flutter_stats/views/outliers_view.dart';
 import 'package:flutter_stats/views/prediction_view.dart';
 import 'package:flutter_stats/views/regression_view.dart';
 import 'package:flutter_stats/views/settings_view.dart';
+import 'package:flutter_stats/widgets/intervals_table.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -26,9 +30,10 @@ enum AppRouteType {
 }
 
 class AppRoute {
-  AppRoute(this.type, this.view);
+  AppRoute(this.type, this.view, {this.childRoutes = const []});
   final AppRouteType type;
   final Widget view;
+  final List<GoRoute> childRoutes;
 
   String get name => type.name;
   String get path => '/$name';
@@ -43,7 +48,23 @@ final List<AppRoute> appRoutes = [
   AppRoute(AppRouteType.projects, const MetricsView()),
   AppRoute(AppRouteType.outliers, const OutliersView()),
   AppRoute(AppRouteType.regression, const RegressionView()),
-  AppRoute(AppRouteType.prediction, const PredictionView()),
+  AppRoute(
+    AppRouteType.prediction,
+    const PredictionView(),
+    childRoutes: [
+      GoRoute(
+        name: 'intervals',
+        path: '/intervals',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: IntervalsTable(
+            intervals:
+                context.read<RegressionModelProvider>().model?.intervals ??
+                    Intervals.empty(),
+          ),
+        ),
+      ),
+    ],
+  ),
 ];
 
 GoRouter router = GoRouter(
@@ -76,6 +97,7 @@ List<StatefulShellBranch> _buildBranches() {
           path: route.path,
           name: route.name,
           pageBuilder: (context, state) => route.page,
+          routes: route.childRoutes,
         ),
       ],
     );

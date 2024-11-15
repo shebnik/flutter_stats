@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
-import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/equation_formatter.dart';
 import 'package:flutter_stats/services/regression_model.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:flutter_stats/widgets/metrics_card.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
@@ -256,6 +256,10 @@ class _PredictionViewState extends State<PredictionView> {
                 const SizedBox(height: 32),
                 _availableFactorsRange(provider),
                 const SizedBox(height: 32),
+                TextButton(
+                  onPressed: () => context.pushNamed('intervals'),
+                  child: const Text('Show Intervals'),
+                ),
               ],
             );
           },

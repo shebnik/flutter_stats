@@ -130,6 +130,25 @@ class _SettingsViewState extends State<SettingsView> {
                       settings.useRelativeNOC = !settings.useRelativeNOC;
                       projectsProvider.useRelativeNOC(
                         useRelativeNOC: settings.useRelativeNOC,
+                        divideYByNOC: settings.divideYByNOC,
+                      );
+                      await updateDataset();
+                    },
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (settings.hasNOC) ...[
+                  const SizedBox(height: 16),
+                  TextSwitch(
+                    caption: 'Divide Y by NOC',
+                    subtitle: 'Please note that this will reset model'
+                        ' and detect new outliers',
+                    value: settings.divideYByNOC,
+                    onChanged: () async {
+                      settings.divideYByNOC = !settings.divideYByNOC;
+                      projectsProvider.useRelativeNOC(
+                        useRelativeNOC: settings.useRelativeNOC,
+                        divideYByNOC: settings.divideYByNOC,
                       );
                       await updateDataset();
                     },

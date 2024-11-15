@@ -21,6 +21,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Settings {
   bool get useRelativeNOC => throw _privateConstructorUsedError;
+  bool get divideYByNOC => throw _privateConstructorUsedError;
   bool get hasX2 => throw _privateConstructorUsedError;
   bool get hasX3 => throw _privateConstructorUsedError;
   bool get hasNOC => throw _privateConstructorUsedError;
@@ -44,6 +45,7 @@ abstract class $SettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool useRelativeNOC,
+      bool divideYByNOC,
       bool hasX2,
       bool hasX3,
       bool hasNOC,
@@ -69,6 +71,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   @override
   $Res call({
     Object? useRelativeNOC = null,
+    Object? divideYByNOC = null,
     Object? hasX2 = null,
     Object? hasX3 = null,
     Object? hasNOC = null,
@@ -79,6 +82,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       useRelativeNOC: null == useRelativeNOC
           ? _value.useRelativeNOC
           : useRelativeNOC // ignore: cast_nullable_to_non_nullable
+              as bool,
+      divideYByNOC: null == divideYByNOC
+          ? _value.divideYByNOC
+          : divideYByNOC // ignore: cast_nullable_to_non_nullable
               as bool,
       hasX2: null == hasX2
           ? _value.hasX2
@@ -124,6 +131,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool useRelativeNOC,
+      bool divideYByNOC,
       bool hasX2,
       bool hasX3,
       bool hasNOC,
@@ -148,6 +156,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? useRelativeNOC = null,
+    Object? divideYByNOC = null,
     Object? hasX2 = null,
     Object? hasX3 = null,
     Object? hasNOC = null,
@@ -158,6 +167,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
       useRelativeNOC: null == useRelativeNOC
           ? _value.useRelativeNOC
           : useRelativeNOC // ignore: cast_nullable_to_non_nullable
+              as bool,
+      divideYByNOC: null == divideYByNOC
+          ? _value.divideYByNOC
+          : divideYByNOC // ignore: cast_nullable_to_non_nullable
               as bool,
       hasX2: null == hasX2
           ? _value.hasX2
@@ -189,6 +202,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
 class _$SettingsImpl implements _Settings {
   const _$SettingsImpl(
       {this.useRelativeNOC = false,
+      this.divideYByNOC = false,
       this.hasX2 = true,
       this.hasX3 = true,
       this.hasNOC = true,
@@ -201,6 +215,9 @@ class _$SettingsImpl implements _Settings {
   @override
   @JsonKey()
   final bool useRelativeNOC;
+  @override
+  @JsonKey()
+  final bool divideYByNOC;
   @override
   @JsonKey()
   final bool hasX2;
@@ -219,7 +236,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(useRelativeNOC: $useRelativeNOC, hasX2: $hasX2, hasX3: $hasX3, hasNOC: $hasNOC, useYInThousands: $useYInThousands, csvAlias: $csvAlias)';
+    return 'Settings(useRelativeNOC: $useRelativeNOC, divideYByNOC: $divideYByNOC, hasX2: $hasX2, hasX3: $hasX3, hasNOC: $hasNOC, useYInThousands: $useYInThousands, csvAlias: $csvAlias)';
   }
 
   @override
@@ -229,6 +246,8 @@ class _$SettingsImpl implements _Settings {
             other is _$SettingsImpl &&
             (identical(other.useRelativeNOC, useRelativeNOC) ||
                 other.useRelativeNOC == useRelativeNOC) &&
+            (identical(other.divideYByNOC, divideYByNOC) ||
+                other.divideYByNOC == divideYByNOC) &&
             (identical(other.hasX2, hasX2) || other.hasX2 == hasX2) &&
             (identical(other.hasX3, hasX3) || other.hasX3 == hasX3) &&
             (identical(other.hasNOC, hasNOC) || other.hasNOC == hasNOC) &&
@@ -240,8 +259,8 @@ class _$SettingsImpl implements _Settings {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, useRelativeNOC, hasX2, hasX3,
-      hasNOC, useYInThousands, csvAlias);
+  int get hashCode => Object.hash(runtimeType, useRelativeNOC, divideYByNOC,
+      hasX2, hasX3, hasNOC, useYInThousands, csvAlias);
 
   /// Create a copy of Settings
   /// with the given fields replaced by the non-null parameter values.
@@ -262,6 +281,7 @@ class _$SettingsImpl implements _Settings {
 abstract class _Settings implements Settings {
   const factory _Settings(
       {final bool useRelativeNOC,
+      final bool divideYByNOC,
       final bool hasX2,
       final bool hasX3,
       final bool hasNOC,
@@ -273,6 +293,8 @@ abstract class _Settings implements Settings {
 
   @override
   bool get useRelativeNOC;
+  @override
+  bool get divideYByNOC;
   @override
   bool get hasX2;
   @override

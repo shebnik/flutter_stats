@@ -10,6 +10,7 @@ class Settings with _$Settings {
   @JsonSerializable(explicitToJson: true)
   const factory Settings({
     @Default(false) bool useRelativeNOC,
+    @Default(false) bool divideYByNOC,
     @Default(true) bool hasX2,
     @Default(true) bool hasX3,
     @Default(true) bool hasNOC,

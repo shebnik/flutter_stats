@@ -94,6 +94,7 @@ class DataHandler {
       await projectsProvider.setProjects(
         projects,
         useRelativeNOC: settings.useRelativeNOC,
+        divideYByNOC: settings.divideYByNOC,
       );
     } catch (e, s) {
       _logger.e('Error loading data file', error: e, stackTrace: s);
@@ -172,6 +173,7 @@ class DataHandler {
             allProjects,
             useRelativeNOC: false,
             refit: false,
+            divideYByNOC: false,
           );
     } catch (e, s) {
       _logger.e('Error uploading file', error: e, stackTrace: s);

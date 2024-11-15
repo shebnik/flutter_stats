@@ -7,7 +7,7 @@ from scipy.stats import f, t, chi2, norm
 import random
 import pingouin as pg
 
-alpha = 0.05
+alpha = 0.005
 
 @dataclass(frozen=True)
 class Project:
@@ -145,7 +145,7 @@ def mardia_skewness_kurtosis(X):
     
     return beta_1_k, beta_2_k
 
-def mardia_tests(X, alpha=0.005):
+def mardia_tests(X):
     """
     Perform Mardia's test for multivariate skewness and kurtosis.
     
@@ -166,13 +166,13 @@ def mardia_tests(X, alpha=0.005):
     skewness_significant = skewness_stat > skewness_critical_value
     skewness_p_value = 1 - chi2.cdf(skewness_stat, df=skewness_df)
     
-    # Test statistic for kurtosis
+    # Test statistic for kurtosis using updated critical value
     expected_kurtosis = k * (k + 2)
     kurtosis_variance = 8 * k * (k + 2) / N
-    kurtosis_stat = (beta_2_k - expected_kurtosis) / np.sqrt(kurtosis_variance)
-    kurtosis_critical_value = norm.ppf(1 - alpha / 2)  # Two-tailed
-    kurtosis_significant = abs(kurtosis_stat) > kurtosis_critical_value
-    kurtosis_p_value = 2 * (1 - norm.cdf(abs(kurtosis_stat)))  # two-tailed test
+    kurtosis_stat = beta_2_k
+    kurtosis_critical_value = norm.ppf(1 - alpha, loc=expected_kurtosis, scale=np.sqrt(kurtosis_variance))
+    kurtosis_significant = kurtosis_stat > kurtosis_critical_value
+    kurtosis_p_value = 1 - norm.cdf(kurtosis_stat, loc=expected_kurtosis, scale=np.sqrt(kurtosis_variance))
     
     # Determine if the distribution is normal based on skewness and kurtosis tests
     normality = not (skewness_significant or kurtosis_significant)
@@ -188,7 +188,6 @@ def mardia_tests(X, alpha=0.005):
         "kurtosis_critical_value": kurtosis_critical_value,
         "normality": normality
     }
-
 
 def perform_mardia_test(data: np.ndarray):
     g_skew, g_kurt, p_skew, p_kurt = mardia_test(data)
@@ -263,7 +262,7 @@ def calculate_test_statistic(n: int, mahalanobis_distances: np.ndarray) -> np.nd
 
 
 def determine_outliers_mahalanobis(
-    projects: List[Project], alpha: float = 0.05
+    projects: List[Project]
 ) -> Tuple[List[int], List[Project]]:
     """Determine outliers using Mahalanobis distance."""
     Z = projects_to_array(projects)
@@ -296,7 +295,7 @@ def determine_outliers_mahalanobis(
 
 
 def calculate_prediction_interval(
-    Z: np.ndarray, Y_hat: np.ndarray, alpha: float = 0.05
+    Z: np.ndarray, Y_hat: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Calculate prediction interval for each data point."""
     X = np.column_stack((np.ones(Z.shape[0]), Z[:, :-1]))
@@ -458,6 +457,7 @@ def main():
     print(f"Initial number of data points: {len(projects)}")
 
     normalized_projects = normalize_data(projects)
+    print(mardia_tests(projects_to_array(normalized_projects)))
     final_projects = iterative_outlier_removal(normalized_projects)
 
     print(f"\nFinal number of data points after outlier removal: {len(final_projects)}")
@@ -472,7 +472,7 @@ def main():
     # save_to_csv(final_projects, "final_projects.csv")
     # save_to_csv(train_projects, "train_data.csv")
     # save_to_csv(test_projects, "test_data.csv")
-    # print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")
+    print("\nData has been split and saved to 'train_data.csv' and 'test_data.csv'")
 
 
 if __name__ == "__main__":

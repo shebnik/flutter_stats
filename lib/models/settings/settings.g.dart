@@ -9,6 +9,7 @@ part of 'settings.dart';
 _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
     _$SettingsImpl(
       useRelativeNOC: json['useRelativeNOC'] as bool? ?? false,
+      divideYByNOC: json['divideYByNOC'] as bool? ?? false,
       hasX2: json['hasX2'] as bool? ?? true,
       hasX3: json['hasX3'] as bool? ?? true,
       hasNOC: json['hasNOC'] as bool? ?? true,
@@ -21,6 +22,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
     <String, dynamic>{
       'useRelativeNOC': instance.useRelativeNOC,
+      'divideYByNOC': instance.divideYByNOC,
       'hasX2': instance.hasX2,
       'hasX3': instance.hasX3,
       'hasNOC': instance.hasNOC,

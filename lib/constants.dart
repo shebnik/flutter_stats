@@ -7,7 +7,7 @@ const List<String> intervalHeaders = [
   'Lower prediction limit',
   'Upper prediction limit',
 ];
-const alpha = 0.05;
+const alpha = 0.005;
 
 const assetsPath = 'assets';
 const iconsPath = '$assetsPath/icons';
@@ -46,3 +46,11 @@ extension QualityTypesExtension on QualityTypes {
     }
   }
 }
+
+const intervalsHeaders = [
+  '№',
+  'Lower confidence',
+  'Upper confidence',
+  'Lower prediction',
+  'Upper prediction',
+];
