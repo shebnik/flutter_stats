@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/dataset/dataset.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
-import 'package:flutter_stats/services/logging/logger_service.dart';
-import 'package:flutter_stats/services/normalization.dart';
 import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/services/regression_model.dart';
-import 'package:flutter_stats/services/utils.dart';
 
 class ProjectsProvider with ChangeNotifier {
   ProjectsProvider(
@@ -17,7 +14,6 @@ class ProjectsProvider with ChangeNotifier {
 
   final RegressionModelProvider _regressionModelProvider;
   Dataset? dataset;
-  final _log = LoggerService.instance;
 
   List<Project> _fileProjects = [];
   List<Project> _projects = [];
@@ -66,16 +62,8 @@ class ProjectsProvider with ChangeNotifier {
   Future<void> removeProjects(List<int> indexes) async {
     indexes.sort();
     final outliers = <Project>[];
-    final normalized = Normalization().normalizeProjects(projects);
-    var i = 1;
     for (final index in indexes) {
       outliers.add(_projects[index]);
-      _log.i('Removing $i project: ${_projects[index].name}'
-          ' Zy: ${Utils.formatNumber(normalized[index].metrics.y)}'
-          ' Zx1: ${Utils.formatNumber(normalized[index].metrics.x1)}'
-          ' Zx2: ${Utils.formatNumber(normalized[index].metrics.x2 ?? 0.0)}'
-          ' with ts: ${Utils.formatNumber(testStatistics[index])}');
-      i++;
     }
     _projects.removeWhere(outliers.contains);
     _fileProjects.removeWhere(outliers.contains);

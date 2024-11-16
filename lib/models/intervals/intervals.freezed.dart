@@ -20,6 +20,8 @@ Intervals _$IntervalsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Intervals {
+  List<double> get y => throw _privateConstructorUsedError;
+  List<double> get yHat => throw _privateConstructorUsedError;
   List<double> get predictionLower => throw _privateConstructorUsedError;
   List<double> get predictionUpper => throw _privateConstructorUsedError;
   List<double> get confidenceLower => throw _privateConstructorUsedError;
@@ -41,7 +43,9 @@ abstract class $IntervalsCopyWith<$Res> {
       _$IntervalsCopyWithImpl<$Res, Intervals>;
   @useResult
   $Res call(
-      {List<double> predictionLower,
+      {List<double> y,
+      List<double> yHat,
+      List<double> predictionLower,
       List<double> predictionUpper,
       List<double> confidenceLower,
       List<double> confidenceUpper});
@@ -62,12 +66,22 @@ class _$IntervalsCopyWithImpl<$Res, $Val extends Intervals>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? y = null,
+    Object? yHat = null,
     Object? predictionLower = null,
     Object? predictionUpper = null,
     Object? confidenceLower = null,
     Object? confidenceUpper = null,
   }) {
     return _then(_value.copyWith(
+      y: null == y
+          ? _value.y
+          : y // ignore: cast_nullable_to_non_nullable
+              as List<double>,
+      yHat: null == yHat
+          ? _value.yHat
+          : yHat // ignore: cast_nullable_to_non_nullable
+              as List<double>,
       predictionLower: null == predictionLower
           ? _value.predictionLower
           : predictionLower // ignore: cast_nullable_to_non_nullable
@@ -97,7 +111,9 @@ abstract class _$$IntervalsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {List<double> predictionLower,
+      {List<double> y,
+      List<double> yHat,
+      List<double> predictionLower,
       List<double> predictionUpper,
       List<double> confidenceLower,
       List<double> confidenceUpper});
@@ -116,12 +132,22 @@ class __$$IntervalsImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? y = null,
+    Object? yHat = null,
     Object? predictionLower = null,
     Object? predictionUpper = null,
     Object? confidenceLower = null,
     Object? confidenceUpper = null,
   }) {
     return _then(_$IntervalsImpl(
+      y: null == y
+          ? _value._y
+          : y // ignore: cast_nullable_to_non_nullable
+              as List<double>,
+      yHat: null == yHat
+          ? _value._yHat
+          : yHat // ignore: cast_nullable_to_non_nullable
+              as List<double>,
       predictionLower: null == predictionLower
           ? _value._predictionLower
           : predictionLower // ignore: cast_nullable_to_non_nullable
@@ -146,17 +172,37 @@ class __$$IntervalsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$IntervalsImpl implements _Intervals {
   const _$IntervalsImpl(
-      {required final List<double> predictionLower,
+      {required final List<double> y,
+      required final List<double> yHat,
+      required final List<double> predictionLower,
       required final List<double> predictionUpper,
       required final List<double> confidenceLower,
       required final List<double> confidenceUpper})
-      : _predictionLower = predictionLower,
+      : _y = y,
+        _yHat = yHat,
+        _predictionLower = predictionLower,
         _predictionUpper = predictionUpper,
         _confidenceLower = confidenceLower,
         _confidenceUpper = confidenceUpper;
 
   factory _$IntervalsImpl.fromJson(Map<String, dynamic> json) =>
       _$$IntervalsImplFromJson(json);
+
+  final List<double> _y;
+  @override
+  List<double> get y {
+    if (_y is EqualUnmodifiableListView) return _y;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_y);
+  }
+
+  final List<double> _yHat;
+  @override
+  List<double> get yHat {
+    if (_yHat is EqualUnmodifiableListView) return _yHat;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_yHat);
+  }
 
   final List<double> _predictionLower;
   @override
@@ -192,7 +238,7 @@ class _$IntervalsImpl implements _Intervals {
 
   @override
   String toString() {
-    return 'Intervals(predictionLower: $predictionLower, predictionUpper: $predictionUpper, confidenceLower: $confidenceLower, confidenceUpper: $confidenceUpper)';
+    return 'Intervals(y: $y, yHat: $yHat, predictionLower: $predictionLower, predictionUpper: $predictionUpper, confidenceLower: $confidenceLower, confidenceUpper: $confidenceUpper)';
   }
 
   @override
@@ -200,6 +246,8 @@ class _$IntervalsImpl implements _Intervals {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$IntervalsImpl &&
+            const DeepCollectionEquality().equals(other._y, _y) &&
+            const DeepCollectionEquality().equals(other._yHat, _yHat) &&
             const DeepCollectionEquality()
                 .equals(other._predictionLower, _predictionLower) &&
             const DeepCollectionEquality()
@@ -214,6 +262,8 @@ class _$IntervalsImpl implements _Intervals {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      const DeepCollectionEquality().hash(_y),
+      const DeepCollectionEquality().hash(_yHat),
       const DeepCollectionEquality().hash(_predictionLower),
       const DeepCollectionEquality().hash(_predictionUpper),
       const DeepCollectionEquality().hash(_confidenceLower),
@@ -237,7 +287,9 @@ class _$IntervalsImpl implements _Intervals {
 
 abstract class _Intervals implements Intervals {
   const factory _Intervals(
-      {required final List<double> predictionLower,
+      {required final List<double> y,
+      required final List<double> yHat,
+      required final List<double> predictionLower,
       required final List<double> predictionUpper,
       required final List<double> confidenceLower,
       required final List<double> confidenceUpper}) = _$IntervalsImpl;
@@ -245,6 +297,10 @@ abstract class _Intervals implements Intervals {
   factory _Intervals.fromJson(Map<String, dynamic> json) =
       _$IntervalsImpl.fromJson;
 
+  @override
+  List<double> get y;
+  @override
+  List<double> get yHat;
   @override
   List<double> get predictionLower;
   @override

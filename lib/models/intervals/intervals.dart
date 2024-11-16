@@ -7,6 +7,8 @@ part 'intervals.g.dart';
 @freezed
 class Intervals with _$Intervals {
   const factory Intervals({
+    required List<double> y,
+    required List<double> yHat,
     required List<double> predictionLower,
     required List<double> predictionUpper,
     required List<double> confidenceLower,
@@ -17,6 +19,8 @@ class Intervals with _$Intervals {
       _$IntervalsFromJson(json);
 
   factory Intervals.empty() => const Intervals(
+        y: [],
+        yHat: [],
         predictionLower: [],
         predictionUpper: [],
         confidenceLower: [],

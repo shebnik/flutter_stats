@@ -64,6 +64,7 @@ class Outliers {
   Future<void> determineOutliers({
     RegressionModel? regressionModel,
   }) async {
+    _log.d('New outlier detection started');
     final testStatistics = calculateTestStatistics();
     final f = await calculateFisherFDistribution();
     if (f == null) {
@@ -72,8 +73,16 @@ class Outliers {
     }
     _log.i('Fisher F distribution: $f');
 
-    final mahalanobisOutliers =
-        List.generate(n, (i) => i).where((i) => testStatistics[i] > f).toList();
+    final epsilonOutliers = List.generate(n, (i) => i).where((i) {
+      final check = testStatistics[i] > f;
+      if (check) {
+        _log.i(
+          'Epsilon Outlier detected: ${projects[i].url} '
+          '${testStatistics[i]} > $f',
+        );
+      }
+      return check;
+    }).toList();
 
     if (regressionModel != null) {
       final predictionOutliers =
@@ -82,10 +91,13 @@ class Outliers {
           .where((i) => predictionOutliers[i])
           .toList();
 
-      _outliers = {...mahalanobisOutliers, ...predictionIndices}.toList()
+      _outliers = {
+        ...epsilonOutliers,
+        ...predictionIndices,
+      }.toList()
         ..sort();
     } else {
-      _outliers = mahalanobisOutliers;
+      _outliers = epsilonOutliers;
     }
   }
 
@@ -108,8 +120,24 @@ class Outliers {
     // Check if each point falls outside the prediction intervals
     return List.generate(n, (i) {
       final actualValue = pow(10, _factors[i].y);
-      return actualValue < intervals.predictionLower[i] ||
+      final check = actualValue < intervals.predictionLower[i] ||
           actualValue > intervals.predictionUpper[i];
+      if (check) {
+        if (actualValue < intervals.predictionLower[i]) {
+          _log.d(
+            'Prediction Outlier detected: ${projects[i].url} '
+            '$actualValue < ${intervals.predictionLower[i]} '
+            '(actual < lower)',
+          );
+        } else {
+          _log.d(
+            'Prediction Outlier detected: ${projects[i].url} '
+            '$actualValue > ${intervals.predictionUpper[i]} '
+            '(actual > upper)',
+          );
+        }
+      }
+      return check;
     });
   }
 }

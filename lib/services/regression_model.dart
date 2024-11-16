@@ -404,6 +404,8 @@ class RegressionModel {
 
       // Transform back to original scale
       return Intervals(
+        y: zy.map((x) => pow(10, x).toDouble()).toList(),
+        yHat: zyHat.map((x) => pow(10, x).toDouble()).toList(),
         predictionLower: predLower.map((x) => pow(10, x).toDouble()).toList(),
         predictionUpper: predUpper.map((x) => pow(10, x).toDouble()).toList(),
         confidenceLower: confLower.map((x) => pow(10, x).toDouble()).toList(),
