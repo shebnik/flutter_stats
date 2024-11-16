@@ -9,10 +9,12 @@ import 'package:flutter_stats/services/regression_model.dart';
 class ProjectsProvider with ChangeNotifier {
   ProjectsProvider(
     this._regressionModelProvider, {
+    required this.outliersProvider,
     this.dataset,
   });
 
   final RegressionModelProvider _regressionModelProvider;
+  final OutliersProvider outliersProvider;
   Dataset? dataset;
 
   List<Project> _fileProjects = [];
@@ -27,12 +29,6 @@ class ProjectsProvider with ChangeNotifier {
   }
 
   List<Project> get projects => _projects;
-  Outliers _outliers = Outliers([]);
-
-  List<double> get mahalanobisDistances =>
-      _outliers.calculateMahalanobisDistances();
-
-  List<double> get testStatistics => _outliers.calculateTestStatistics();
 
   Future<void> setProjects(
     List<Project>? projects, {
@@ -43,7 +39,6 @@ class ProjectsProvider with ChangeNotifier {
     if (projects == null) return;
     _fileProjects = List.from(projects);
     _projects = List.from(projects);
-    _outliersRemoved = 0;
 
     divideByNOC(
       useRelativeNOC: useRelativeNOC,
@@ -51,54 +46,18 @@ class ProjectsProvider with ChangeNotifier {
     );
 
     if (refit) {
+      _projects = await outliersProvider.removeAllOutliers(_projects);
+      setOutliersRemoved(_fileProjects.length - _projects.length);
       refitModel();
+    } else {
+      setOutliersRemoved(0);
     }
-    await refitOutliers(
-      _projects,
-    );
-    notifyListeners();
-  }
-
-  Future<void> removeProjects(List<int> indexes) async {
-    indexes.sort();
-    final outliers = <Project>[];
-    for (final index in indexes) {
-      outliers.add(_projects[index]);
-    }
-    _projects.removeWhere(outliers.contains);
-    _fileProjects.removeWhere(outliers.contains);
-
-    _outliersRemoved += indexes.length;
-    refitModel();
-    await refitOutliers(
-      _projects,
-    );
-    notifyListeners();
-  }
-
-  Future<void> removeProject(int index) async {
-    _projects.removeAt(index);
-    _fileProjects.removeAt(index);
-    _outliersRemoved++;
-    refitModel();
-    await refitOutliers(
-      _projects,
-    );
     notifyListeners();
   }
 
   void refitModel() {
     _regressionModelProvider.model = RegressionModel(_projects);
   }
-
-  Future<void> refitOutliers(List<Project> projects) async {
-    _outliers = Outliers(projects);
-    await _outliers.determineOutliers(
-      regressionModel: _regressionModelProvider.model,
-    );
-  }
-
-  List<int> get outliers => _outliers.outliers;
 
   void useRelativeNOC({
     required bool useRelativeNOC,

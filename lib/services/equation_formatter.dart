@@ -32,7 +32,7 @@ class EquationFormatter {
           ..write('}');
       }
 
-      buffer.write(r' + \sigma =');
+      buffer.write(' + ε =');
     }
 
     // Add constant term
@@ -65,7 +65,7 @@ class EquationFormatter {
     final buffer = StringBuffer(r'\hat{Y} = ');
 
     if (!isMobile) {
-      buffer.write(r'10^{\beta_0 + \sigma}');
+      buffer.write(r'10^{\beta_0 + ε}');
 
       // Add beta terms
       for (var i = 1; i < coefficients.b.length; i++) {
@@ -80,7 +80,7 @@ class EquationFormatter {
       buffer.write(' = ');
     }
 
-    // Add base and sigma
+    // Add base and epsilon
     buffer
       ..write('10^{')
       ..write(Utils.formatNumber(coefficients.b[0]))
@@ -115,8 +115,8 @@ class EquationFormatter {
 
     // Desktop format includes beta coefficients
     if (!isMobile) {
-      // Add base with optional sigma
-      buffer.write(r'10^{\beta_0 + \sigma}');
+      // Add base with epsilon
+      buffer.write(r'10^{\beta_0 + ε}');
 
       // Add beta terms dynamically
       for (var i = 1; i < coefficients.b.length; i++) {
@@ -130,7 +130,7 @@ class EquationFormatter {
       buffer.write('=');
     }
 
-    // Add base value with sigma
+    // Add base value with epsilon
     buffer
       ..write('10^{')
       ..write(Utils.formatNumber(coefficients.b[0]))

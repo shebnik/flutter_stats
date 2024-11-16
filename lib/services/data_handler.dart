@@ -323,7 +323,6 @@ class DataHandler {
     required String fileName,
     required List<Project> projects,
     required Settings settings,
-    List<double> mahalanobisDistances = const [],
   }) async {
     final csvAlias = settings.csvAlias;
     fileName = fileName.endsWith('.csv') ? fileName : '$fileName.csv';
@@ -342,7 +341,6 @@ class DataHandler {
         'Zx1',
         if (settings.hasX2) 'Zx2',
         if (settings.hasX3) 'Zx3',
-        if (mahalanobisDistances.isNotEmpty) 'Mahalanobis Distances',
       ],
       ...List.generate(projects.length, (i) {
         final project = projects[i];
@@ -352,16 +350,31 @@ class DataHandler {
           i + 1,
           project.url,
           if (settings.hasNOC) metrics.noc,
-          metrics.y,
-          metrics.x1,
-          if (settings.hasX2) metrics.x2,
-          if (settings.hasX3) metrics.x3,
+          if (settings.hasNOC &&
+              settings.useRelativeNOC &&
+              settings.divideYByNOC)
+            (metrics.y) * (metrics.noc ?? 1)
+          else
+            metrics.y,
+          if (settings.hasNOC && settings.useRelativeNOC)
+            metrics.x1 * (metrics.noc ?? 1)
+          else
+            metrics.x1,
+          if (settings.hasX2)
+            if (settings.hasNOC && settings.useRelativeNOC)
+              (metrics.x2 ?? 0) * (metrics.noc ?? 1)
+            else
+              metrics.x2,
+          if (settings.hasX3)
+            if (settings.hasNOC && settings.useRelativeNOC)
+              (metrics.x3 ?? 0) * (metrics.noc ?? 1)
+            else
+              metrics.x3,
           '',
           normalized.y,
           normalized.x1,
           if (settings.hasX2) normalized.x2,
           if (settings.hasX3) normalized.x3,
-          if (mahalanobisDistances.isNotEmpty) mahalanobisDistances[i],
         ];
       }),
     ]);

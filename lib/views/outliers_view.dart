@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stats/providers/projects_provider.dart';
+import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/widgets/projects_list.dart';
 import 'package:provider/provider.dart';
 
@@ -11,52 +11,64 @@ class OutliersView extends StatefulWidget {
 }
 
 class _OutliersViewState extends State<OutliersView> {
-  final isRemoving = ValueNotifier<bool>(false);
+  int currentPage = 1;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProjectsProvider>(
+    return Consumer<OutliersProvider>(
       builder: (context, provider, _) {
-        if (provider.outliers.isEmpty) {
-          return Center(
-            child: Text(
-              'No outliers',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          );
-        }
-
         return CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.all(16),
               sliver: SliverToBoxAdapter(
-                child: Center(
-                  child: ValueListenableBuilder(
-                    valueListenable: isRemoving,
-                    builder: (_, disabled, __) => ElevatedButton(
-                      onPressed:
-                          disabled ? null : () => _removeAllClick(provider),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          'Remove all outliers',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (currentPage > 1) ...[
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () {
+                          if (currentPage > 1) {
+                            setState(() {
+                              currentPage--;
+                            });
+                          }
+                        },
+                      ),
+                    ] else ...[
+                      const SizedBox(),
+                    ],
+                    Text(
+                      'Iteration $currentPage',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    if (currentPage < provider.iterations.length) ...[
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          if (currentPage < provider.iterations.length) {
+                            setState(() {
+                              currentPage++;
+                            });
+                          }
+                        },
+                      ),
+                    ] else ...[
+                      const SizedBox(),
+                    ],
+                  ],
                 ),
               ),
             ),
-            const SliverPadding(
-              padding: EdgeInsets.only(top: 16),
-            ),
             SliverFillRemaining(
               child: ProjectsList(
-                projects: provider.projects,
-                outliersIndexes: provider.outliers,
+                projects: provider.iterations[currentPage - 1].projects,
+                whyOutliers: provider.iterations[currentPage - 1].whyOutliers,
                 key: const Key('outliers_list'),
               ),
             ),
@@ -64,26 +76,5 @@ class _OutliersViewState extends State<OutliersView> {
         );
       },
     );
-  }
-
-  Future<void> _removeAllClick(ProjectsProvider provider) async {
-    if (isRemoving.value) return;
-    isRemoving.value = true;
-    try {
-      await _removeAllOutliers(provider);
-    } finally {
-      isRemoving.value = false;
-    }
-  }
-
-  Future<void> _removeAllOutliers(ProjectsProvider provider) async {
-    await provider.removeProjects(
-      provider.outliers,
-    );
-
-    if (provider.outliers.isEmpty) {
-      return;
-    }
-    return _removeAllOutliers(provider);
   }
 }

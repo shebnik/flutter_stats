@@ -9,33 +9,83 @@ import 'package:flutter_stats/services/fisher.dart';
 import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:flutter_stats/services/normalization.dart';
 import 'package:flutter_stats/services/regression_model.dart';
+import 'package:flutter_stats/services/utils.dart';
 
-class Outliers {
-  Outliers(this.projects) {
-    _normalizeData();
-  }
-  late final List<Project> projects;
+enum OutliersType { epsilon, predictionInterval }
 
+class OutliersIterations {
+  OutliersIterations({
+    required this.step,
+    required this.projects,
+    required this.type,
+    required this.whyOutliers,
+  });
+
+  final int step;
+  final List<Project> projects;
+  final OutliersType type;
+  final List<String> whyOutliers;
+  int get count => projects.length;
+}
+
+class OutliersProvider extends ChangeNotifier {
   final Algebra _algebra = Algebra();
   final Normalization _normalization = Normalization();
   final _log = LoggerService.instance;
 
-  late final List<RegressionFactors> _factors;
+  List<OutliersIterations> _iterations = [];
+  List<OutliersIterations> get iterations => _iterations;
 
-  int get n => projects.length;
-  int get p => _factors.first.x.length + 1;
+  Future<List<Project>> removeAllOutliers(List<Project> projects) async {
+    _log.i('Removing all outliers');
+    _iterations = [];
+    var outliers = <Project>[];
+    var whyOutliers = <String>[];
+    var iteration = 1;
+    do {
+      (whyOutliers, outliers) = await determineEpsilonOutliers(projects);
+      if (outliers.isNotEmpty) {
+        _iterations.add(
+          OutliersIterations(
+            step: iteration,
+            projects: outliers,
+            whyOutliers: whyOutliers,
+            type: OutliersType.epsilon,
+          ),
+        );
+        projects.removeWhere((p) => outliers.contains(p));
+        iteration++;
+      }
+    } while (outliers.isNotEmpty);
 
-  List<int> _outliers = [];
-  List<int> get outliers => _outliers;
+    do {
+      (whyOutliers, outliers) = await determinePredictionIntervalOutliers(
+        projects,
+      );
+      if (outliers.isNotEmpty) {
+        _iterations.add(
+          OutliersIterations(
+            step: iteration,
+            projects: outliers,
+            whyOutliers: whyOutliers,
+            type: OutliersType.predictionInterval,
+          ),
+        );
+        projects.removeWhere((p) => outliers.contains(p));
+        iteration++;
+      }
+    } while (outliers.isNotEmpty);
 
-  void _normalizeData() {
-    final normalizedTestProjects = _normalization.normalizeProjects(projects);
-    _factors =
-        normalizedTestProjects.map(RegressionFactors.fromProject).toList();
+    _iterations = List.from(_iterations);
+    notifyListeners();
+
+    return projects;
   }
 
-  List<double> calculateMahalanobisDistances() {
-    final values = _factors.toArray();
+  List<double> calculateMahalanobisDistances(List<RegressionFactors> factors) {
+    final n = factors.length;
+    final p = factors.first.x.length + 1;
+    final values = factors.toArray();
     final covInv =
         _algebra.invertMatrix(_algebra.calculateCovarianceMatrix(values));
     final means = values.map(_algebra.average).toList();
@@ -52,92 +102,102 @@ class Outliers {
     });
   }
 
-  List<double> calculateTestStatistics() {
-    final distances = calculateMahalanobisDistances();
+  List<double> calculateTestStatistics(List<RegressionFactors> factors) {
+    final distances = calculateMahalanobisDistances(factors);
+    final n = factors.length;
+    final p = factors.first.x.length + 1;
     final factor = (n - p) * n / ((pow(n, 2) - 1) * p);
     return distances.map((d) => factor * d).toList();
   }
 
-  Future<double?> calculateFisherFDistribution() =>
+  Future<double?> calculateFisherFDistribution({
+    required int n,
+    required int p,
+  }) =>
       Fisher.inv(alpha: alpha, df1: p, df2: n - p);
 
-  Future<void> determineOutliers({
-    RegressionModel? regressionModel,
-  }) async {
-    _log.d('New outlier detection started');
-    final testStatistics = calculateTestStatistics();
-    final f = await calculateFisherFDistribution();
+  Future<(List<String>, List<Project>)> determineEpsilonOutliers(
+    List<Project> projects,
+  ) async {
+    _log.d('Epsilon Outlier Detection Started');
+    final factors = _normalization
+        .normalizeProjects(projects)
+        .map(RegressionFactors.fromProject)
+        .toList();
+    final n = factors.length;
+    final p = factors.first.x.length + 1;
+    final testStatistics = calculateTestStatistics(factors);
+    final f = await calculateFisherFDistribution(n: n, p: p);
     if (f == null) {
       debugPrint('Failed to calculate Fisher F distribution');
-      return;
+      return (<String>[], <Project>[]);
     }
     _log.i('Fisher F distribution: $f');
 
-    final epsilonOutliers = List.generate(n, (i) => i).where((i) {
-      final check = testStatistics[i] > f;
-      if (check) {
-        _log.i(
-          'Epsilon Outlier detected: ${projects[i].url} '
-          '${testStatistics[i]} > $f',
-        );
+    final outliers = <Project>[];
+    final whyOutliers = <String>[];
+    for (var i = 0; i < n; i++) {
+      if (testStatistics[i] > f) {
+        final outlier = projects[i];
+        final why = 'Test Statistic: ${Utils.formatNumber(testStatistics[i])} '
+            '> F: ${Utils.formatNumber(f)}';
+        _log.d('Epsilon Outlier detected: ${outlier.url} $why');
+        outliers.add(outlier);
+        whyOutliers.add(why);
       }
-      return check;
-    }).toList();
-
-    if (regressionModel != null) {
-      final predictionOutliers =
-          await calculatePredictionIntervalOutliers(regressionModel);
-      final predictionIndices = List.generate(n, (i) => i)
-          .where((i) => predictionOutliers[i])
-          .toList();
-
-      _outliers = {
-        ...epsilonOutliers,
-        ...predictionIndices,
-      }.toList()
-        ..sort();
-    } else {
-      _outliers = epsilonOutliers;
     }
+    return (whyOutliers, outliers);
   }
 
-  Future<List<bool>> calculatePredictionIntervalOutliers(
-    RegressionModel regressionModel,
+  Future<(List<String>, List<Project>)> determinePredictionIntervalOutliers(
+    List<Project> projects,
   ) async {
+    _log.i('Prediction Interval Outlier Detection Started');
+    final regressionModel = RegressionModel(projects);
+    final factors = _normalization
+        .normalizeProjects(projects)
+        .map(RegressionFactors.fromProject)
+        .toList();
+    final n = factors.length;
     final coefficients =
-        regressionModel.calculateRegressionCoefficients(factors: _factors);
+        regressionModel.calculateRegressionCoefficients(factors: factors);
     final zyHat = regressionModel.calculatePredictedValues(
-      factors: _factors,
+      factors: factors,
       coefficients: coefficients,
     );
-
     final intervals = await regressionModel.calculateIntervals(
-      z: _factors.map((f) => f.x).toList(),
-      zy: _factors.map((f) => f.y).toList(),
+      z: factors.map((f) => f.x).toList(),
+      zy: factors.map((f) => f.y).toList(),
       zyHat: zyHat,
     );
 
-    // Check if each point falls outside the prediction intervals
-    return List.generate(n, (i) {
-      final actualValue = pow(10, _factors[i].y);
-      final check = actualValue < intervals.predictionLower[i] ||
-          actualValue > intervals.predictionUpper[i];
-      if (check) {
-        if (actualValue < intervals.predictionLower[i]) {
-          _log.d(
-            'Prediction Outlier detected: ${projects[i].url} '
-            '$actualValue < ${intervals.predictionLower[i]} '
-            '(actual < lower)',
-          );
-        } else {
-          _log.d(
-            'Prediction Outlier detected: ${projects[i].url} '
-            '$actualValue > ${intervals.predictionUpper[i]} '
-            '(actual > upper)',
-          );
-        }
+    final outliers = <Project>[];
+    final whyOutliers = <String>[];
+    for (var i = 0; i < n; i++) {
+      final actualValue = pow(10, factors[i].y);
+      if (actualValue < intervals.predictionLower[i]) {
+        final outlier = projects[i];
+        whyOutliers.add('Actual: ${Utils.formatNumber(actualValue.toDouble())} '
+            '< Lower: ${Utils.formatNumber(intervals.predictionLower[i])}');
+        _log.d(
+          'Prediction Outlier detected: ${outlier.url} '
+          '$actualValue < ${intervals.predictionLower[i]} '
+          '(actual < lower)',
+        );
+        outliers.add(outlier);
       }
-      return check;
-    });
+      if (actualValue > intervals.predictionUpper[i]) {
+        final outlier = projects[i];
+        whyOutliers.add('Actual: ${Utils.formatNumber(actualValue.toDouble())} '
+            '> Upper: ${Utils.formatNumber(intervals.predictionUpper[i])}');
+        _log.d(
+          'Prediction Outlier detected: ${outlier.url} '
+          '$actualValue > ${intervals.predictionUpper[i]} '
+          '(actual > upper)',
+        );
+        outliers.add(outlier);
+      }
+    }
+    return (whyOutliers, outliers);
   }
 }

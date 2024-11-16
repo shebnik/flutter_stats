@@ -10,6 +10,7 @@ import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/router/router.dart';
 import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/database.dart';
+import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -26,23 +27,28 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final regressionModelProvider = RegressionModelProvider();
+    final outliersProvider = OutliersProvider();
     final db = Database(sp);
     return MultiProvider(
       providers: [
         Provider.value(value: db),
+        Provider(create: (_) => DataHandler()),
+        Provider(create: (_) => Utils()),
         ChangeNotifierProvider(
           create: (_) => SettingsProvider(db: db),
         ),
-        Provider(create: (_) => DataHandler()),
-        Provider(create: (_) => Utils()),
+        ChangeNotifierProvider(
+          create: (_) => outliersProvider,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => regressionModelProvider,
+        ),
         ChangeNotifierProvider(
           create: (_) => ProjectsProvider(
             regressionModelProvider,
             dataset: db.getDataset(),
+            outliersProvider: outliersProvider,
           ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => regressionModelProvider,
         ),
         ChangeNotifierProvider(
           create: (_) => MetricsNavigationProvider(),

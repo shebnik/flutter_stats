@@ -296,24 +296,42 @@ class RegressionModel {
     var mediumQualityCount = 0;
     var lowQualityCount = 0;
 
-    final avgPredLower = _algebra.average(intervals.predictionLower);
-    final avgPredUpper = _algebra.average(intervals.predictionUpper);
-    final avgConfLower = _algebra.average(intervals.confidenceLower);
-    final avgConfUpper = _algebra.average(intervals.confidenceUpper);
+    final factors = _normalization
+        .normalizeProjects(projects)
+        .map(RegressionFactors.fromProject)
+        .toList();
+    final coefficients = calculateRegressionCoefficients(factors: factors);
+    final zyHat = calculatePredictedValues(
+      factors: factors,
+      coefficients: coefficients,
+    );
+    final intervals = await calculateIntervals(
+      z: factors.map((f) => f.x).toList(),
+      zy: factors.map((f) => f.y).toList(),
+      zyHat: zyHat,
+    );
 
     for (var i = 0; i < projects.length; i++) {
       final project = projects[i];
-
       final y = pow(10, project.metrics.y);
 
-      if (y >= avgConfLower && y <= avgConfUpper) {
+      final predLower = pow(10, intervals.predictionLower[i]);
+      final predUpper = pow(10, intervals.predictionUpper[i]);
+      final confLower = pow(10, intervals.confidenceLower[i]);
+      final confUpper = pow(10, intervals.confidenceUpper[i]);
+
+      if (y > predUpper) {
+        // RFC exceeds prediction interval upper bound
+        lowQualityCount++;
+      } else if (y >= confLower && y <= confUpper) {
+        // RFC falls within confidence interval
         mediumQualityCount++;
-      } else if (y > avgConfUpper && y <= avgPredUpper) {
-        lowQualityCount++;
-      } else if (y >= avgPredLower && y < avgConfLower) {
+      } else if ((y > confUpper && y <= predUpper) ||
+          (y >= predLower && y < confLower)) {
+        // RFC falls between confidence and prediction intervals
         highQualityCount++;
-      } else if (y > avgPredUpper) {
-        lowQualityCount++;
+      } else {
+        _log.w('Project ${project.url} has unusual Y value: $y');
       }
     }
 
@@ -412,7 +430,7 @@ class RegressionModel {
         confidenceUpper: confUpper.map((x) => pow(10, x).toDouble()).toList(),
       );
     } catch (e) {
-      _log.e('Failed to calculate intervals: $e');
+      LoggerService.instance.e('Failed to calculate intervals: $e');
       return Intervals.empty();
     }
   }

@@ -45,15 +45,8 @@ class _RegressionViewState extends State<RegressionView> {
       const SizedBox(width: 16),
       Flexible(
         child: MetricsCard(
-          title: 'Outliers removed',
+          title: 'Total Outliers removed',
           value: provider.outliersRemoved.toString(),
-        ),
-      ),
-      const SizedBox(width: 16),
-      Flexible(
-        child: MetricsCard(
-          title: 'Outliers left',
-          value: provider.outliers.length.toString(),
         ),
       ),
     ];

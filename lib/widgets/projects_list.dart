@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/models/settings/settings.dart';
-import 'package:flutter_stats/providers/projects_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/utils.dart';
 import 'package:provider/provider.dart';
@@ -10,12 +9,12 @@ import 'package:provider/provider.dart';
 class ProjectsList extends StatefulWidget {
   const ProjectsList({
     required this.projects,
-    this.outliersIndexes,
+    this.whyOutliers,
     super.key,
   });
 
   final List<Project> projects;
-  final List<int>? outliersIndexes;
+  final List<String>? whyOutliers;
 
   @override
   State<ProjectsList> createState() => _ProjectsListState();
@@ -67,20 +66,40 @@ class _ProjectsListState extends State<ProjectsList> {
     return ListView.separated(
       shrinkWrap: true,
       itemCount: widget.projects.length,
-      separatorBuilder: (context, index) {
-        if (widget.outliersIndexes != null &&
-            !widget.outliersIndexes!.contains(index)) {
-          return const SizedBox.shrink();
-        }
-        return const Divider();
-      },
+      separatorBuilder: (context, index) => const Divider(),
       itemBuilder: (context, index) {
-        if (widget.outliersIndexes != null &&
-            !widget.outliersIndexes!.contains(index)) {
-          return const SizedBox.shrink();
-        }
         final project = widget.projects[index];
         final metrics = project.metrics;
+        final whyOutlier =
+            widget.whyOutliers != null ? widget.whyOutliers![index] : null;
+        final title = project.url != null || whyOutlier != null
+            ? RichText(
+                text: TextSpan(
+                  children: [
+                    if (project.url != null)
+                      TextSpan(
+                        text: project.url,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          height: 2,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    if (project.url != null && whyOutlier != null)
+                      const TextSpan(text: '\n'),
+                    if (whyOutlier != null)
+                      TextSpan(
+                        text: whyOutlier,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          height: 2,
+                          color: Colors.red,
+                        ),
+                      ),
+                  ],
+                ),
+              )
+            : null;
         final subtitle = getSubtitle(
           project,
           metrics,
@@ -108,16 +127,7 @@ class _ProjectsListState extends State<ProjectsList> {
                 Utils.copyToClipboard(subtitle, context);
               }
             },
-            title: project.url != null
-                ? Text(
-                    project.url!,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      height: 2,
-                      color: Colors.blue,
-                    ),
-                  )
-                : null,
+            title: title,
             subtitle: Text(
               subtitle,
               style: const TextStyle(
@@ -125,12 +135,6 @@ class _ProjectsListState extends State<ProjectsList> {
               ),
             ),
             isThreeLine: true,
-            trailing: IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () {
-                context.read<ProjectsProvider>().removeProject(index);
-              },
-            ),
           ),
         );
       },
