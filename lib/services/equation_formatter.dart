@@ -111,12 +111,12 @@ class EquationFormatter {
       return 'Error: No coefficients provided';
     }
 
-    final buffer = StringBuffer('${alias.y} = ');
+    final buffer = StringBuffer(r'\hat{Y} = ');
 
     // Desktop format includes beta coefficients
     if (!isMobile) {
       // Add base with epsilon
-      buffer.write(r'10^{\beta_0 + ε}');
+      buffer.write(r'10^{\beta_0}');
 
       // Add beta terms dynamically
       for (var i = 1; i < coefficients.b.length; i++) {
@@ -134,8 +134,6 @@ class EquationFormatter {
     buffer
       ..write('10^{')
       ..write(Utils.formatNumber(coefficients.b[0]))
-      ..write(' + ')
-      ..write(Utils.formatNumber(coefficients.epsilon))
       ..write('}');
 
     // Add variable terms dynamically

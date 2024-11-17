@@ -76,24 +76,24 @@ class _ProjectsListState extends State<ProjectsList> {
             ? RichText(
                 text: TextSpan(
                   children: [
-                    if (project.url != null)
-                      TextSpan(
-                        text: project.url,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          height: 2,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    if (project.url != null && whyOutlier != null)
-                      const TextSpan(text: '\n'),
                     if (whyOutlier != null)
                       TextSpan(
                         text: whyOutlier,
                         style: const TextStyle(
                           fontSize: 18,
-                          height: 2,
+                          height: 1.5,
                           color: Colors.red,
+                        ),
+                      ),
+                    if (project.url != null && whyOutlier != null)
+                      const TextSpan(text: '\n'),
+                    if (project.url != null)
+                      TextSpan(
+                        text: project.url,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.blue,
+                          height: 1.5,
                         ),
                       ),
                   ],

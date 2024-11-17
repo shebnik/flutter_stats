@@ -435,24 +435,39 @@ class RegressionModel {
     }
   }
 
-  Future<QualityTypes> calculateProjectQuality(double y) async {
-    final avgPredLower = _algebra.average(intervals.predictionLower);
-    final avgPredUpper = _algebra.average(intervals.predictionUpper);
-    final avgConfLower = _algebra.average(intervals.confidenceLower);
-    final avgConfUpper = _algebra.average(intervals.confidenceUpper);
+  Future<QualityTypes> calculateProjectQuality({
+    required List<double> x,
+    required double y,
+    required double predictedY,
+  }) async {
+    final factors = [
+      _normalization.normalizeFactors(RegressionFactors(y: y, x: x)),
+      ..._factors,
+    ];
+    final intervals = await calculateIntervals(
+      zyHat: [_normalization.normalize(predictedY), ..._predictedValues],
+      z: factors.map((f) => f.x).toList(),
+      zy: factors.map((f) => f.y).toList(),
+    );
+    final predLower = intervals.predictionLower.first;
+    final predUpper = intervals.predictionUpper.first;
+    final confLower = intervals.confidenceLower.first;
+    final confUpper = intervals.confidenceUpper.first;
 
-    _log.i('Calculating quality for project with y = $y, '
-        'prediction interval: $avgPredLower - $avgPredUpper, '
-        'confidence interval: $avgConfLower - $avgConfUpper');
+    _log.i(
+      'Calculating quality for project with X: $x, Y: $y, '
+      'predicted Y: $predictedY, '
+      'prediction interval: $predLower - $predUpper, '
+      'confidence interval: $confLower - $confUpper',
+    );
 
-    if (y >= avgConfLower && y <= avgConfUpper) {
+    if (y > predUpper) {
+      return QualityTypes.low;
+    } else if (y >= confLower && y <= confUpper) {
       return QualityTypes.medium;
-    } else if (y > avgConfUpper && y <= avgPredUpper) {
-      return QualityTypes.low;
-    } else if (y >= avgPredLower && y < avgConfLower) {
+    } else if ((y > confUpper && y <= predUpper) ||
+        (y >= predLower && y < confLower)) {
       return QualityTypes.high;
-    } else if (y > avgPredUpper) {
-      return QualityTypes.low;
     }
 
     return QualityTypes.unknown;

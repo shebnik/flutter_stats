@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/constants.dart';
+import 'package:flutter_stats/models/settings/csv_alias/csv_alias.dart';
 import 'package:flutter_stats/providers/regression_model_provider.dart';
 import 'package:flutter_stats/providers/settings_provider.dart';
 import 'package:flutter_stats/services/equation_formatter.dart';
@@ -21,10 +22,17 @@ class PredictionView extends StatefulWidget {
 class _PredictionViewState extends State<PredictionView> {
   late RegressionModel model;
 
+  final yController = TextEditingController();
   final x1Controller = TextEditingController();
   final x2Controller = TextEditingController();
   final x3Controller = TextEditingController();
+  String? yError;
+  String? x1Error;
+  String? x2Error;
+  String? x3Error;
+
   num? _prediction;
+  double? y;
   double? x1;
   double? x2;
   double? x3;
@@ -33,9 +41,6 @@ class _PredictionViewState extends State<PredictionView> {
   bool hasX3 = true;
 
   MinMaxFactors? minMaxFactors;
-  String? x1Error;
-  String? x2Error;
-  String? x3Error;
 
   Widget _buildTextField(
     TextEditingController controller,
@@ -71,7 +76,7 @@ class _PredictionViewState extends State<PredictionView> {
     );
   }
 
-  Widget _buildPredictionOutput() {
+  Widget _buildPredictionOutput(CSVAlias csvAlias) {
     if (_prediction != null &&
         !_prediction!.isNaN &&
         !_prediction!.isInfinite &&
@@ -80,7 +85,7 @@ class _PredictionViewState extends State<PredictionView> {
         children: [
           Expanded(
             child: MetricsCard(
-              title: 'Y Prediction (RFC)',
+              title: 'Ŷ (${csvAlias.y})',
               value: Utils.formatNumber(_prediction?.toDouble() ?? 0),
             ),
           ),
@@ -89,7 +94,15 @@ class _PredictionViewState extends State<PredictionView> {
           ),
           Expanded(
             child: FutureBuilder(
-              future: model.calculateProjectQuality(_prediction!.toDouble()),
+              future: model.calculateProjectQuality(
+                predictedY: _prediction!.toDouble(),
+                y: y!,
+                x: [
+                  if (x1 != null) x1!,
+                  if (x2 != null) x2!,
+                  if (x3 != null) x3!,
+                ],
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox();
@@ -114,6 +127,7 @@ class _PredictionViewState extends State<PredictionView> {
   }
 
   void makePrediction() {
+    y = double.tryParse(yController.text);
     x1 = double.tryParse(x1Controller.text);
     if (hasX2) {
       x2 = double.tryParse(x2Controller.text);
@@ -141,6 +155,14 @@ class _PredictionViewState extends State<PredictionView> {
         Provider.of<SettingsProvider>(context, listen: false).settings.csvAlias;
 
     if (minMaxFactors != null) {
+      if (y! > minMaxFactors!.y.max || y! < minMaxFactors!.y.min) {
+        yError = '${csvAlias.y} should be between '
+            '${Utils.formatNumber(minMaxFactors!.y.min)}'
+            ' and ${Utils.formatNumber(minMaxFactors!.y.max)}';
+      } else {
+        yError = null;
+      }
+
       if (x1! > minMaxFactors!.x1.max || x1! < minMaxFactors!.x1.min) {
         x1Error = '${csvAlias.x1} should be between '
             '${Utils.formatNumber(minMaxFactors!.x1.min)}'
@@ -148,6 +170,7 @@ class _PredictionViewState extends State<PredictionView> {
       } else {
         x1Error = null;
       }
+
       if (minMaxFactors!.x2 != null) {
         if (x2! > minMaxFactors!.x2!.max || x2! < minMaxFactors!.x2!.min) {
           x2Error = '${csvAlias.x2} should be between '
@@ -171,6 +194,12 @@ class _PredictionViewState extends State<PredictionView> {
 
     setState(() {});
   }
+
+  Widget yField(SettingsProvider provider) => _buildTextField(
+        yController,
+        'Enter Y (${provider.settings.csvAlias.y})',
+        yError,
+      );
 
   Widget x1Field(SettingsProvider provider) => _buildTextField(
         x1Controller,
@@ -205,6 +234,7 @@ class _PredictionViewState extends State<PredictionView> {
         model = provider.model!;
         return Consumer<SettingsProvider>(
           builder: (context, provider, _) {
+            final yField = this.yField(provider);
             final x1Field = this.x1Field(provider);
             final x2Field = this.x2Field(provider);
             final x3Field = this.x3Field(provider);
@@ -226,6 +256,8 @@ class _PredictionViewState extends State<PredictionView> {
                 if (ResponsiveBreakpoints.of(context).isDesktop)
                   Row(
                     children: [
+                      Expanded(child: yField),
+                      const SizedBox(width: 16),
                       Expanded(child: x1Field),
                       if (x2Field != null) ...[
                         const SizedBox(width: 16),
@@ -240,6 +272,8 @@ class _PredictionViewState extends State<PredictionView> {
                 else
                   Column(
                     children: [
+                      yField,
+                      const SizedBox(height: 16),
                       x1Field,
                       if (x2Field != null) ...[
                         const SizedBox(height: 16),
@@ -252,7 +286,7 @@ class _PredictionViewState extends State<PredictionView> {
                     ],
                   ),
                 const SizedBox(height: 16),
-                _buildPredictionOutput(),
+                _buildPredictionOutput(provider.settings.csvAlias),
                 const SizedBox(height: 32),
                 _availableFactorsRange(provider),
                 const SizedBox(height: 32),
@@ -273,6 +307,9 @@ class _PredictionViewState extends State<PredictionView> {
     if (minMaxFactors == null) {
       return const SizedBox.shrink();
     }
+    final minY = Utils.formatNumber(minMaxFactors!.y.min);
+    final maxY = Utils.formatNumber(minMaxFactors!.y.max);
+
     final minX1 = Utils.formatNumber(minMaxFactors!.x1.min);
     final maxX1 = Utils.formatNumber(minMaxFactors!.x1.max);
 
@@ -301,6 +338,13 @@ class _PredictionViewState extends State<PredictionView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Flexible(
+              child: MetricsCard(
+                title: provider.settings.csvAlias.y,
+                value: '[$minY - $maxY]',
+              ),
+            ),
+            const SizedBox(width: 16),
             Flexible(
               child: MetricsCard(
                 title: provider.settings.csvAlias.x1,
