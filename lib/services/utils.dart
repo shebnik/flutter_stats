@@ -42,9 +42,13 @@ class Utils {
       return '0';
     }
     if (number % 1 == 0) {
-      return number.toStringAsFixed(0);
+      return number.toInt().toString();
     }
-    return number.toStringAsFixed(4).replaceAll(RegExp(r'0*$'), '');
+    final formatted =
+        number.toStringAsFixed(4).replaceFirst(RegExp(r'0+$'), '');
+    return formatted.endsWith('.')
+        ? formatted.substring(0, formatted.length - 1)
+        : formatted;
   }
 
   static void copyToClipboard(String value, BuildContext context) {

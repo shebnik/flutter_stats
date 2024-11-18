@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_stats/constants.dart';
 import 'package:flutter_stats/models/intervals/intervals.dart';
+import 'package:flutter_stats/services/data_handler.dart';
 import 'package:flutter_stats/services/utils.dart';
 
 class IntervalsTable extends StatelessWidget {
@@ -17,6 +18,18 @@ class IntervalsTable extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Confidence and Prediction Intervals'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () async {
+              await DataHandler().downloadIntervalsAsCSV(
+                intervalsHeaders: intervalsHeaders,
+                table: intervals,
+                fileName: 'Confidence and Prediction Intervals',
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Table(
@@ -54,7 +67,7 @@ class IntervalsTable extends StatelessWidget {
                   )
                   .toList(),
             ),
-            for (var i = 0; i < intervals.confidenceLower.length; i++) ...[
+            for (var i = 0; i < intervals.y.length; i++) ...[
               TableRow(
                 children: [
                   TableCell(
@@ -62,6 +75,30 @@ class IntervalsTable extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         (i + 1).toString(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  TableCell(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        Utils.formatNumber(intervals.y[i]),
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  TableCell(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        Utils.formatNumber(intervals.yHat[i]),
                         style: const TextStyle(
                           fontSize: 16,
                         ),

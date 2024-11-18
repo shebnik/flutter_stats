@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stats/models/dataset/dataset.dart';
+import 'package:flutter_stats/models/intervals/intervals.dart';
 import 'package:flutter_stats/models/metrics/metrics.dart';
 import 'package:flutter_stats/models/project/project.dart';
 import 'package:flutter_stats/models/settings/settings.dart';
@@ -247,7 +248,8 @@ class DataHandler {
         String.fromCharCodes(bytes),
       );
 
-      final headers = rows[0].map((h) => h.toString().toUpperCase()).toList();
+      final headers =
+          rows[0].map((h) => h.toString().trim().toUpperCase()).toList();
       final csvAlias = settings.csvAlias;
 
       final nameIndex = headers.indexOf('name');
@@ -298,14 +300,10 @@ class DataHandler {
   }
 
   int getMetricIndex(List<dynamic> headers, List<String> aliases) {
-    for (var i = 0; i < headers.length; i++) {
-      final lowerHeader = headers[i].toString().toUpperCase();
-      for (final alias in aliases) {
-        final lowerAlias = alias.toUpperCase();
-        if (lowerHeader.contains(lowerAlias)) {
-          if (lowerAlias == 'y' && lowerAlias != lowerHeader) continue;
-          return i;
-        }
+    for (final alias in aliases) {
+      final index = headers.indexOf(alias.toUpperCase());
+      if (index != -1) {
+        return index;
       }
     }
     return -1;
@@ -329,7 +327,7 @@ class DataHandler {
     final normalizedProjects = Normalization().normalizeProjects(projects);
     final csv = const ListToCsvConverter().convert([
       [
-        'No.',
+        '#',
         csvAlias.url,
         if (settings.hasNOC) csvAlias.noc,
         csvAlias.y,
@@ -353,21 +351,21 @@ class DataHandler {
           if (settings.hasNOC &&
               settings.useRelativeNOC &&
               settings.divideYByNOC)
-            (metrics.y) * (metrics.noc ?? 1)
+            ((metrics.y) * (metrics.noc ?? 1)).roundToDouble()
           else
             metrics.y,
           if (settings.hasNOC && settings.useRelativeNOC)
-            metrics.x1 * (metrics.noc ?? 1)
+            (metrics.x1 * (metrics.noc ?? 1)).roundToDouble()
           else
             metrics.x1,
           if (settings.hasX2)
             if (settings.hasNOC && settings.useRelativeNOC)
-              (metrics.x2 ?? 0) * (metrics.noc ?? 1)
+              ((metrics.x2 ?? 0) * (metrics.noc ?? 1)).roundToDouble()
             else
               metrics.x2,
           if (settings.hasX3)
             if (settings.hasNOC && settings.useRelativeNOC)
-              (metrics.x3 ?? 0) * (metrics.noc ?? 1)
+              ((metrics.x3 ?? 0) * (metrics.noc ?? 1)).roundToDouble()
             else
               metrics.x3,
           '',
@@ -375,6 +373,64 @@ class DataHandler {
           normalized.x1,
           if (settings.hasX2) normalized.x2,
           if (settings.hasX3) normalized.x3,
+        ];
+      }),
+    ]);
+
+    final bytes = Uint8List.fromList(csv.codeUnits);
+
+    if (kIsWeb) {
+      // Web platform implementation
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.document.createElement('a') as html.AnchorElement
+        ..href = url
+        ..style.display = 'none'
+        ..download = fileName;
+
+      html.document.body?.children.add(anchor);
+      anchor.click();
+      html.document.body?.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+    } else {
+      try {
+        // Show save file dialog
+        final outputFile = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save CSV file',
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['csv'],
+        );
+
+        if (outputFile != null) {
+          final file = File(outputFile);
+          await file.writeAsBytes(bytes);
+        }
+      } catch (e) {
+        // Handle any errors that occur during file saving
+        _logger.e('Error saving file', error: e);
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> downloadIntervalsAsCSV({
+    required List<String> intervalsHeaders,
+    required Intervals table,
+    required String fileName,
+  }) async {
+    fileName = fileName.endsWith('.csv') ? fileName : '$fileName.csv';
+    final csv = const ListToCsvConverter().convert([
+      intervalsHeaders,
+      ...List.generate(table.y.length, (i) {
+        return [
+          i + 1,
+          table.y[i],
+          table.yHat[i],
+          table.confidenceLower[i],
+          table.confidenceUpper[i],
+          table.predictionLower[i],
+          table.predictionUpper[i],
         ];
       }),
     ]);

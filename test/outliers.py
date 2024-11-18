@@ -450,7 +450,7 @@ def save_to_csv(projects: List[Project], filename: str):
 
 
 def main():
-    projects = retrieve_data()
+    projects = retrieve_data('george.csv')
     data = np.array([[p.x1, p.x2, p.y] for p in projects])
     perform_mardia_test(data)
 

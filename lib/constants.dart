@@ -48,7 +48,9 @@ extension QualityTypesExtension on QualityTypes {
 }
 
 const intervalsHeaders = [
-  '№',
+  '#',
+  'Y',
+  r'\hat{Y}',
   'Lower confidence',
   'Upper confidence',
   'Lower prediction',
