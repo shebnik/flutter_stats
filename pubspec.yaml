@@ -51,3 +51,11 @@ flutter:
   assets:
     - assets/
     - assets/icons/
+
+dependency_overrides:
+  shared_preferences_web:
+    # https://github.com/flutter/flutter/issues/156574
+    git:
+      url: https://github.com/Dan-Crane/packages.git
+      ref: c544578d50f767099972abc9421c46f8df402c59
+      path: packages/shared_preferences/shared_preferences_web

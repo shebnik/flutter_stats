@@ -750,13 +750,14 @@ packages:
     source: hosted
     version: "2.4.1"
   shared_preferences_web:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: shared_preferences_web
-      sha256: d2ca4132d3946fec2184261726b355836a82c33d7d5b67af32692aff18a4684e
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.4.2"
+      path: "packages/shared_preferences/shared_preferences_web"
+      ref: c544578d50f767099972abc9421c46f8df402c59
+      resolved-ref: c544578d50f767099972abc9421c46f8df402c59
+      url: "https://github.com/Dan-Crane/packages.git"
+    source: git
+    version: "2.4.3"
   shared_preferences_windows:
     dependency: transitive
     description:
