@@ -10,6 +10,7 @@ import 'package:flutter_stats/models/regression_factors/regression_factors.dart'
 import 'package:flutter_stats/services/algebra.dart';
 import 'package:flutter_stats/services/logging/logger_service.dart';
 import 'package:flutter_stats/services/normalization.dart';
+import 'package:flutter_stats/services/outliers.dart';
 import 'package:flutter_stats/services/student.dart';
 import 'package:ml_linalg/matrix.dart';
 import 'package:ml_linalg/vector.dart';
@@ -444,6 +445,22 @@ class RegressionModel {
       _normalization.normalizeFactors(RegressionFactors(y: y, x: x)),
       ..._factors,
     ];
+    final distances = OutliersProvider().calculateMahalanobisDistances(factors);
+    var chiSquare = 0.0;
+    switch (p) {
+      case 1:
+        chiSquare = 7.879438577;
+      case 2:
+        chiSquare = 10.59663473;
+      case 3:
+        chiSquare = 12.83815647;
+    }
+    for (var i = 0; i < distances.length; i++) {
+      if (distances[i] > chiSquare) {
+        return QualityTypes.unknown;
+      }
+    }
+
     final intervals = await calculateIntervals(
       zyHat: [_normalization.normalize(predictedY), ..._predictedValues],
       z: factors.map((f) => f.x).toList(),
